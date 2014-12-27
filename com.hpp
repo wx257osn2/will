@@ -2,6 +2,7 @@
 #include<objbase.h>
 #include<cassert>
 #include<utility>
+#include<string>
 namespace will{
 struct com_apartment{
 	enum class thread{
@@ -16,6 +17,30 @@ T* com_create_resource(F&& f){
 	T* t;
 	return SUCCEEDED(f(&t)) ? t : nullptr;
 }
+struct bstr_adaptor{
+	bstr_adaptor() = delete;
+	bstr_adaptor(const bstr_adaptor&) = delete;
+	bstr_adaptor(BSTR _):bstr(_){}
+	bstr_adaptor(bstr_adaptor&& other):bstr(other.bstr){other.bstr = nullptr;}
+	bstr_adaptor(const std::wstring& _):bstr_adaptor(_.c_str()){}
+	bstr_adaptor(LPCWSTR _):bstr(SysAllocString(_)){}
+	~bstr_adaptor(){SysFreeString(bstr);}
+	operator BSTR()const{return bstr;}
+private:
+	BSTR bstr;
+};
+struct variant{
+	variant():var([]()->VARIANT{VARIANT var; VariantInit(&var);return var;}()){}
+	variant(const variant&) = default;
+	variant(variant&&) = default;
+	~variant(){VariantClear(&var);}
+	variant(VARIANT v):var(std::move(v)){}
+	variant& operator=(VARIANT v){var = std::move(v); return *this;}
+	VARIANT& get(){return var;}
+	const VARIANT& get()const{return var;}
+private:
+	VARIANT var;
+};
 template <typename T>
 class com_ptr{
   T* ptr;
@@ -65,7 +90,7 @@ public:
   com_weak_ptr(const com_ptr<T>& other) : ptr(other.ptr){}
   com_weak_ptr(const com_weak_ptr&) = default;
   com_weak_ptr(com_weak_ptr&&) = default;
-  ~com_weak_ptr(){detach();}
+  ~com_weak_ptr() = default;
   void detach(){
     ptr = nullptr;
   }
