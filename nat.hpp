@@ -96,28 +96,9 @@ public:
 		com_ptr<IStaticPortMappingCollection> operator->()const{
 			return portmaps;
 		}
-		class range_t{
-			com_ptr<IUnknown> unk;
-		public:
-			explicit range_t(const port_mappings& collection):unk(com_create_resource<IUnknown>([&](IUnknown** ptr){return collection->get__NewEnum(ptr);})){}
-			class iterator{
-				com_ptr<IEnumVARIANT> enu;
-				variant var;
-				HRESULT hr;
-			public:
-				explicit iterator(const com_ptr<IUnknown>& unk):enu(com_create_resource<IEnumVARIANT>([&](IEnumVARIANT** ptr){return unk->QueryInterface(IID_IEnumVARIANT, reinterpret_cast<void**>(ptr));})), var(), hr(enu->Next(1, &var.get(), nullptr)){}
-				explicit iterator():enu(nullptr), var(), hr(S_FALSE){}
-				iterator& operator++(){VariantClear(&var.get()); hr = enu->Next(1, &var.get(), nullptr); return *this;}
-				bool operator==(const iterator& rhs)const{return hr == rhs.hr;}
-				bool operator!=(const iterator& rhs)const{return !(*this == rhs);}
-				port_mapping operator*()const{
-					return port_mapping(com_create_resource<IStaticPortMapping>([&](IStaticPortMapping** ptr){return var.get().pdispVal->QueryInterface(IID_IStaticPortMapping, reinterpret_cast<void**>(ptr));}));
-				}
-			};
-			iterator begin()const{return iterator{unk};}
-			iterator end()const{return iterator{};}
-		};
-		range_t range()const{return range_t(*this);}
+		using iterator = com_enum_iterator<IStaticPortMapping, port_mapping>;
+		iterator begin()const{return iterator{portmaps};}
+		iterator end()const{return iterator{};}
 	};
 	port_mappings make_port_mappings()const{
 		return port_mappings(*this);

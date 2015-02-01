@@ -17,6 +17,10 @@ T* com_create_resource(F&& f){
 	T* t;
 	return SUCCEEDED(f(&t)) ? t : nullptr;
 }
+template<typename T, typename U>
+T* query_interface(U* u){
+	return com_create_resource<T>([&](T** ptr){return u->QueryInterface(__uuidof(T), reinterpret_cast<void**>(ptr));});
+}
 struct bstr_adaptor{
 	bstr_adaptor() = delete;
 	bstr_adaptor(const bstr_adaptor&) = delete;
@@ -79,39 +83,27 @@ public:
     assert(!ptr);
     return &ptr;
   }
+  template<typename U>
+  com_ptr<U> as()const{
+    assert(ptr);
+    return query_interface<U>(ptr);
+  }
   explicit operator bool()const{return ptr != nullptr;}
 };
-template <typename T>
-class com_weak_ptr{
-  T* ptr;
+template<typename T, typename U = T*>
+class com_enum_iterator{
+	com_ptr<IEnumVARIANT> enu;
+	variant var;
+	HRESULT hr;
 public:
-  com_weak_ptr() : ptr(nullptr){}
-  com_weak_ptr(T* ptr) : ptr(ptr){}
-  com_weak_ptr(const com_ptr<T>& other) : ptr(other.ptr){}
-  com_weak_ptr(const com_weak_ptr&) = default;
-  com_weak_ptr(com_weak_ptr&&) = default;
-  ~com_weak_ptr() = default;
-  void detach(){
-    ptr = nullptr;
-  }
-  void swap(com_weak_ptr& other){
-    std::swap(ptr, other.ptr);
-  }
-  T* get()const{return ptr;}
-  com_weak_ptr& operator=(com_weak_ptr rhs){
-    rhs.swap(*this);
-    return *this;
-  }
-  com_weak_ptr& operator=(T* rhs){
-    ptr = rhs;
-    return *this;
-  }
-  T* operator->()const{return ptr;}
-  T** operator&()const{
-    assert(!ptr);
-    return &ptr;
-  }
-  explicit operator bool()const{return ptr != nullptr;}
-  com_ptr<T> lock()const{if(ptr)ptr->AddRef();return com_ptr<T>(ptr);}
+	template<typename Collection>
+	explicit com_enum_iterator(const Collection& collection):enu(com_ptr<IUnknown>{com_create_resource<IUnknown>([&](IUnknown** ptr){return collection->get__NewEnum(ptr);})}.as<IEnumVARIANT>()), var(), hr(enu->Next(1, &var.get(), nullptr)){}
+	explicit com_enum_iterator():enu(nullptr), var(), hr(S_FALSE){}
+	com_enum_iterator& operator++(){VariantClear(&var.get()); hr = enu->Next(1, &var.get(), nullptr); return *this;}
+	bool operator==(const com_enum_iterator& rhs)const{return hr == rhs.hr;}
+	bool operator!=(const com_enum_iterator& rhs)const{return !(*this == rhs);}
+	U operator*()const{
+		return U(query_interface<T>(var.get().pdispVal));
+	}
 };
 }
