@@ -202,19 +202,19 @@ class hwnd_render_target:protected dxgi::swap_chain, public detail::auto_restore
 		return sc;
 	}
 	HWND hwnd;
+	HRESULT status;
 public:
-	hwnd_render_target(HWND hwnd):swap_chain(create_swap_chain(hwnd)), auto_restore_render_target([this]{return will::d2d::device::context(get_buffer());}), hwnd(hwnd){}
+	hwnd_render_target(HWND hwnd):swap_chain(create_swap_chain(hwnd)), auto_restore_render_target([this]{return will::d2d::device::context(get_buffer());}), hwnd(hwnd), status(0ul){}
 	auto operator->()->decltype(std::declval<d2d::device::context>().get()){return devcon();}
 	template<typename F, typename G, typename H>
 	void draw(F&& f, G&& g, H&& h){
-		static_cast<detail::auto_restore_render_target*>(this)->draw(std::forward<F>(f), [&]{
-			static_cast<dxgi::swap_chain*>(this)->~swap_chain();
-			new (static_cast<dxgi::swap_chain*>(this)) dxgi::swap_chain(std::move(create_swap_chain(hwnd)));
-		}, std::forward<G>(g), [&]{
-			DXGI_PRESENT_PARAMETERS param = {};
-			(*static_cast<dxgi::swap_chain*>(this))->Present1(1, 0, &param);
-			h();
-		});
+		if(!(status & DXGI_STATUS_OCCLUDED))
+			static_cast<detail::auto_restore_render_target*>(this)->draw(std::forward<F>(f), [&]{
+				static_cast<dxgi::swap_chain*>(this)->~swap_chain();
+				new (static_cast<dxgi::swap_chain*>(this)) dxgi::swap_chain(std::move(create_swap_chain(hwnd)));
+			}, std::forward<G>(g), std::forward<H>(h));
+		DXGI_PRESENT_PARAMETERS param = {};
+		status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, bool(status), &param);
 	}
 	template<typename F, typename H>
 	void draw(F&& f, H&& h){
