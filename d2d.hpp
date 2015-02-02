@@ -6,7 +6,6 @@
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dxguid.lib")
 #include<functional>
-#include<vector>
 #include<utility>
 namespace will{
 class d2d{
@@ -191,17 +190,16 @@ public:
 				return create_bitmap(std::forward<Source>(src).get(), prop);
 			}
 			template<typename F, typename G>
-			void draw(F&& f, G&& g){
+			HRESULT draw(F&& f, G&& g){
 				cont->BeginDraw();
 				f();
 				auto ret = cont->EndDraw();
 				g();
-				return ret;
-					
+				return ret;	
 			}
 			template<typename F>
-			void draw(F&& f){
-				draw(std::forward<F>(f), []{});
+			HRESULT draw(F&& f){
+				return draw(std::forward<F>(f), []{});
 			}
 			friend class will::d2d::device;
 		};

@@ -83,7 +83,7 @@ public:
 		class description{
 			DXGI_SWAP_CHAIN_DESC1 desc;
 		public:
-			description():desc(){desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; desc.SampleDesc.Count = 1; desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; desc.BufferCount = 2; desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;}
+			description():desc(){desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; desc.SampleDesc.Count = 1; desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; desc.BufferCount = 2;}
 			description(const description&) = default;
 			description(description&&) = default;
 			description& operator=(const description&) = default;

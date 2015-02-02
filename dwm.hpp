@@ -15,6 +15,5 @@ public:
 	blur_behind& region(Region&& rgn){return region(rgn.cget());}
 	blur_behind& transition_on_maximized(bool f){bb.fTransitionOnMaximized = f; bb.dwFlags |= DWM_BB_TRANSITIONONMAXIMIZED; return *this;}
 	HRESULT operator()(HWND hwnd)const{return ::DwmEnableBlurBehindWindow(hwnd, &bb);}
-	HRESULT operator()(const window& w)const{return (*this)(w.get_hwnd());}
 };
 }
