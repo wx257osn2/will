@@ -120,7 +120,7 @@ public:
 			f();
 			auto ret = rt->EndDraw();
 			g();
-			return ret;	
+			return ret;
 		}
 		template<typename F>
 		HRESULT draw(F&& f){
@@ -232,25 +232,28 @@ public:
 			template<typename F>
 			bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){
 				auto rt = create_compatible_render_target(desired_size);
-				rt->BeginDraw();
-				f(rt.as<ID2D1DeviceContext>().get());
-				rt->EndDraw();
+				auto rt_ = rt.as<ID2D1DeviceContext>();
+				rt_->BeginDraw();
+				f(rt_.get());
+				rt_->EndDraw();
 				return rt.get_bitmap();
 			}
 			template<typename F>
 			bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, F&& f){
 				auto rt = create_compatible_render_target(desired_pixel_size);
-				rt->BeginDraw();
-				f(rt.as<ID2D1DeviceContext>().get());
-				rt->EndDraw();
+				auto rt_ = rt.as<ID2D1DeviceContext>();
+				rt_->BeginDraw();
+				f(rt_.get());
+				rt_->EndDraw();
 				return rt.get_bitmap();
 			}
 			template<typename F>
 			bitmap prerender(F&& f){
 				auto rt = create_compatible_render_target();
-				rt->BeginDraw();
-				f(rt.as<ID2D1DeviceContext>().get());
-				rt->EndDraw();
+				auto rt_ = rt.as<ID2D1DeviceContext>();
+				rt_->BeginDraw();
+				f(rt_.get());
+				rt_->EndDraw();
 				return rt.get_bitmap();
 			}
 			template<typename F, typename G>
@@ -259,7 +262,7 @@ public:
 				f();
 				auto ret = cont->EndDraw();
 				g();
-				return ret;	
+				return ret;
 			}
 			template<typename F>
 			HRESULT draw(F&& f){
