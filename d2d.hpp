@@ -99,6 +99,34 @@ public:
 			effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
 		};
 	};
+	class bitmap_render_target{
+		com_ptr<ID2D1BitmapRenderTarget> rt;
+	public:
+		explicit bitmap_render_target(ID2D1BitmapRenderTarget* ptr):rt(ptr){}
+		bitmap_render_target(const bitmap_render_target&) = delete;
+		bitmap_render_target(bitmap_render_target&& o) = default;
+		bitmap_render_target& operator=(const bitmap_render_target&) = delete;
+		bitmap_render_target& operator=(bitmap_render_target&&) = default;
+		~bitmap_render_target() = default;
+		ID2D1BitmapRenderTarget* get()const{return rt.get();}
+		ID2D1BitmapRenderTarget* operator->()const{return rt.get();}
+		explicit operator bool()const{return static_cast<bool>(rt);}
+		bitmap get_bitmap()const{
+			return bitmap{com_ptr<ID2D1Bitmap>{com_create_resource<ID2D1Bitmap>([&](ID2D1Bitmap** ptr){return rt->GetBitmap(ptr);})}.as<ID2D1Bitmap1>().get()};
+		}
+		template<typename F, typename G>
+		HRESULT draw(F&& f, G&& g){
+			rt->BeginDraw();
+			f();
+			auto ret = rt->EndDraw();
+			g();
+			return ret;	
+		}
+		template<typename F>
+		HRESULT draw(F&& f){
+			return draw(std::forward<F>(f), []{});
+		}
+	};
 	class device{
 		com_ptr<ID2D1Device> dev;
 	public:
@@ -188,6 +216,42 @@ public:
 			template<typename Source>
 			bitmap create_bitmap(Source&& src, const D2D1_BITMAP_PROPERTIES1& prop)const{
 				return create_bitmap(std::forward<Source>(src).get(), prop);
+			}
+			bitmap_render_target create_compatible_render_target(const D2D1_SIZE_F& desired_size, const D2D1_SIZE_U& desired_pixel_size, const D2D1_PIXEL_FORMAT& desired_format = D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS option = D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE)const{
+				return bitmap_render_target{com_create_resource<ID2D1BitmapRenderTarget>([&](ID2D1BitmapRenderTarget** ptr){return cont->CreateCompatibleRenderTarget(desired_size, desired_pixel_size, desired_format, option, ptr);})};
+			}
+			bitmap_render_target create_compatible_render_target(const D2D1_SIZE_F& desired_size, const D2D1_PIXEL_FORMAT& desired_format = D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS option = D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE)const{
+				return bitmap_render_target{com_create_resource<ID2D1BitmapRenderTarget>([&](ID2D1BitmapRenderTarget** ptr){return cont->CreateCompatibleRenderTarget(&desired_size, nullptr, &desired_format, option, ptr);})};
+			}
+			bitmap_render_target create_compatible_render_target(const D2D1_SIZE_U& desired_pixel_size, const D2D1_PIXEL_FORMAT& desired_format = D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS option = D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE)const{
+				return bitmap_render_target{com_create_resource<ID2D1BitmapRenderTarget>([&](ID2D1BitmapRenderTarget** ptr){return cont->CreateCompatibleRenderTarget(nullptr, &desired_pixel_size, &desired_format, option, ptr);})};
+			}
+			bitmap_render_target create_compatible_render_target(const D2D1_PIXEL_FORMAT& desired_format = D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS option = D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE)const{
+				return bitmap_render_target{com_create_resource<ID2D1BitmapRenderTarget>([&](ID2D1BitmapRenderTarget** ptr){return cont->CreateCompatibleRenderTarget(nullptr, nullptr, &desired_format, option, ptr);})};
+			}
+			template<typename F>
+			bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){
+				auto rt = create_compatible_render_target(desired_size);
+				rt->BeginDraw();
+				f(rt.as<ID2D1DeviceContext>().get());
+				rt->EndDraw();
+				return rt.get_bitmap();
+			}
+			template<typename F>
+			bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, F&& f){
+				auto rt = create_compatible_render_target(desired_pixel_size);
+				rt->BeginDraw();
+				f(rt.as<ID2D1DeviceContext>().get());
+				rt->EndDraw();
+				return rt.get_bitmap();
+			}
+			template<typename F>
+			bitmap prerender(F&& f){
+				auto rt = create_compatible_render_target();
+				rt->BeginDraw();
+				f(rt.as<ID2D1DeviceContext>().get());
+				rt->EndDraw();
+				return rt.get_bitmap();
 			}
 			template<typename F, typename G>
 			HRESULT draw(F&& f, G&& g){

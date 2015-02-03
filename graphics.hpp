@@ -93,7 +93,7 @@ class auto_restore_render_target{
 		g();
 	}
 	template<typename U, typename F>
-	U make_ddr(F&& f){ddrs.emplace_back(std::make_shared<device_dependent_resource<decltype(f()), F>>(std::forward<F>(f)));return U(*this, ddrs.size()-1u);}
+	U make_ddr(F&& f){ddrs.emplace_back(std::make_shared<device_dependent_resource<std::decay_t<decltype(f())>, F>>(std::forward<F>(f)));return U(*this, ddrs.size()-1u);}
 	template<typename F>
 	class device_context:public device_dependent_base{
 		std::aligned_storage_t<sizeof(d2d::device::context), sizeof(d2d::device::context)> data;
@@ -143,12 +143,29 @@ public:
 			return static_cast<void*>(data.get());
 		}
 	};
+	template<typename T, typename F>
+	class device_dependent_resource<com_ptr<T>, F>:public device_dependent_base{
+		com_ptr<T> data;
+		F init_function;
+	public:
+		device_dependent_resource(F&& f):init_function(std::forward<F>(f)){construct();}
+		~device_dependent_resource(){destruct();}
+		void construct()override{
+			data = init_function();
+		}
+		void destruct()override{
+			data.reset();
+		}
+		void* get()override{
+			return static_cast<void*>(data.get());
+		}
+	};
 	solid_color_brush create_solid_color_brush(const D2D1_COLOR_F& col, const D2D1_BRUSH_PROPERTIES& prop = D2D1::BrushProperties()){
 		return this->make_ddr<solid_color_brush>([col,prop,this]{return com_create_resource<ID2D1SolidColorBrush>([&](ID2D1SolidColorBrush** x){return devcon()->CreateSolidColorBrush(col, prop, x);});});
 	}
 	template<typename D2D1_GRADIENT_STOP_ARRAY>
-			gradient_stop_collection create_gradient_stop_collection(D2D1_GRADIENT_STOP_ARRAY&& gradient_stops, D2D1_COLOR_SPACE preinterpolation_space = D2D1_COLOR_SPACE_SRGB, D2D1_COLOR_SPACE postinterpolation_space = D2D1_COLOR_SPACE_SCRGB, D2D1_BUFFER_PRECISION buffer_precision = D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB, D2D1_EXTEND_MODE extend_mode = D2D1_EXTEND_MODE_CLAMP, D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode = D2D1_COLOR_INTERPOLATION_MODE_STRAIGHT){
-		return this->make_ddr<gradient_stop_collection>([gradient_stops, preinterpolation_space, postinterpolation_space, buffer_precision, extend_mode, color_interpolation_mode, this]{return com_create_resource<ID2D1GradientStopCollection>([&](ID2D1SolidColorBrush** x){return devcon()->CreateGradientStopCollection(gradient_stops.data(), gradient_stops.size(), preinterpolation_space, postinterpolation_space, buffer_precision, extend_mode, color_interpolation_mode, x);});});
+	gradient_stop_collection create_gradient_stop_collection(D2D1_GRADIENT_STOP_ARRAY&& gradient_stops, D2D1_COLOR_SPACE preinterpolation_space = D2D1_COLOR_SPACE_SRGB, D2D1_COLOR_SPACE postinterpolation_space = D2D1_COLOR_SPACE_SCRGB, D2D1_BUFFER_PRECISION buffer_precision = D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB, D2D1_EXTEND_MODE extend_mode = D2D1_EXTEND_MODE_CLAMP, D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode = D2D1_COLOR_INTERPOLATION_MODE_STRAIGHT){
+		return this->make_ddr<gradient_stop_collection>([gradient_stops, preinterpolation_space, postinterpolation_space, buffer_precision, extend_mode, color_interpolation_mode, this]{return com_create_resource<ID2D1GradientStopCollection1>([&](ID2D1GradientStopCollection1** x){return devcon()->CreateGradientStopCollection(gradient_stops.data(), gradient_stops.size(), preinterpolation_space, postinterpolation_space, buffer_precision, extend_mode, color_interpolation_mode, x);});});
 	}
 	linear_gradient_brush create_linear_gradient_brush(const gradient_stop_collection& stops, const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES& pos, const D2D1_BRUSH_PROPERTIES& prop = D2D1::BrushProperties()){
 		return this->make_ddr<linear_gradient_brush>([&stops, pos, prop, this]{return com_create_resource<ID2D1LinearGradientBrush>([&](ID2D1LinearGradientBrush** x){return devcon()->CreateLinearGradientBrush(pos, prop, stops.get(), x);});});
@@ -190,6 +207,39 @@ public:
 			restore_device(std::forward<G>(inter_restore), std::forward<H>(after_restore));
 		after_draw();
 	}
+	template<typename F>
+	bitmap prerender(const D2D1_SIZE_F& desired_size, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS option, F&& f){
+		return make_ddr<bitmap>([desired_size, option, f, this]{
+			com_ptr<ID2D1BitmapRenderTarget> rt = com_create_resource<ID2D1BitmapRenderTarget>([&](ID2D1BitmapRenderTarget** ptr){return devcon()->CreateCompatibleRenderTarget(&desired_size, nullptr, nullptr, option, ptr);});
+			auto rt_ = rt.as<ID2D1DeviceContext>();
+			rt_->BeginDraw();
+			f(rt_.get());
+			rt_->EndDraw();
+			return com_ptr<ID2D1Bitmap>{com_create_resource<ID2D1Bitmap>([&](ID2D1Bitmap** ptr){return rt->GetBitmap(ptr);})}.as<ID2D1Bitmap1>();
+		});
+	}
+	template<typename F>
+	bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS option, F&& f){
+		return make_ddr<bitmap>([desired_pixel_size, option, f, this]{
+			com_ptr<ID2D1BitmapRenderTarget> rt = com_create_resource<ID2D1BitmapRenderTarget>([&](ID2D1BitmapRenderTarget** ptr){return devcon()->CreateCompatibleRenderTarget(nullptr, &desired_pixel_size,  nullptr, option, ptr);});
+			auto rt_ = rt.as<ID2D1DeviceContext>();
+			rt_->BeginDraw();
+			f(rt_.get());
+			rt_->EndDraw();
+			return com_ptr<ID2D1Bitmap>{com_create_resource<ID2D1Bitmap>([&](ID2D1Bitmap** ptr){return rt->GetBitmap(ptr);})}.as<ID2D1Bitmap1>();
+		});
+	}
+	template<typename F>
+	bitmap prerender(D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS option, F&& f){
+		return make_ddr<bitmap>([f, option, this]{
+			com_ptr<ID2D1BitmapRenderTarget> rt = com_create_resource<ID2D1BitmapRenderTarget>([&](ID2D1BitmapRenderTarget** ptr){return devcon()->CreateCompatibleRenderTarget(nullptr, nullptr, nullptr, option, ptr);});
+			auto rt_ = rt.as<ID2D1DeviceContext>();
+			rt_->BeginDraw();
+			f(rt_.get());
+			rt_->EndDraw();
+			return com_ptr<ID2D1Bitmap>{com_create_resource<ID2D1Bitmap>([&](ID2D1Bitmap** ptr){return rt->GetBitmap(ptr);})}.as<ID2D1Bitmap1>();
+		});
+	}
 };
 }
 class hwnd_render_target:protected dxgi::swap_chain, public detail::auto_restore_render_target{
@@ -204,7 +254,7 @@ class hwnd_render_target:protected dxgi::swap_chain, public detail::auto_restore
 	HWND hwnd;
 	HRESULT status;
 public:
-	hwnd_render_target(HWND hwnd):swap_chain(create_swap_chain(hwnd)), auto_restore_render_target([this]{return will::d2d::device::context(get_buffer());}), hwnd(hwnd), status(0ul){}
+	hwnd_render_target(HWND hwnd):dxgi::swap_chain(create_swap_chain(hwnd)), detail::auto_restore_render_target([this]{return will::d2d::device::context(get_buffer());}), hwnd(hwnd), status(0ul){}
 	auto operator->()->decltype(std::declval<d2d::device::context>().get()){return devcon();}
 	template<typename F, typename G, typename H>
 	void draw(F&& f, G&& g, H&& h){
@@ -214,7 +264,7 @@ public:
 				new (static_cast<dxgi::swap_chain*>(this)) dxgi::swap_chain(std::move(create_swap_chain(hwnd)));
 			}, std::forward<G>(g), std::forward<H>(h));
 		DXGI_PRESENT_PARAMETERS param = {};
-		status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, bool(status), &param);
+		status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, static_cast<UINT>(status != 0), &param);
 	}
 	template<typename F, typename H>
 	void draw(F&& f, H&& h){
@@ -224,14 +274,26 @@ public:
 	void draw(F&& f){
 		draw(std::forward<F>(f), []{});
 	}
+	template<typename F>
+	bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){
+		return static_cast<detail::auto_restore_render_target*>(this)->prerender(desired_size, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, std::forward<F>(f));
+	}
+	template<typename F>
+	bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, F&& f){
+		return static_cast<detail::auto_restore_render_target*>(this)->prerender(desired_pixel_size, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, std::forward<F>(f));
+	}
+	template<typename F>
+	bitmap prerender(F&& f){
+		return static_cast<detail::auto_restore_render_target*>(this)->prerender(D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, std::forward<F>(f));
+	}
 };
-class hdc_interop_render_target:public dxgi::surface, public detail::auto_restore_render_target{
+class gdi_compatible_render_target:public dxgi::surface, public detail::auto_restore_render_target{
 	static dxgi::surface create_surface(int w, int h){
 		d3d::device dev;
 		return dxgi::surface(dev.create_texture2d(will::d3d::texture2d::description{}.width(w).height(h).mip_levels(1).array_size(1).format(DXGI_FORMAT_B8G8R8A8_UNORM).sample_count(1).sample_quality(0).bind_flags(D3D11_BIND_RENDER_TARGET).misc_flags(D3D11_RESOURCE_MISC_GDI_COMPATIBLE)));
 	}
 public:
-	hdc_interop_render_target(int width, int height) : surface(create_surface(width, height)), auto_restore_render_target([this]{return d2d::device::context(*static_cast<dxgi::surface*>(this));}){}
+	gdi_compatible_render_target(int width, int height) : dxgi::surface(create_surface(width, height)), detail::auto_restore_render_target([this]{return d2d::device::context(*static_cast<dxgi::surface*>(this));}){}
 	auto operator->()->decltype(std::declval<d2d::device::context>().get()){return devcon();}
 	template<typename F, typename G, typename H>
 	void draw(F&& f, G&& g, H&& h){
@@ -244,6 +306,18 @@ public:
 	template<typename F>
 	void draw(F&& f){
 		draw(std::forward<F>(f), []{});
+	}
+	template<typename F>
+	bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){
+		return static_cast<detail::auto_restore_render_target*>(this)->prerender(desired_size, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE, std::forward<F>(f));
+	}
+	template<typename F>
+	bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, F&& f){
+		return static_cast<detail::auto_restore_render_target*>(this)->prerender(desired_pixel_size, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE, std::forward<F>(f));
+	}
+	template<typename F>
+	bitmap prerender(F&& f){
+		return static_cast<detail::auto_restore_render_target*>(this)->prerender(D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE, std::forward<F>(f));
 	}
 };
 }
