@@ -87,6 +87,7 @@ public:
 		effect& operator|=(ID2D1Effect* input){eff->SetInputEffect(0, input); return *this;}
 		template<typename Input>
 		effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
+		impl operator[](UINT32 i){return impl{i, *this};}
 	private:
 		class impl{
 			UINT32 index;

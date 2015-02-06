@@ -63,6 +63,7 @@ class auto_restore_render_target{
 		effect& operator|=(ID2D1Effect* input){get()->SetInputEffect(0, input); return *this;}
 		template<typename Input>
 		effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
+		impl operator[](UINT32 i){return impl{i, *this};}
 	private:
 		class impl{
 			UINT32 index;
@@ -258,13 +259,18 @@ public:
 	auto operator->()->decltype(std::declval<d2d::device::context>().get()){return devcon();}
 	template<typename F, typename G, typename H>
 	void draw(F&& f, G&& g, H&& h){
-		if(!(status & DXGI_STATUS_OCCLUDED))
-			static_cast<detail::auto_restore_render_target*>(this)->draw(std::forward<F>(f), [&]{
-				static_cast<dxgi::swap_chain*>(this)->~swap_chain();
-				new (static_cast<dxgi::swap_chain*>(this)) dxgi::swap_chain(std::move(create_swap_chain(hwnd)));
-			}, std::forward<G>(g), std::forward<H>(h));
+		if((status & DXGI_STATUS_OCCLUDED)){
+			DXGI_PRESENT_PARAMETERS param = {};
+			status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, 0, &param);
+			Sleep(8);
+			return;
+		}
+		static_cast<detail::auto_restore_render_target*>(this)->draw(std::forward<F>(f), [&]{
+			static_cast<dxgi::swap_chain*>(this)->~swap_chain();
+			new (static_cast<dxgi::swap_chain*>(this)) dxgi::swap_chain(std::move(create_swap_chain(hwnd)));
+		}, std::forward<G>(g), std::forward<H>(h));
 		DXGI_PRESENT_PARAMETERS param = {};
-		status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, static_cast<UINT>(status != 0), &param);
+		status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, 0, &param);
 	}
 	template<typename F, typename H>
 	void draw(F&& f, H&& h){
