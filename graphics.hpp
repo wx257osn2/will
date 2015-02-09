@@ -261,7 +261,7 @@ public:
 	void draw(F&& f, G&& g, H&& h){
 		if((status & DXGI_STATUS_OCCLUDED)){
 			DXGI_PRESENT_PARAMETERS param = {};
-			status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, 0, &param);
+			status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, DXGI_PRESENT_TEST, &param);
 			Sleep(8);
 			return;
 		}

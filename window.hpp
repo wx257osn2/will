@@ -60,12 +60,12 @@ public:
 	~window(){
 		if(hwnd != nullptr){
 			DestroyWindow(hwnd);
-			UnregisterClass(reinterpret_cast<LPCSTR>(0ull | atom), hinst);
+			UnregisterClass(reinterpret_cast<LPCTSTR>(0ull | atom), hinst);
 		}
 	}
 	HWND create(WNDCLASSEX&& wcx, window_property&& property){
 		if((atom = RegisterClassEx(&wcx)) == 0)return nullptr;
-		messenger[WM_DESTROY] = [](auto&&, auto&&, auto&&){::PostQuitMessage(0);return 0;};
+		messenger[WM_DESTROY] = [](window&, WPARAM, LPARAM)->LRESULT{::PostQuitMessage(0);return 0;};
 		SetWindowLongPtr(hwnd = CreateWindowEx(
 			property._exstyle,
 			wcx.lpszClassName,
@@ -84,7 +84,7 @@ public:
 	}
 	LRESULT procedure(UINT msg, WPARAM wp, LPARAM lp){
 		const auto it = messenger.find(msg);
-		return it != messenger.end() ? it->second(*this,wp,lp) : DefWindowProc(this->hwnd, msg, wp, lp );
+		return it != messenger.end() ? it->second(*this,wp,lp) : DefWindowProc(this->hwnd, msg, wp, lp);
 	}
 	HWND get_hwnd()const{return hwnd;}
 	bool is_active()const{return ::GetActiveWindow() == hwnd;}
