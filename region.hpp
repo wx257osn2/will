@@ -53,7 +53,7 @@ public:
 	class data{
 		std::vector<char> rgn_data;
 	public:
-		data(HRGN rgn):rgn_data(::GetRegionData(rgn, 0, nullptr)){::GetRegionData(rgn, rgn_data.size(), reinterpret_cast<LPRGNDATA>(rgn_data.data()));}
+		data(HRGN rgn):rgn_data(::GetRegionData(rgn, 0, nullptr)){::GetRegionData(rgn, static_cast<DWORD>(rgn_data.size()), reinterpret_cast<LPRGNDATA>(rgn_data.data()));}
 		data(const region& rgn):data(rgn.get()){}
 		std::vector<char>::size_type size()const{return rgn_data.size();}
 		RGNDATA* get(){return reinterpret_cast<RGNDATA*>(rgn_data.data());}
@@ -62,7 +62,7 @@ public:
 private:
 	HRGN in = CreateRectRgn(0,0,1,1);
 	static region conversion(const data& rgn_data, const XFORM& trans){
-		return ExtCreateRegion(&trans, rgn_data.size(), rgn_data.get());
+		return ExtCreateRegion(&trans, static_cast<DWORD>(rgn_data.size()), rgn_data.get());
 	}
 	static region conversion(const region& rgn, const XFORM& trans){
 		return conversion(data(rgn), trans);
@@ -127,6 +127,6 @@ public:
 	static region ellipse(const two_dim::xyxy<int>& rect){return ::CreateEllipticRgn(rect._1.x, rect._1.y, rect._2.x, rect._2.y);}
 	static region circle(const two_dim::xy<int>& p, unsigned int radius){return ::CreateEllipticRgn(p.x-radius, p.y-radius, p.x+radius, p.y+radius);}
 	static region round(const two_dim::xyxy<int>& rect, const two_dim::wh<int> ellipse){return ::CreateRoundRectRgn(rect._1.x, rect._1.y, rect._2.x, rect._2.y, ellipse.w, ellipse.h);}
-	static region polygon(const std::vector<POINT>& points, int fill_mode){return ::CreatePolygonRgn(points.data(), points.size(), fill_mode);}
+	static region polygon(const std::vector<POINT>& points, int fill_mode){return ::CreatePolygonRgn(points.data(), static_cast<int>(points.size()), fill_mode);}
 };
 }
