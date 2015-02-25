@@ -16,7 +16,7 @@ public:
 	class window_class_property{
 		WNDCLASSEX wcx;
 	public:
-		window_class_property():wcx(){wcx.cbSize = sizeof WNDCLASSEX; wcx.lpfnWndProc = window::proc_; wcx.cbWndExtra = sizeof(window*); wcx.hCursor = (HCURSOR)LoadImage(nullptr,MAKEINTRESOURCE(IDC_ARROW),IMAGE_CURSOR,0,0,LR_DEFAULTSIZE | LR_SHARED);}
+		window_class_property():wcx(){wcx.cbSize = sizeof WNDCLASSEX; wcx.lpfnWndProc = window::proc_; wcx.cbWndExtra = sizeof(window*); wcx.hCursor = reinterpret_cast<HCURSOR>(LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED));}
 #define PROPERTYDECL(name, type, membername) window_class_property& name(type t){wcx.membername = t;return *this;}
 		PROPERTYDECL(style, UINT, style)
 		PROPERTYDECL(icon_handle, HICON, hIcon)
@@ -88,6 +88,14 @@ public:
 	}
 	HWND get_hwnd()const{return hwnd;}
 	bool is_active()const{return ::GetActiveWindow() == hwnd;}
+	void show(){
+		::ShowWindow(hwnd, SW_SHOW);
+		::UpdateWindow(hwnd);
+	}
+	void hide(){::ShowWindow(hwnd, SW_HIDE);}
+	void show(bool enable){
+		enable ? show() : hide();
+	}
 	explicit operator bool()const{return hwnd != nullptr;}
 	explicit operator HWND()const{return hwnd;} 
 };
