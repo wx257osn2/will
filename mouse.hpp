@@ -11,8 +11,24 @@ class mouse{
 		operator int()const{return _getpos().y;}
 		_y& operator=(int t){SetCursorPos(_getpos().x, t);return *this;}
 	};
+	HCURSOR cursor = nullptr;
 public:
 	_x x;
 	_y y;
+	bool show(){
+	  if(cursor)
+	    SetCursor(cursor);
+	  return cursor;
+	}
+	bool hide(){
+	  if(cursor)
+	    SetCursor(nullptr);
+	  else
+	    cursor = SetCursor(nullptr);
+	  return true;
+	}
+	bool show(bool enable){
+	  return enable ? show() : hide();
+	}
 };
 }

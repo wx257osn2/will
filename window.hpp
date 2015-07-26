@@ -12,11 +12,28 @@ class window{
 		const auto it = reinterpret_cast<window*>(GetWindowLongPtr(hwnd, 0));
 		return it ? it->procedure(msg, wp, lp) : DefWindowProc(hwnd, msg, wp, lp);
 	}
+	static RECT _getrect(HWND hwnd){RECT r;GetWindowRect(hwnd, &r);return r;}
+	struct _x{
+		window& w;
+		operator int()const{return _getrect(w.get_hwnd()).left;}
+	};
+	struct _y{
+		window& w;
+		operator int()const{return _getrect(w.get_hwnd()).top;}
+	};
+	struct _w{
+		window& w;
+		operator int()const{const auto r = _getrect(w.get_hwnd()); return r.right - r.left;}
+	};
+	struct _h{
+		window& w;
+		operator int()const{const auto r = _getrect(w.get_hwnd()); return r.bottom - r.top;}
+	};
 public:
 	class window_class_property{
 		WNDCLASSEX wcx;
 	public:
-		window_class_property():wcx(){wcx.cbSize = sizeof WNDCLASSEX; wcx.lpfnWndProc = window::proc_; wcx.cbWndExtra = sizeof(window*); wcx.hCursor = reinterpret_cast<HCURSOR>(LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED));}
+		window_class_property():wcx(){wcx.cbSize = sizeof(WNDCLASSEX); wcx.lpfnWndProc = window::proc_; wcx.cbWndExtra = sizeof(window*); wcx.hCursor = reinterpret_cast<HCURSOR>(LoadImage(nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED));}
 #define PROPERTYDECL(name, type, membername) window_class_property& name(type t){wcx.membername = t;return *this;}
 		PROPERTYDECL(style, UINT, style)
 		PROPERTYDECL(icon_handle, HICON, hIcon)
@@ -51,7 +68,10 @@ public:
 #undef  PROPERTYDECL
 	};
 	std::unordered_map<UINT, std::function<LRESULT(window&, WPARAM, LPARAM)>> messenger;
-
+	_x x{*this};
+	_y y{*this};
+	_w w{*this};
+	_h h{*this};
 	window(WNDCLASSEX&& wcx, window_property&& property):hwnd(nullptr), hinst(wcx.hInstance){create(std::move(wcx), std::move(property));}
 	window(window_class_property&& wcp, window_property&& property):window(std::move(wcp.get()), std::move(property)){}
 	window():hwnd(nullptr){}
