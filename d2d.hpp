@@ -1,5 +1,6 @@
 #pragma once
 #include"com.hpp"
+#include"_2dim.hpp"
 #include<dxgi1_2.h>
 #include<wincodec.h>
 #include<d2d1_1.h>
@@ -277,4 +278,17 @@ public:
 	template<typename DXGIDevice>
 	device create_device(DXGIDevice&& dev)const{return create_device(std::forward<DXGIDevice>(dev).get());}
 };
+namespace two_dim{
+namespace detail{
+template<>struct attribute<::D2D1_RECT_F, xyxy<FLOAT>>{static ::D2D1_RECT_F impl(const xyxy<FLOAT>& p){return {p._1.x, p._1.y, p._2.x, p._2.y};}};
+template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, FLOAT>::value, ::D2D1_RECT_F>, xyxy<T>>{static ::D2D1_RECT_F impl(const xyxy<T>& p){return p.cast<FLOAT>().attribute<::D2D1_RECT_F>();}};
+template<typename T>struct attribute<::D2D1_RECT_F, xywh<T>>{static ::D2D1_RECT_F impl(const xywh<T>& p){return static_cast<xyxy<T>>(p).cast<FLOAT>().attribute<::D2D1_RECT_F>();}};
+template<>struct attribute<::D2D1_RECT_L, xyxy<LONG>>{static ::D2D1_RECT_L impl(const xyxy<LONG>& p){return {p._1.x, p._1.y, p._2.x, p._2.y};}};
+template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, LONG>::value, ::D2D1_RECT_L>, xyxy<T>>{static ::D2D1_RECT_L impl(const xyxy<T>& p){return p.cast<LONG>().attribute<::D2D1_RECT_L>();}};
+template<typename T>struct attribute<::D2D1_RECT_L, xywh<T>> { static ::D2D1_RECT_L impl(const xywh<T>& p) { return static_cast<xyxy<T>>(p).cast<LONG>().attribute<::D2D1_RECT_L>(); } };
+template<>struct attribute<::D2D1_RECT_U, xyxy<UINT32>>{static ::D2D1_RECT_U impl(const xyxy<UINT32>& p){return {p._1.x, p._1.y, p._2.x, p._2.y};}};
+template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, UINT32>::value, ::D2D1_RECT_U>, xyxy<T>>{static ::D2D1_RECT_U impl(const xyxy<T>& p){return p.cast<UINT32>().attribute<::D2D1_RECT_U>();}};
+template<typename T>struct attribute<::D2D1_RECT_U, xywh<T>>{static ::D2D1_RECT_U impl(const xywh<T>& p){return static_cast<xyxy<T>>(p).cast<UINT32>().attribute<::D2D1_RECT_U>();}};
+}
+}
 }

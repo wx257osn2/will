@@ -18,7 +18,7 @@ public:
 	bool show(){
 	  if(cursor)
 	    SetCursor(cursor);
-	  return cursor;
+	  return cursor != nullptr;
 	}
 	bool hide(){
 	  if(cursor)
