@@ -21,13 +21,11 @@ class auto_restore_render_target{
 	template<typename T>
 	static reverse_<T> reverse(T& t){return reverse_<T>(t);}
 	struct device_dependent_base{
-		bool available;
 		device_dependent_base()noexcept{}
 		virtual ~device_dependent_base()noexcept{}
 		virtual void construct() = 0;
 		virtual void destruct()  = 0;
 		virtual void* get() = 0;
-		explicit operator bool(){return available;}
 	};
 	std::vector<std::shared_ptr<device_dependent_base>> ddrs;
 	template<typename I>
@@ -101,6 +99,8 @@ class auto_restore_render_target{
 		F init_function;
 	public:
 		device_context(F&& f):init_function(std::forward<F>(f)){construct();}
+		device_context(const device_context&) = delete;
+		device_context(device_context&&) = delete;
 		~device_context(){destruct();}
 		void construct()override{
 			new (reinterpret_cast<d2d::device::context*>(&data)) d2d::device::context(std::move(init_function()));

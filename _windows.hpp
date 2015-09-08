@@ -10,6 +10,7 @@
 #include<windows.h>
 #include<tchar.h>
 
+
 namespace std{
 	template<std::size_t N>
 	::errno_t tcscpy(TCHAR (&dst)[N], const TCHAR* src)noexcept{
