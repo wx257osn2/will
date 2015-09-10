@@ -47,7 +47,16 @@ class auto_restore_render_target{
 		auto_restore_render_target& parent;
 		std::vector<std::shared_ptr<device_dependent_base>>::size_type index;
 		bool life = true;
-		class impl;
+		class impl{
+			UINT32 index;
+			effect& eff;
+		public:
+			impl(UINT32 i, effect& eff):index(i), eff(eff){}
+			effect& operator|=(ID2D1Bitmap1* input){eff->SetInput(index, input); return eff;}
+			effect& operator|=(ID2D1Effect* input){eff->SetInputEffect(index, input); return eff;}
+			template<typename Input>
+			effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
+		};
 	public:
 		effect(auto_restore_render_target& parent, std::vector<std::shared_ptr<device_dependent_base>>::size_type i) : parent(parent), index(i){}
 		~effect(){if(life)if(parent.ddrs.size() -1u == index)parent.ddrs.pop_back();else parent.ddrs[index].reset();}
@@ -62,17 +71,6 @@ class auto_restore_render_target{
 		template<typename Input>
 		effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
 		impl operator[](UINT32 i){return impl{i, *this};}
-	private:
-		class impl{
-			UINT32 index;
-			effect& eff;
-		public:
-			impl(UINT32 i, effect& eff):index(i), eff(eff){}
-			effect& operator|=(ID2D1Bitmap1* input){eff->SetInput(index, input); return eff;}
-			effect& operator|=(ID2D1Effect* input){eff->SetInputEffect(index, input); return eff;}
-			template<typename Input>
-			effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
-		};
 	};
 	static void discard_ddr(std::vector<std::shared_ptr<device_dependent_base>>& ddrs){
 		for(auto&& x : reverse(ddrs))
@@ -259,10 +257,11 @@ public:
 	auto operator->()->decltype(std::declval<d2d::device::context>().get()){return devcon();}
 	template<typename F, typename G, typename H>
 	void draw(F&& f, G&& g, H&& h){
+		using namespace std::literals::chrono_literals;
 		if((status & DXGI_STATUS_OCCLUDED)){
 			DXGI_PRESENT_PARAMETERS param = {};
 			status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, DXGI_PRESENT_TEST, &param);
-			Sleep(8);
+			Sleep(static_cast<DWORD>(static_cast<std::chrono::milliseconds>(1s).count()/60/2));
 			return;
 		}
 		static_cast<detail::auto_restore_render_target*>(this)->draw(std::forward<F>(f), [&]{

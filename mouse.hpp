@@ -11,10 +11,15 @@ class mouse{
 		operator int()const{return _getpos().y;}
 		_y& operator=(int t){SetCursorPos(_getpos().x, t);return *this;}
 	};
+	struct _xy{
+		operator two_dim::xy<int>()const{auto pos = _getpos(); return {pos.x, pos.y};}
+		_xy& operator=(const two_dim::xy<int>& t){SetCursorPos(t.x, t.y);return *this;}
+	};
 	HCURSOR cursor = nullptr;
 public:
 	_x x;
 	_y y;
+	_xy xy;
 	bool show(){
 	  if(cursor)
 	    SetCursor(cursor);
