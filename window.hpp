@@ -4,6 +4,41 @@
 #include<functional>
 #include<chrono>
 namespace will{
+template<typename T, typename F>
+inline std::pair<T, bool> sleep_wait(std::chrono::milliseconds wait_time, T&& default_return_value, F&& f, std::chrono::milliseconds sleep_time_per_loop = std::chrono::milliseconds{1}){
+	const auto start_point = std::chrono::high_resolution_clock().now();
+	do{
+		auto ret = f();
+		if(ret.second == false)
+			return ret;
+		if(wait_time.count() > 0)
+			sleep(sleep_time_per_loop);
+	}while(std::chrono::high_resolution_clock().now() - start_point < wait_time);
+	return std::make_pair(std::forward<T>(default_return_value), true);
+}
+inline std::chrono::milliseconds rest_of_time(std::chrono::milliseconds elapsed, std::chrono::milliseconds limit){
+	return elapsed < limit ? limit - elapsed : std::chrono::milliseconds{0};
+}
+inline std::pair<int, bool> get_message(HWND handle){
+	MSG msg;
+	if(::PeekMessage(&msg, handle, 0, 0, PM_NOREMOVE)){
+		if([](BOOL t)->bool{return t == 0 || t == -1;}(::GetMessage(&msg, handle, 0, 0)))
+			return std::make_pair(static_cast<int>(msg.wParam), false);
+		::TranslateMessage( &msg );
+		::DispatchMessage( &msg );
+	}
+	return std::make_pair(0, true);
+}
+inline std::pair<int, bool> get_all_message(){
+	MSG msg;
+	if(::PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE)){
+		if([](BOOL t)->bool{return t == 0 || t == -1;}(::GetMessage(&msg, nullptr, 0, 0)))
+			return std::make_pair(static_cast<int>(msg.wParam), false);
+		::TranslateMessage( &msg );
+		::DispatchMessage( &msg );
+	}
+	return std::make_pair(0, true);
+}
 class window{
 	HWND hwnd;
 	ATOM atom;
@@ -115,6 +150,22 @@ public:
 	void hide(){::ShowWindow(hwnd, SW_HIDE);}
 	void show(bool enable){
 		enable ? show() : hide();
+	}
+	class message_loop_result{
+		std::pair<int, bool> result;
+	public:
+		message_loop_result() = default;
+		message_loop_result(const std::pair<int, bool>& r):result(r){}
+		message_loop_result& operator=(const std::pair<int, bool>& r){result = r; return *this;}
+		explicit operator bool()const{return result.second;}
+		int get()const{return result.first;}
+	};
+	message_loop_result message_loop(const std::chrono::steady_clock::time_point& start, int frame_per_second){
+		return sleep_wait(
+			will::rest_of_time(
+				std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock().now() - start),
+				std::chrono::milliseconds{1000} / frame_per_second
+			), 0, get_all_message);
 	}
 	explicit operator bool()const{return hwnd != nullptr;}
 	explicit operator HWND()const{return hwnd;} 

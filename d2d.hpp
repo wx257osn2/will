@@ -15,76 +15,6 @@ class d2d : public detail::resource<ID2D1Factory1>{
 	using resource::resource;
 public:
 	explicit d2d(D2D1_FACTORY_TYPE t = D2D1_FACTORY_TYPE_MULTI_THREADED):resource(com_create_resource<ID2D1Factory1>(std::bind(static_cast<HRESULT(*)(D2D1_FACTORY_TYPE,ID2D1Factory1**)>(D2D1CreateFactory), t, std::placeholders::_1))){}
-	using solid_color_brush = detail::resource<ID2D1SolidColorBrush>;
-	using gradient_stop_collection = detail::resource<ID2D1GradientStopCollection1>;
-	using linear_gradient_brush = detail::resource<ID2D1LinearGradientBrush>;
-	using radial_gradient_brush = detail::resource<ID2D1RadialGradientBrush>;
-	using bitmap_brush = detail::resource<ID2D1BitmapBrush1>;
-	struct bitmap : detail::resource<ID2D1Bitmap1>{
-		using resource::resource;
-		class property : public detail::property<D2D1_BITMAP_PROPERTIES1>{
-			class dpi_property{
-				property* prop;
-			public:
-				dpi_property(property* p):prop(p){}
-				dpi_property(const dpi_property&) = delete;
-				dpi_property(dpi_property&&) = delete;
-				dpi_property& operator=(const dpi_property&) = delete;
-				dpi_property& operator=(dpi_property&&) = delete;
-				property& operator()(FLOAT x, FLOAT y)const{prop->prop.dpiX = x; prop->prop.dpiY = y; return *prop;}
-				property& operator()(const two_dim::xy<FLOAT>& xy)const{return (*this)(xy.x, xy.y);}
-				property& x(FLOAT x)const{prop->prop.dpiX = x; return *prop;}
-				property& y(FLOAT y)const{prop->prop.dpiY = y; return *prop;}
-			};
-			friend class dpi_property;
-		public:
-			using detail::property<D2D1_BITMAP_PROPERTIES1>::property;
-	#define PROPERTYDECL(name, type, membername) property& name(type t){prop.membername = t;return *this;}
-			PROPERTYDECL(format, DXGI_FORMAT, pixelFormat.format)
-			PROPERTYDECL(alpha_mode, D2D1_ALPHA_MODE, pixelFormat.alphaMode)
-			const dpi_property dpi = this;
-			PROPERTYDECL(option, D2D1_BITMAP_OPTIONS, bitmapOptions)
-			PROPERTYDECL(color_context, ID2D1ColorContext*, colorContext)
-	#undef  PROPERTYDECL
-		};
-	};
-	class effect : public detail::resource<ID2D1Effect>{
-		class impl{
-			UINT32 index;
-			effect& eff;
-		public:
-			impl(UINT32 i, effect& eff):index(i), eff(eff){}
-			effect& operator|=(ID2D1Bitmap1* input){eff->SetInput(index, input); return eff;}
-			effect& operator|=(ID2D1Effect* input){eff->SetInputEffect(index, input); return eff;}
-			template<typename Input>
-			effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
-		};
-	public:
-		using resource::resource;
-		effect& operator|=(ID2D1Bitmap1* input){(*this)->SetInput(0, input); return *this;}
-		effect& operator|=(ID2D1Effect* input){(*this)->SetInputEffect(0, input); return *this;}
-		template<typename Input>
-		effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
-		impl operator[](UINT32 i){return impl{i, *this};}
-	};
-	struct bitmap_render_target : detail::resource<ID2D1BitmapRenderTarget>{
-		using resource::resource;
-		bitmap get_bitmap()const{
-			return bitmap{com_ptr<ID2D1Bitmap>{com_create_resource<ID2D1Bitmap>([&](ID2D1Bitmap** ptr){return (*this)->GetBitmap(ptr);})}.as<ID2D1Bitmap1>()};
-		}
-		template<typename F, typename G>
-		HRESULT draw(F&& f, G&& g){
-			rt->BeginDraw();
-			f();
-			const auto ret = rt->EndDraw();
-			g();
-			return ret;
-		}
-		template<typename F>
-		HRESULT draw(F&& f){
-			return draw(std::forward<F>(f), []{});
-		}
-	};
 	struct stroke_style : detail::resource<ID2D1StrokeStyle1>{
 		using resource::resource;
 		struct property : detail::property<D2D1_STROKE_STYLE_PROPERTIES1>{
@@ -110,6 +40,111 @@ public:
 		class context : public detail::resource<ID2D1DeviceContext>{
 			using resource::resource;
 		public:
+			class solid_color_brush : public detail::resource<ID2D1SolidColorBrush>{
+				class _color{
+					solid_color_brush& brush;
+				public:
+					_color(solid_color_brush& b):brush(b){}
+					_color(const _color&) = delete;
+					_color(_color&&) = default;
+					_color& operator=(const _color&) = delete;
+					_color& operator=(_color&&) = default;
+					~_color() = default;
+					operator D2D1_COLOR_F()const{return brush->GetColor();}
+					_color& operator=(const D2D1::ColorF& c){brush->SetColor(c);}
+				};
+			public:
+				using resource::resource;
+				_color color = *this;
+			};
+			struct gradient_stop_collection : detail::resource<ID2D1GradientStopCollection1>{
+				using resource::resource;
+				class property{
+					D2D1_COLOR_SPACE preerps = D2D1_COLOR_SPACE_SRGB;
+					D2D1_COLOR_SPACE posterps = D2D1_COLOR_SPACE_SCRGB;
+					D2D1_BUFFER_PRECISION bufpre = D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB;
+					D2D1_EXTEND_MODE extm = D2D1_EXTEND_MODE_CLAMP;
+					D2D1_COLOR_INTERPOLATION_MODE colerpm = D2D1_COLOR_INTERPOLATION_MODE_STRAIGHT;
+				public:
+					explicit property() = default;
+			#define PROPERTYDECL(name, type, membername) property& name(type t){membername = t;return *this;}
+					PROPERTYDECL(preinterpolation_space, D2D1_COLOR_SPACE, preerps)
+					PROPERTYDECL(postinterpolation_space, D2D1_COLOR_SPACE, posterps)
+					PROPERTYDECL(buffer_precision, D2D1_BUFFER_PRECISION, bufpre)
+					PROPERTYDECL(extend_mode, D2D1_EXTEND_MODE, extm)
+					PROPERTYDECL(color_interpolation_mode, D2D1_COLOR_INTERPOLATION_MODE, colerpm)
+			#undef  PROPERTYDECL
+						friend context;
+				};
+			};
+			using linear_gradient_brush = detail::resource<ID2D1LinearGradientBrush>;
+			using radial_gradient_brush = detail::resource<ID2D1RadialGradientBrush>;
+			using bitmap_brush = detail::resource<ID2D1BitmapBrush1>;
+			struct bitmap : detail::resource<ID2D1Bitmap1>{
+				using resource::resource;
+				class property : public detail::property<D2D1_BITMAP_PROPERTIES1>{
+					class dpi_property{
+						property* prop;
+					public:
+						dpi_property(property* p):prop(p){}
+						dpi_property(const dpi_property&) = delete;
+						dpi_property(dpi_property&&) = delete;
+						dpi_property& operator=(const dpi_property&) = delete;
+						dpi_property& operator=(dpi_property&&) = delete;
+						property& operator()(FLOAT x, FLOAT y)const{prop->prop.dpiX = x; prop->prop.dpiY = y; return *prop;}
+						property& operator()(const two_dim::xy<FLOAT>& xy)const{return (*this)(xy.x, xy.y);}
+						property& x(FLOAT x)const{prop->prop.dpiX = x; return *prop;}
+						property& y(FLOAT y)const{prop->prop.dpiY = y; return *prop;}
+					};
+					friend class dpi_property;
+				public:
+					using detail::property<D2D1_BITMAP_PROPERTIES1>::property;
+			#define PROPERTYDECL(name, type, membername) property& name(type t){prop.membername = t;return *this;}
+					PROPERTYDECL(format, DXGI_FORMAT, pixelFormat.format)
+					PROPERTYDECL(alpha_mode, D2D1_ALPHA_MODE, pixelFormat.alphaMode)
+					const dpi_property dpi = this;
+					PROPERTYDECL(option, D2D1_BITMAP_OPTIONS, bitmapOptions)
+					PROPERTYDECL(color_context, ID2D1ColorContext*, colorContext)
+			#undef  PROPERTYDECL
+				};
+			};
+			class effect : public detail::resource<ID2D1Effect>{
+				class impl{
+					UINT32 index;
+					effect& eff;
+				public:
+					impl(UINT32 i, effect& eff):index(i), eff(eff){}
+					effect& operator|=(ID2D1Bitmap1* input){eff->SetInput(index, input); return eff;}
+					effect& operator|=(ID2D1Effect* input){eff->SetInputEffect(index, input); return eff;}
+					template<typename Input>
+					effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
+				};
+			public:
+				using resource::resource;
+				effect& operator|=(ID2D1Bitmap1* input){(*this)->SetInput(0, input); return *this;}
+				effect& operator|=(ID2D1Effect* input){(*this)->SetInputEffect(0, input); return *this;}
+				template<typename Input>
+				effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
+				impl operator[](UINT32 i){return impl{i, *this};}
+			};
+			struct bitmap_render_target : detail::resource<ID2D1BitmapRenderTarget>{
+				using resource::resource;
+				bitmap get_bitmap()const{
+					return bitmap{com_ptr<ID2D1Bitmap>{com_create_resource<ID2D1Bitmap>([&](ID2D1Bitmap** ptr){return (*this)->GetBitmap(ptr);})}.as<ID2D1Bitmap1>()};
+				}
+				template<typename F, typename G>
+				HRESULT draw(F&& f, G&& g){
+					rt->BeginDraw();
+					f();
+					const auto ret = rt->EndDraw();
+					g();
+					return ret;
+				}
+				template<typename F>
+				HRESULT draw(F&& f){
+					return draw(std::forward<F>(f), []{});
+				}
+			};
 			explicit context(IDXGISurface2* surface):resource(com_create_resource<ID2D1DeviceContext>([&](ID2D1DeviceContext** ptr){return D2D1CreateDeviceContext(surface, nullptr, ptr);})){}
 			context(IDXGISurface2* surface, const D2D1_CREATION_PROPERTIES& prop):resource(com_create_resource<ID2D1DeviceContext>([&](ID2D1DeviceContext** ptr){return D2D1CreateDeviceContext(surface, prop, ptr);})){}
 			template<typename Surface>
@@ -131,6 +166,10 @@ public:
 			template<typename D2D1_GRADIENT_STOP_ARRAY>
 			gradient_stop_collection create_gradient_stop_collection(const D2D1_GRADIENT_STOP_ARRAY& gradient_stops, D2D1_COLOR_SPACE preinterpolation_space = D2D1_COLOR_SPACE_SRGB, D2D1_COLOR_SPACE postinterpolation_space = D2D1_COLOR_SPACE_SCRGB, D2D1_BUFFER_PRECISION buffer_precision = D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB, D2D1_EXTEND_MODE extend_mode = D2D1_EXTEND_MODE_CLAMP, D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode = D2D1_COLOR_INTERPOLATION_MODE_STRAIGHT){
 				return gradient_stop_collection(com_create_resource<ID2D1GradientStopCollection1>([&](ID2D1GradientStopCollection1** x){return (*this)->CreateGradientStopCollection(gradient_stops.data(), gradient_stops.size(), preinterpolation_space, postinterpolation_space, buffer_precision, extend_mode, color_interpolation_mode, x);}));
+			}
+			template<typename D2D1_GRADIENT_STOP_ARRAY>
+			gradient_stop_collection create_gradient_stop_collection(const D2D1_GRADIENT_STOP_ARRAY& gradient_stops, const typename gradient_stop_collection::property& prop){
+				return std::move(create_gradient_stop_collection(gradient_stops, prop.preerps, prop.posterps, prop.bufpre, prop.extm, prop.colerpm));
 			}
 			linear_gradient_brush create_linear_gradient_brush(const gradient_stop_collection& stops, const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES& pos, const D2D1_BRUSH_PROPERTIES& prop = D2D1::BrushProperties()){
 				return linear_gradient_brush(com_create_resource<ID2D1LinearGradientBrush>([&](ID2D1LinearGradientBrush** x){return (*this)->CreateLinearGradientBrush(pos, prop, stops.get(), x);}));
@@ -226,7 +265,23 @@ public:
 			friend struct will::d2d::device;
 		};
 		context create_context(D2D1_DEVICE_CONTEXT_OPTIONS option = D2D1_DEVICE_CONTEXT_OPTIONS_NONE)const{return context{com_create_resource<ID2D1DeviceContext>([&](ID2D1DeviceContext** ptr){return (*this)->CreateDeviceContext(option, ptr);})};}
+		using solid_color_brush =  context::solid_color_brush;
+		using gradient_stop_collection =  context::gradient_stop_collection;
+		using linear_gradient_brush =  context::linear_gradient_brush;
+		using radial_gradient_brush =  context::radial_gradient_brush;
+		using bitmap_brush =  context::bitmap_brush;
+		using bitmap =  context::bitmap;
+		using effect =  context::effect;
+		using bitmap_render_target =  context::bitmap_render_target;
 	};
+	using solid_color_brush =  device::solid_color_brush;
+	using gradient_stop_collection =  device::gradient_stop_collection;
+	using linear_gradient_brush =  device::linear_gradient_brush;
+	using radial_gradient_brush =  device::radial_gradient_brush;
+	using bitmap_brush =  device::bitmap_brush;
+	using bitmap =  device::bitmap;
+	using effect =  device::effect;
+	using bitmap_render_target =  device::bitmap_render_target;
 	template<typename RandomAccessableContainer>
 	stroke_style create_stroke_style(const D2D1_STROKE_STYLE_PROPERTIES1& prop, RandomAccessableContainer&& dashes)const{
 		return stroke_style(com_create_resource<ID2D1StrokeStyle1>([&](ID2D1StrokeStyle1** ptr){return (*this)->CreateStrokeStyle(prop, dashes.data(), dashes.size(), ptr);}))
