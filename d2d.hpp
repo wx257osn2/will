@@ -70,9 +70,9 @@ public:
 				public:
 					_color(solid_color_brush& b):brush(b){}
 					_color(const _color&) = delete;
-					_color(_color&&) = delete;
+					_color(_color&&){}
 					_color& operator=(const _color&) = delete;
-					_color& operator=(_color&&) = delete;
+					_color& operator=(_color&&){}
 					~_color() = default;
 					operator D2D1::ColorF()const{return brush->GetColor();}
 					_color& operator=(const D2D1::ColorF& c){b->SetColor(c);}
@@ -177,6 +177,9 @@ public:
 					return draw(std::forward<F>(f), []{});
 				}
 			};
+		protected:
+			using resource::resource;
+		public:
 			explicit context(IDXGISurface2* surface):ResourceHolder(), resource(com_create_resource<ID2D1DeviceContext>([&](ID2D1DeviceContext** ptr){return D2D1CreateDeviceContext(surface, nullptr, ptr);})){}
 			context(IDXGISurface2* surface, const D2D1_CREATION_PROPERTIES& prop):ResourceHolder(), resource(com_create_resource<ID2D1DeviceContext>([&](ID2D1DeviceContext** ptr){return D2D1CreateDeviceContext(surface, prop, ptr);})){}
 			template<typename Surface>

@@ -33,8 +33,8 @@ class auto_restore_resources{
 	class ddr_base{
 		auto_restore_resources& parent;
 		device_dependent_resources::size_type index;
-		ddr_base(auto_restore_resources& parent, device_dependent_resources::size_type i) : parent(parent), index(i+1){}
 	public:
+		ddr_base(auto_restore_resources& parent, device_dependent_resources::size_type i) : parent(parent), index(i+1){}
 		~ddr_base(){if(index != 0)if(parent.ddrs.size()-1u == index)parent.ddrs.pop_back();else parent.ddrs[index].reset();}
 		ddr_base(const ddr_base&) = delete;
 		ddr_base(ddr_base&& o):parent(o.parent), index(o.index){o.index = 0;}
@@ -42,6 +42,7 @@ class auto_restore_resources{
 		ddr_base& operator=(ddr_base&&) = delete;
 		I* get()const{return static_cast<I*>(parent.ddrs[index]->get());}
 		I* operator->(){return get();}
+		friend auto_restore_resources;
 	};
 public:
 	struct factory_create_tag{};
@@ -62,7 +63,25 @@ private:
 	}
 	template<typename T, typename F>
 	class device_dependent_resource:public device_dependent_base{
-		T data;
+		std::aligned_storage_t<sizeof(T), alignof(T)> data;
+		F init_function;
+		T& get_context(){return *reinterpret_cast<T*>(&data);}
+	public:
+		device_dependent_resource(F&& f):init_function(std::forward<F>(f)){construct();}
+		~device_dependent_resource(){destruct();}
+		void construct()override{
+			new(&get_context()) T{init_function()};
+		}
+		void destruct()override{
+			get_context().~T();
+		}
+		void* get()override{
+			return static_cast<void*>(get_context().get());
+		}
+	};
+	template<typename T, typename F>
+	class device_dependent_resource<com_ptr<T>, F>:public device_dependent_base{
+		com_ptr<T> data;
 		F init_function;
 	public:
 		device_dependent_resource(F&& f):init_function(std::forward<F>(f)){construct();}
@@ -81,7 +100,7 @@ private:
 	class device_dependent_resource<T*, F> : public device_dependent_resource<com_ptr<T>, F>{public:using device_dependent_resource<com_ptr<T>, F>::device_dependent_resource;};
 public:
 	template<typename T, typename F>
-	T create_factory(F&& f){ddrs.emplace_back(std::make_shared<device_dependent_resource<std::decay_t<decltype(f())>, F>>(std::forward<F>(f)));return T(*this, 0u);}
+	T create_factory(F&& f){ddrs.emplace_back(std::make_shared<device_dependent_resource<basic_d2d<auto_restore_resources>::device::context, F>>(std::forward<F>(f)));return T(*this, 0u);}
 	template<typename T, typename F>
 	T create_resource(F&& f){ddrs.emplace_back(std::make_shared<device_dependent_resource<std::decay_t<decltype(f())>, F>>(std::forward<F>(f)));return T(*this, ddrs.size()-1u);}
 	template<typename F, typename G>
@@ -91,12 +110,13 @@ public:
 		create_ddr(ddrs);
 		g();
 	}
-	template<typename F, typename G, typename H, typename I>
-	void draw(F&& draw_impl, G&& inter_restore, H&& after_restore, I&& after_draw){
-		auto ret = draw(std::forward<F>(draw_impl));
+	template<typename U, typename F, typename G, typename H, typename I>
+	static HRESULT draw(U&& u, F&& draw_impl, G&& inter_restore, H&& after_restore, I&& after_draw){
+		auto ret = u.draw(std::forward<F>(draw_impl));
 		if(ret == D2DERR_RECREATE_TARGET)
-			restore_device(std::forward<G>(inter_restore), std::forward<H>(after_restore));
+			u.restore_device(std::forward<G>(inter_restore), std::forward<H>(after_restore));
 		after_draw();
+		return ret;
 	}
 };
 }
@@ -112,32 +132,33 @@ class hwnd_render_target:protected dxgi::swap_chain, public basic_d2d<detail::au
 	HWND hwnd;
 	HRESULT status;
 public:
-	hwnd_render_target(HWND hwnd):dxgi::swap_chain(create_swap_chain(hwnd)), context(create_factory<dxgi::surface>([this]{return get_buffer();})), hwnd(hwnd), status(0ul){}
+	hwnd_render_target(HWND hwnd):dxgi::swap_chain(create_swap_chain(hwnd)), context(create_factory<ddr_base<ID2D1DeviceContext>>([this]{return get_buffer();})), hwnd(hwnd), status(0ul){}
 	using context::get;
 	using context::operator->;
 	template<typename F, typename G, typename H>
-	void draw(F&& f, G&& g, H&& h){
+	HRESULT draw(F&& f, G&& g, H&& h){
 		using namespace std::literals::chrono_literals;
 		if((status & DXGI_STATUS_OCCLUDED)){
 			DXGI_PRESENT_PARAMETERS param = {};
 			status = dxgi::swap_chain::get()->Present1(1, DXGI_PRESENT_TEST, &param);
 			will::sleep(static_cast<std::chrono::milliseconds>(1s)/60/2);
-			return;
+			return status;
 		}
-		draw(std::forward<F>(f), [&]{
-			dxgi::swap_chain.~swap_chain();
+		auto ret = detail::auto_restore_resources::draw(*this, std::forward<F>(f), [&]{
+			dxgi::swap_chain::~swap_chain();
 			new (static_cast<dxgi::swap_chain*>(this)) dxgi::swap_chain(std::move(create_swap_chain(hwnd)));
 		}, std::forward<G>(g), std::forward<H>(h));
 		DXGI_PRESENT_PARAMETERS param = {};
 		status = dxgi::swap_chain::get()->Present1(1, 0, &param);
+		return ret;
 	}
 	template<typename F, typename H>
-	void draw(F&& f, H&& h){
-		draw(std::forward<F>(f), []{}, std::forward<H>(h));
+	HRESULT draw(F&& f, H&& h){
+		return draw(std::forward<F>(f), []{}, std::forward<H>(h));
 	}
 	template<typename F>
-	void draw(F&& f){
-		draw(std::forward<F>(f), []{});
+	HRESULT draw(F&& f){
+		return draw(std::forward<F>(f), []{});
 	}
 };
 class gdi_compatible_render_target:public dxgi::surface, public basic_d2d<detail::auto_restore_resources>::device::context{
@@ -146,7 +167,7 @@ class gdi_compatible_render_target:public dxgi::surface, public basic_d2d<detail
 		return dxgi::surface(dev.create_texture2d(will::d3d::texture2d::description{}.width(w).height(h).mip_levels(1).array_size(1).format(DXGI_FORMAT_B8G8R8A8_UNORM).sample_count(1).sample_quality(0).bind_flags(D3D11_BIND_RENDER_TARGET).misc_flags(D3D11_RESOURCE_MISC_GDI_COMPATIBLE)));
 	}
 public:
-	gdi_compatible_render_target(int width, int height) : dxgi::surface(create_surface(width, height)), basic_d2d<detail::auto_restore_resources>::device::context([this]{return d2d::device::context(*static_cast<dxgi::surface*>(this));}){}
+	gdi_compatible_render_target(int width, int height) : dxgi::surface(create_surface(width, height)), context(create_factory<ddr_base<ID2D1DeviceContext>>([this]()->dxgi::surface&{return *static_cast<dxgi::surface*>(this);})){}
 	using context::get;
 	using context::operator->;
 	template<typename F, typename G, typename H>
