@@ -126,11 +126,18 @@ public:
 				template<typename Input>
 				effect& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
 				impl operator[](UINT32 i){return impl{i, *this};}
+				template<typename Prop, typename Value>
+				effect&  operator()(Prop&& p, Value&& v)& {(*this)->SetValue(std::forward<Prop>(p), std::forward<Value>(v)); return           *this ;}
+				template<typename Prop, typename Value>
+				effect&& operator()(Prop&& p, Value&& v)&&{(*this)->SetValue(std::forward<Prop>(p), std::forward<Value>(v)); return std::move(*this);}
 			};
 			struct bitmap_render_target : detail::resource<ID2D1BitmapRenderTarget>{
 				using resource::resource;
 				bitmap get_bitmap()const{
 					return bitmap{com_ptr<ID2D1Bitmap>{com_create_resource<ID2D1Bitmap>([&](ID2D1Bitmap** ptr){return (*this)->GetBitmap(ptr);})}.as<ID2D1Bitmap1>()};
+				}
+				context get_render_target()const{
+					return context{res.as<ID2D1DeviceContext>()};
 				}
 				template<typename F, typename G>
 				HRESULT draw(F&& f, G&& g){
@@ -225,27 +232,27 @@ public:
 			template<typename F>
 			bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){
 				auto rt = create_compatible_render_target(desired_size);
-				auto rt_ = rt.as<ID2D1DeviceContext>();
+				auto rt_ = rt.get_render_target();
 				rt_->BeginDraw();
-				f(rt_.get());
+				f(rt_);
 				rt_->EndDraw();
 				return rt.get_bitmap();
 			}
 			template<typename F>
 			bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, F&& f){
 				auto rt = create_compatible_render_target(desired_pixel_size);
-				auto rt_ = rt.as<ID2D1DeviceContext>();
+				auto rt_ = rt.get_render_target();
 				rt_->BeginDraw();
-				f(rt_.get());
+				f(rt_);
 				rt_->EndDraw();
 				return rt.get_bitmap();
 			}
 			template<typename F>
 			bitmap prerender(F&& f){
 				auto rt = create_compatible_render_target();
-				auto rt_ = rt.as<ID2D1DeviceContext>();
+				auto rt_ = rt.get_render_target();
 				rt_->BeginDraw();
-				f(rt_.get());
+				f(rt_);
 				rt_->EndDraw();
 				return rt.get_bitmap();
 			}

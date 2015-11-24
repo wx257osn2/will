@@ -10,11 +10,14 @@ struct wic : detail::resource<IWICImagingFactory>{
 	wic():resource(com_create_resource<IWICImagingFactory>([](IWICImagingFactory** t){return ::CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, reinterpret_cast<void**>(t));})){}
 	using bitmap = detail::resource<IWICBitmap>;
 	using converter = detail::resource<IWICFormatConverter>;
-	using frame = detail::resource<IWICBitmapFrameDecode>;
+	struct frame : detail::resource<IWICBitmapFrameDecode>{
+		using resource::resource;
+		will::two_dim::xy<unsigned int> get_size()const{will::two_dim::xy<unsigned int> size; (*this)->GetSize(&size.x, &size.y); return size;}
+	};
 	struct decoder : detail::resource<IWICBitmapDecoder>{
 		using resource::resource;
 		enum class access:DWORD{read = GENERIC_READ, write = GENERIC_WRITE};
-		frame get_frame(UINT f = 0u){return frame(com_create_resource<IWICBitmapFrameDecode>(std::bind(std::mem_fn(&IWICBitmapDecoder::GetFrame), get(), f, std::placeholders::_1)));}
+		frame get_frame(UINT f = 0u)const{return frame(com_create_resource<IWICBitmapFrameDecode>(std::bind(std::mem_fn(&IWICBitmapDecoder::GetFrame), get(), f, std::placeholders::_1)));}
 	};
 	decoder create_decoder(LPCWSTR filename, decoder::access read_or_write = decoder::access::read, WICDecodeOptions decop = WICDecodeMetadataCacheOnLoad){
 		return decoder(com_create_resource<IWICBitmapDecoder>(std::bind(std::mem_fn(&IWICImagingFactory::CreateDecoderFromFilename), get(), filename, nullptr, static_cast<DWORD>(read_or_write), decop, std::placeholders::_1)));

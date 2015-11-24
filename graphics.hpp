@@ -63,27 +63,27 @@ public:
 	template<typename F>
 	bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){
 		auto rt = create_compatible_render_target(desired_size, D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE);
-		auto rt_ = rt.as<ID2D1DeviceContext>();
+		auto rt_ = rt.get_render_target();
 		rt_->BeginDraw();
-		f(rt_.get());
+		f(rt_);
 		rt_->EndDraw();
 		return rt.get_bitmap();
 	}
 	template<typename F>
 	bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, F&& f){
 		auto rt = create_compatible_render_target(desired_pixel_size, D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE);
-		auto rt_ = rt.as<ID2D1DeviceContext>();
+		auto rt_ = rt.get_render_target();
 		rt_->BeginDraw();
-		f(rt_.get());
+		f(rt_);
 		rt_->EndDraw();
 		return rt.get_bitmap();
 	}
 	template<typename F>
 	bitmap prerender(F&& f){
 		auto rt = create_compatible_render_target(D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE);
-		auto rt_ = rt.as<ID2D1DeviceContext>();
+		auto rt_ = rt.get_render_target();
 		rt_->BeginDraw();
-		f(rt_.get());
+		f(rt_);
 		rt_->EndDraw();
 		return rt.get_bitmap();
 	}

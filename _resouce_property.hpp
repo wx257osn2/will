@@ -7,6 +7,7 @@ namespace detail{
 
 template<typename T>
 class resource{
+protected:
 	com_ptr<T> res;
 public:
 	explicit resource(com_ptr<T>&& resource):res(std::move(resource)){}
