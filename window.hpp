@@ -47,22 +47,28 @@ class window{
 		const auto it = reinterpret_cast<window*>(GetWindowLongPtr(hwnd, 0));
 		return it ? it->procedure(msg, wp, lp) : DefWindowProc(hwnd, msg, wp, lp);
 	}
-	static RECT _getrect(HWND hwnd){RECT r;GetWindowRect(hwnd, &r);return r;}
+	static RECT _getwrect(HWND hwnd){RECT r;::GetWindowRect(hwnd, &r);return r;}
+	static RECT _getcrect(HWND hwnd){RECT r;::GetClientRect(hwnd, &r);return r;}
+	static BOOL _setrect(HWND hwnd, int x, int y, int w, int h, UINT flags = SWP_NOZORDER){return ::SetWindowPos(hwnd, nullptr, x, y, w, h, flags);}
 	struct _x{
 		window& w;
-		operator int()const{return _getrect(w.get_hwnd()).left;}
+		operator int()const{return _getwrect(w.get_hwnd()).left;}
+		_x& operator=(int t){_setrect(w.get_hwnd(), t, w.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 	};
 	struct _y{
 		window& w;
-		operator int()const{return _getrect(w.get_hwnd()).top;}
+		operator int()const{return _getwrect(w.get_hwnd()).top;}
+		_x& operator=(int t){_setrect(w.get_hwnd(), w.x, t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 	};
 	struct _w{
 		window& w;
-		operator int()const{const auto r = _getrect(w.get_hwnd()); return r.right - r.left;}
+		operator int()const{const auto r = _getwrect(w.get_hwnd()); return r.right - r.left;}
+		_x& operator=(int t){_setrect(w.get_hwnd(), 0, 0, t, w.h, SWP_NOZORDER | SWP_NOMOVE);}
 	};
 	struct _h{
 		window& w;
-		operator int()const{const auto r = _getrect(w.get_hwnd()); return r.bottom - r.top;}
+		operator int()const{const auto r = _getwrect(w.get_hwnd()); return r.bottom - r.top;}
+		_x& operator=(int t){_setrect(w.get_hwnd(), 0, 0, w.w, t, SWP_NOZORDER | SWP_NOMOVE);}
 	};
 public:
 	class window_class_property{
@@ -142,6 +148,8 @@ public:
 		return it != messenger.end() ? it->second(*this,wp,lp) : DefWindowProc(this->hwnd, msg, wp, lp);
 	}
 	HWND get_hwnd()const{return hwnd;}
+	will::two_dim::xywh<int> get_window_rect()const{const auto r = _getwrect(get_hwnd()); return {{r.left, r.top}, {r.right - r.left, r.bottom - r.top}};}
+	will::two_dim::xywh<int> get_client_rect()const{const auto r = _getcrect(get_hwnd()); return {{r.left, r.top}, {r.right - r.left, r.bottom - r.top}};}
 	bool is_active()const{return ::GetActiveWindow() == hwnd;}
 	void show(){
 		::ShowWindow(hwnd, SW_SHOW);

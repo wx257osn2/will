@@ -13,7 +13,7 @@ namespace detail{
 	template<typename T>
 	struct xyxy{xy<T> _1, _2;operator xywh<T>()const;template<typename U>operator xyxy<U>()const{return {{static_cast<U>(_1.x), static_cast<U>(_1.y)}, {static_cast<U>(_2.x), static_cast<U>(_2.y)}};}template<typename U>xyxy<U> cast()const{return static_cast<xyxy<U>>(*this);}template<typename U>U attribute()const{return will::two_dim::attribute<U>(*this);}};
 	template<typename T>
-	struct xywh{xy<T> p; wh<T> r;operator xyxy<T>()const{return {{p.x, p.y}, {p.x+r.w, p.y+r.h}};}template<typename U>operator xywh<U>()const{return {{static_cast<U>(p.x), static_cast<U>(p.y)}, {static_cast<U>(r.w), static_cast<U>(r.h)}};}template<typename U>xywh<U> cast()const{return static_cast<xywh<U>>(*this);}template<typename U>U attribute()const{return will::two_dim::attribute<U>(*this);}};
+	struct xywh{xy<T> xy; wh<T> wh;operator xyxy<T>()const{return {{xy.x, xy.y}, {xy.x+wh.w, xy.y+wh.h}};}template<typename U>operator xywh<U>()const{return {{static_cast<U>(xy.x), static_cast<U>(xy.y)}, {static_cast<U>(wh.w), static_cast<U>(wh.h)}};}template<typename U>xywh<U> cast()const{return static_cast<xywh<U>>(*this);}template<typename U>U attribute()const{return will::two_dim::attribute<U>(*this);}};
 	template<typename T>
 	inline xyxy<T>::operator xywh<T>()const{return {{_1.x, _1.y}, {_2.x-_1.x, _2.y-_1.y}};}
 }

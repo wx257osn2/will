@@ -233,40 +233,34 @@ public:
 			bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){
 				auto rt = create_compatible_render_target(desired_size);
 				auto rt_ = rt.get_render_target();
-				rt_->BeginDraw();
-				f(rt_);
-				rt_->EndDraw();
+				rt_.draw(std::forward<F>(f));
 				return rt.get_bitmap();
 			}
 			template<typename F>
 			bitmap prerender(const D2D1_SIZE_U& desired_pixel_size, F&& f){
 				auto rt = create_compatible_render_target(desired_pixel_size);
 				auto rt_ = rt.get_render_target();
-				rt_->BeginDraw();
-				f(rt_);
-				rt_->EndDraw();
+				rt_.draw(std::forward<F>(f));
 				return rt.get_bitmap();
 			}
 			template<typename F>
 			bitmap prerender(F&& f){
 				auto rt = create_compatible_render_target();
 				auto rt_ = rt.get_render_target();
-				rt_->BeginDraw();
-				f(rt_);
-				rt_->EndDraw();
+				rt_.draw(std::forward<F>(f));
 				return rt.get_bitmap();
 			}
 			template<typename F, typename G>
 			HRESULT draw(F&& f, G&& g){
 				(*this)->BeginDraw();
-				f();
+				f(*this);
 				auto ret = (*this)->EndDraw();
-				g();
+				g(*this);
 				return ret;
 			}
 			template<typename F>
 			HRESULT draw(F&& f){
-				return draw(std::forward<F>(f), []{});
+				return draw(std::forward<F>(f), [](const context&){});
 			}
 
 			friend struct will::d2d::device;
