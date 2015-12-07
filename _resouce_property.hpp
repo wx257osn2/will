@@ -20,6 +20,7 @@ public:
 	T* get()const{return res.get();}
 	T* operator->()const{return res.get();}
 	explicit operator bool()const{return static_cast<bool>(res);}
+	void swap(resource<T>& other){res.swap(other.res);}
 };
 
 template<typename T>

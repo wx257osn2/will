@@ -35,12 +35,12 @@ public:
 		const auto ret = d2d::device::context::draw(std::forward<F>(f));
 		DXGI_PRESENT_PARAMETERS param = {};
 		status = dxgi::swap_chain::get()->Present1(1, 0, &param);
-		g();
+		g(*this);
 		return ret;
 	}
 	template<typename F>
 	HRESULT draw(F&& f){
-		return draw(std::forward<F>(f), []{});
+		return draw(std::forward<F>(f), [](const d2d::device::context&){});
 	}
 };
 class gdi_compatible_render_target:public dxgi::surface, public d2d::device::context{
@@ -60,7 +60,7 @@ public:
 	}
 	template<typename F>
 	HRESULT draw(F&& f){
-		return draw(std::forward<F>(f), []{});
+		return draw(std::forward<F>(f), [](const d2d::device::context&){});
 	}
 	template<typename F>
 	bitmap prerender(const D2D1_SIZE_F& desired_size, F&& f){

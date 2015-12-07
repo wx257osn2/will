@@ -141,7 +141,7 @@ private:
 		}
 		template<typename WICConverter>
 		bitmap create_bitmap(WICConverter&& conv){
-			return make_bitmap(conv.get());
+			return create_bitmap(conv.get());
 		}
 		bitmap_brush create_bitmap_brush(const bitmap& bm, const D2D1_BITMAP_BRUSH_PROPERTIES& extm, const D2D1_BRUSH_PROPERTIES& prop){
 			return this->make_ddr<bitmap_brush>([&bm, extm, prop, this]{return com_create_resource<ID2D1BitmapBrush>([&](ID2D1BitmapBrush** x){return get()->CreateBitmapBrush(bm.get(), extm, prop, x);});});
