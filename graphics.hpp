@@ -7,9 +7,8 @@
 #include<memory>
 #include<vector>
 namespace will{
-class hwnd_render_target:protected dxgi::swap_chain, public d2d::device::context{
-	static dxgi::swap_chain create_swap_chain(HWND hwnd){
-		d3d::device dev;
+class hwnd_render_target:protected d3d::device, protected dxgi::swap_chain, public d2d::device::context{
+	static dxgi::swap_chain create_swap_chain(HWND hwnd, d3d::device& dev){
 		dxgi::device dev2{dev};
 		auto sc = dev2.get_factory().create_swap_chain(dev, hwnd, will::dxgi::swap_chain::description{});
 		assert(sc);
@@ -19,7 +18,9 @@ class hwnd_render_target:protected dxgi::swap_chain, public d2d::device::context
 	HWND hwnd;
 	HRESULT status;
 public:
-	hwnd_render_target(HWND hwnd):dxgi::swap_chain(create_swap_chain(hwnd)), d2d::device::context(get_buffer()), hwnd(hwnd), status(0ul){}
+	explicit hwnd_render_target(HWND hwnd):d3d::device(), dxgi::swap_chain(create_swap_chain(hwnd, *this)), d2d::device::context(get_buffer()), hwnd(hwnd), status(0ul){}
+	hwnd_render_target(HWND hwnd, const D2D1_CREATION_PROPERTIES& prop):d3d::device(), dxgi::swap_chain(create_swap_chain(hwnd, *this)), d2d::device::context(get_buffer(), prop), hwnd(hwnd), status(0ul){}
+	hwnd_render_target(HWND hwnd, D3D11_CREATE_DEVICE_FLAG flag, const D2D1_CREATION_PROPERTIES& prop):d3d::device(flag), dxgi::swap_chain(create_swap_chain(hwnd, *this)), d2d::device::context(get_buffer(), prop), hwnd(hwnd), status(0ul){}
 	using d2d::device::context::get;
 	using d2d::device::context::operator->;
 	using d2d::device::context::operator bool;
@@ -42,15 +43,20 @@ public:
 	HRESULT draw(F&& f){
 		return draw(std::forward<F>(f), [](const d2d::device::context&){});
 	}
+	d3d::device& get_d3d_device(){return *this;}
+	const d3d::device& get_d3d_device()const{return *this;}
 };
-class gdi_compatible_render_target:public dxgi::surface, public d2d::device::context{
-	static dxgi::surface create_surface(unsigned int w, unsigned int h){
-		d3d::device dev;
+class gdi_compatible_render_target:protected d3d::device, public dxgi::surface, public d2d::device::context{
+	static dxgi::surface create_surface(unsigned int w, unsigned int h, d3d::device& dev){
 		return dxgi::surface(dev.create_texture2d(will::d3d::texture2d::description{}.width(w).height(h).mip_levels(1).array_size(1).format(DXGI_FORMAT_B8G8R8A8_UNORM).sample_count(1).sample_quality(0).bind_flags(D3D11_BIND_RENDER_TARGET).misc_flags(D3D11_RESOURCE_MISC_GDI_COMPATIBLE)));
 	}
 public:
-	gdi_compatible_render_target(const will::two_dim::wh<unsigned int>& wh) : dxgi::surface(create_surface(wh.w, wh.h)), d2d::device::context(*static_cast<dxgi::surface*>(this)){}
-	gdi_compatible_render_target(const will::two_dim::wh<int>& wh) : gdi_compatible_render_target(will::two_dim::wh<unsigned int>{static_cast<unsigned int>(wh.w), static_cast<unsigned int>(wh.h)}){}
+	explicit gdi_compatible_render_target(const will::two_dim::wh<unsigned int>& wh) : d3d::device(), dxgi::surface(create_surface(wh.w, wh.h, *this)), d2d::device::context(*static_cast<dxgi::surface*>(this)){}
+	explicit gdi_compatible_render_target(const will::two_dim::wh<int>& wh) : gdi_compatible_render_target(will::two_dim::wh<unsigned int>{static_cast<unsigned int>(wh.w), static_cast<unsigned int>(wh.h)}){}
+	gdi_compatible_render_target(const will::two_dim::wh<unsigned int>& wh, const D2D1_CREATION_PROPERTIES& prop) : d3d::device(), dxgi::surface(create_surface(wh.w, wh.h, *this)), d2d::device::context(*static_cast<dxgi::surface*>(this), prop){}
+	gdi_compatible_render_target(const will::two_dim::wh<int>& wh, const D2D1_CREATION_PROPERTIES& prop) : gdi_compatible_render_target(will::two_dim::wh<unsigned int>{static_cast<unsigned int>(wh.w), static_cast<unsigned int>(wh.h)}, prop){}
+	gdi_compatible_render_target(const will::two_dim::wh<unsigned int>& wh, D3D11_CREATE_DEVICE_FLAG flag, const D2D1_CREATION_PROPERTIES& prop) : d3d::device(flag), dxgi::surface(create_surface(wh.w, wh.h, *this)), d2d::device::context(*static_cast<dxgi::surface*>(this), prop){}
+	gdi_compatible_render_target(const will::two_dim::wh<int>& wh, D3D11_CREATE_DEVICE_FLAG flag, const D2D1_CREATION_PROPERTIES& prop) : gdi_compatible_render_target(will::two_dim::wh<unsigned int>{static_cast<unsigned int>(wh.w), static_cast<unsigned int>(wh.h)}, flag, prop){}
 	using d2d::device::context::get;
 	using d2d::device::context::operator->;
 	using d2d::device::context::operator bool;
@@ -83,5 +89,7 @@ public:
 		rt_.draw(std::forward<F>(f));
 		return rt.get_bitmap();
 	}
+	d3d::device& get_d3d_device(){return *this;}
+	const d3d::device& get_d3d_device()const{return *this;}
 };
 }

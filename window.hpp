@@ -32,25 +32,61 @@ class window{
 	static RECT _getwrect(HWND hwnd){RECT r;::GetWindowRect(hwnd, &r);return r;}
 	static RECT _getcrect(HWND hwnd){RECT r;::GetClientRect(hwnd, &r);return r;}
 	static BOOL _setrect(HWND hwnd, int x, int y, int w, int h, UINT flags = SWP_NOZORDER){return ::SetWindowPos(hwnd, nullptr, x, y, w, h, flags);}
-	struct _x{
+	struct _wx{
 		window& w;
 		operator int()const{return _getwrect(w.get_hwnd()).left;}
-		_x& operator=(int t){_setrect(w.get_hwnd(), t, w.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+		_wx& operator=(int t){_setrect(w.get_hwnd(), t, w.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE); return *this;}
+		_wx& operator+=(int t){return (*this) = (*this) + t;}
+		_wx& operator-=(int t){return (*this) = (*this) - t;}
 	};
-	struct _y{
+	struct _wy{
 		window& w;
 		operator int()const{return _getwrect(w.get_hwnd()).top;}
-		_x& operator=(int t){_setrect(w.get_hwnd(), w.x, t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+		_wy& operator=(int t){_setrect(w.get_hwnd(), w.x, t, 0, 0, SWP_NOZORDER | SWP_NOSIZE); return *this;}
+		_wy& operator+=(int t){return (*this) = (*this) + t;}
+		_wy& operator-=(int t){return (*this) = (*this) - t;}
 	};
-	struct _w{
+	struct _ww{
 		window& w;
 		operator int()const{const auto r = _getwrect(w.get_hwnd()); return r.right - r.left;}
-		_x& operator=(int t){_setrect(w.get_hwnd(), 0, 0, t, w.h, SWP_NOZORDER | SWP_NOMOVE);}
+		_ww& operator=(int t){_setrect(w.get_hwnd(), 0, 0, t, w.h, SWP_NOZORDER | SWP_NOMOVE); return *this;}
+		_ww& operator+=(int t){return (*this) = (*this) + t;}
+		_ww& operator-=(int t){return (*this) = (*this) - t;}
 	};
-	struct _h{
+	struct _wh{
 		window& w;
 		operator int()const{const auto r = _getwrect(w.get_hwnd()); return r.bottom - r.top;}
-		_x& operator=(int t){_setrect(w.get_hwnd(), 0, 0, w.w, t, SWP_NOZORDER | SWP_NOMOVE);}
+		_wh& operator=(int t){_setrect(w.get_hwnd(), 0, 0, w.w, t, SWP_NOZORDER | SWP_NOMOVE); return *this;}
+		_wh& operator+=(int t){return (*this) = (*this) + t;}
+		_wh& operator-=(int t){return (*this) = (*this) - t;}
+	};
+	struct _cx{
+		window& w;
+		operator int()const{return _getcrect(w.get_hwnd()).left;}
+		_cx& operator=(int t){_setrect(w.get_hwnd(), w.x - w.client_x + t, w.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE); return *this;}
+		_cx& operator+=(int t){return (*this) = (*this) + t;}
+		_cx& operator-=(int t){return (*this) = (*this) - t;}
+	};
+	struct _cy{
+		window& w;
+		operator int()const{return _getcrect(w.get_hwnd()).top;}
+		_cy& operator=(int t){_setrect(w.get_hwnd(), w.x, w.y - w.client_y + t, 0, 0, SWP_NOZORDER | SWP_NOSIZE); return *this;}
+		_cy& operator+=(int t){return (*this) = (*this) + t;}
+		_cy& operator-=(int t){return (*this) = (*this) - t;}
+	};
+	struct _cw{
+		window& w;
+		operator int()const{const auto r = _getcrect(w.get_hwnd()); return r.right - r.left;}
+		_cw& operator=(int t){_setrect(w.get_hwnd(), 0, 0, w.w - w.client_w + t, w.h, SWP_NOZORDER | SWP_NOMOVE); return *this;}
+		_cw& operator+=(int t){return (*this) = (*this) + t;}
+		_cw& operator-=(int t){return (*this) = (*this) - t;}
+	};
+	struct _ch{
+		window& w;
+		operator int()const{const auto r = _getcrect(w.get_hwnd()); return r.bottom - r.top;}
+		_ch& operator=(int t){_setrect(w.get_hwnd(), 0, 0, w.w, w.h - w.client_h + t, SWP_NOZORDER | SWP_NOMOVE); return *this;}
+		_ch& operator+=(int t){return (*this) = (*this) + t;}
+		_ch& operator-=(int t){return (*this) = (*this) - t;}
 	};
 public:
 	class window_class_property{
@@ -91,10 +127,14 @@ public:
 #undef  PROPERTYDECL
 	};
 	std::unordered_map<UINT, std::function<LRESULT(window&, WPARAM, LPARAM)>> messenger;
-	_x x{*this};
-	_y y{*this};
-	_w w{*this};
-	_h h{*this};
+	_wx x{*this};
+	_wy y{*this};
+	_ww w{*this};
+	_wh h{*this};
+	_cx client_x{*this};
+	_cy client_y{*this};
+	_cw client_w{*this};
+	_ch client_h{*this};
 	window(WNDCLASSEX&& wcx, window_property&& property):hwnd(nullptr), hinst(wcx.hInstance){create(std::move(wcx), std::move(property));}
 	window(window_class_property&& wcp, window_property&& property):window(std::move(wcp.get()), std::move(property)){}
 	window():hwnd(nullptr){}
