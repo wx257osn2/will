@@ -32,7 +32,7 @@ public:
 #ifdef UNICODE
 		to_string(
 #endif
-		(tstring(e.get_func_name()) + _T(" : ") + e.get_error_message().value().get()).c_str()
+		(tstring(err.get_func_name()) + _T(" : ") + err.get_error_message().value().get()).c_str()
 #ifdef UNICODE
 		, -1, CP_ACP).value()
 #endif
@@ -65,20 +65,22 @@ struct error_traits<hresult_error>{
 	}
 };
 class com_apartment{
-	com_apartment() = default;
+	bool scope;
+	com_apartment(bool t = false):scope(t){}
 public:
+	com_apartment(com_apartment&& other):scope(other.scope){other.scope = false;}
 	enum class thread{
 		single = COINIT_APARTMENTTHREADED, 
 		multi  = COINIT_MULTITHREADED
 	};
-	static expected<com_apartment, hresult_error> initalize(thread t){
+	static expected<com_apartment, hresult_error> initialize(thread t){
 		const auto hr = ::CoInitializeEx(nullptr, static_cast<COINIT>(t));
 		if(SUCCEEDED(hr))
-			return com_apartment{};
+			return com_apartment{true};
 		return make_unexpected(hresult_error{_T(__FUNCTION__), hr});
 	}
-	com_apartment(thread t){::CoInitializeEx(nullptr, static_cast<COINIT>(t));}
-	~com_apartment(){::CoUninitialize();}
+	com_apartment(thread t):com_apartment{+initialize(t)}{}
+	~com_apartment(){if(scope)::CoUninitialize();}
 };
 template<typename T, typename F>
 inline expected<T*, HRESULT> com_create_resource(F&& f)noexcept(noexcept(f(std::declval<T**>()))){
@@ -638,7 +640,7 @@ public:
 	expected<U, hresult_error> value()const{
 		return query_interface<T>(var.get().pdispVal).map([](T* t){return U{std::move(t)};});
 	}
-	U operator*()const{return +value();}
+	U operator*()const{return *value();}
 };
 template<typename T>
 class com_base : public T{

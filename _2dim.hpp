@@ -4,7 +4,8 @@ namespace two_dim{
 namespace detail{
 	template<typename T, typename U>struct attribute;
 }
-	template<typename T, typename U>inline auto&& attribute(const U& u)noexcept(noexcept(detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(u))){return detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(u);}
+	template<typename T, typename U, std::enable_if_t< std::is_reference<decltype(detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(std::declval<U>()))>::value>* = nullptr>inline auto&& attribute(const U& u)noexcept(noexcept(detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(u))){return detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(u);}
+	template<typename T, typename U, std::enable_if_t<!std::is_reference<decltype(detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(std::declval<U>()))>::value>* = nullptr>inline auto   attribute(const U& u)noexcept(noexcept(detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(u))){return detail::attribute<std::decay_t<T>, std::decay_t<U>>::impl(u);}
 	template<typename T>
 	struct xy{T x, y;template<typename U>constexpr operator xy<U>()const noexcept{return {static_cast<U>(x), static_cast<U>(y)};}template<typename U>constexpr xy<U> cast()const noexcept{return static_cast<xy<U>>(*this);}template<typename U>auto&& attribute()const noexcept(noexcept(will::two_dim::attribute<U>(*this))){return will::two_dim::attribute<U>(*this);}};
 	template<typename T>

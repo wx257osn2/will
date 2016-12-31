@@ -552,12 +552,12 @@ struct catch_all<T, E, false>{
   template<typename F>
   static expected<void, E> type_void(F&& f, T&& t)noexcept(noexcept(f(std::declval<T>()))){
     f(std::move(t));
-	return {};
+    return {};
   }
   template<typename F>
   static expected<void, E> type_void(F&& f, T& t)noexcept(noexcept(f(std::declval<T&>()))){
     f(t);
-	return {};
+    return {};
   }
   template<typename F>
   static std::result_of_t<F(T)> type_type(F&& f, T&& t)noexcept(noexcept(f(std::declval<T>()))){
@@ -578,7 +578,7 @@ struct catch_all<T, E, false>{
   template<typename F>
   static expected<void, E> etype_void(F&& f, expected<T, E>&& t)noexcept(noexcept(f(std::declval<expected<T, E>>()))){
     f(std::move(t));
-	return {};
+    return {};
   }
   template<typename F>
   static std::result_of_t<F(expected<T, E>)> etype_type(F&& f, expected<T, E>&& t)noexcept(noexcept(f(std::declval<expected<T, E>>()))){
@@ -722,7 +722,9 @@ class expected : detail::expected::expected_base<T, E>{
   constexpr expected(const value_type& v)noexcept(std::is_nothrow_copy_constructible<value_type>::value) : base_type(expect, v){}
   template<bool Dummy = std::is_move_constructible<value_type>::value, std::enable_if_t<(Dummy, std::is_move_constructible<value_type>::value)>* = nullptr>
   constexpr expected(value_type&& v)noexcept(std::is_nothrow_move_constructible<value_type>::value) : base_type(expect, std::move(v)){}
+  template<bool Dummy = std::is_copy_constructible<value_type>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<value_type>::value && std::is_copy_constructible<error_type>::value)>* = nullptr>
   expected(const expected& rhs)noexcept(std::is_nothrow_copy_constructible<value_type>::value && std::is_nothrow_copy_constructible<error_type>::value) : base_type(static_cast<const base_type&>(rhs)){}
+  template<bool Dummy = std::is_move_constructible<value_type>::value, std::enable_if_t<(Dummy, std::is_move_constructible<value_type>::value && std::is_move_constructible<error_type>::value)>* = nullptr>
   expected(expected&& rhs)noexcept(std::is_nothrow_move_constructible<value_type>::value && std::is_nothrow_move_constructible<error_type>::value) : base_type(static_cast<base_type&&>(rhs)){}
   template<bool Dummy = std::is_copy_constructible<error_type>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<error_type>::value)>* = nullptr>
   constexpr expected(const unexpected_type<error_type>& e)noexcept(std::is_nothrow_copy_constructible<error_type>::value) : base_type(unexpect, e.value()){}
@@ -761,7 +763,7 @@ class expected : detail::expected::expected_base<T, E>{
     this_type(expect, il, std::forward<Args>(args)...).swap(*this);
   }
   void swap(expected& rhs)noexcept(std::is_nothrow_move_constructible<value_type>::value && std::is_nothrow_move_constructible<error_type>::value){
-	if(valid()){
+    if(valid()){
       if(rhs.valid()){
         using std::swap;
         swap(**this, *rhs);
@@ -977,7 +979,7 @@ class expected : detail::expected::expected_base<T, E>{
          ;
   }
   template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, this_type>::value>* = nullptr>
-  this_type catch_exception(F&& f)const noexcept(noexcept(f(std::declval<Exception&>()))){
+  this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>()))){
     try{
       if(!valid())
         std::rethrow_exception(error());
@@ -989,7 +991,7 @@ class expected : detail::expected::expected_base<T, E>{
     return std::move_if_noexcept(*this);
   }
   template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, value_type>::value>* = nullptr>
-  this_type catch_exception(F&& f)const noexcept(noexcept(this_type(f(std::declval<Exception&>())))){
+  this_type catch_exception(F&& f)noexcept(noexcept(this_type(f(std::declval<Exception&>())))){
     try{
       if(!valid())
         std::rethrow_exception(error());
@@ -1009,12 +1011,12 @@ class expected : detail::expected::expected_base<T, E>{
     catch(Exception&){
       return true;
     }
-	catch(...){}
+    catch(...){}
     return false;
   }
   template<typename Error>
   constexpr bool has_error(const Error& err)const noexcept(noexcept(std::declval<error_type>() == std::declval<Error>())){
-	return !valid() && error() == err;
+    return !valid() && error() == err;
   }
 };
 
@@ -1080,7 +1082,7 @@ class expected<T&, E> : detail::expected::expected_base<T*, E>{
     this_type(expect, arg).swap(*this);
   }
   void swap(expected& rhs)noexcept(std::is_nothrow_move_constructible<error_type>::value){
-	if(valid()){
+    if(valid()){
       if(rhs.valid()){
         using std::swap;
         swap(this->storage.value, rhs.storage.value);
@@ -1251,7 +1253,7 @@ class expected<T&, E> : detail::expected::expected_base<T*, E>{
          ;
   }
   template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, this_type>::value>* = nullptr>
-  this_type catch_exception(F&& f)const noexcept(noexcept(f(std::declval<Exception&>()))){
+  this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>()))){
     try{
       if(!valid())
         std::rethrow_exception(error());
@@ -1263,7 +1265,7 @@ class expected<T&, E> : detail::expected::expected_base<T*, E>{
     return std::move_if_noexcept(*this);
   }
   template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, value_type>::value>* = nullptr>
-  this_type catch_exception(F&& f)const noexcept(noexcept(this_type(f(std::declval<Exception&>())))){
+  this_type catch_exception(F&& f)noexcept(noexcept(this_type(f(std::declval<Exception&>())))){
     try{
       if(!valid())
         std::rethrow_exception(error());
@@ -1283,12 +1285,12 @@ class expected<T&, E> : detail::expected::expected_base<T*, E>{
     catch(Exception&){
       return true;
     }
-	catch(...){}
+    catch(...){}
     return false;
   }
   template<typename Error>
   constexpr bool has_error(const Error& err)const noexcept(noexcept(std::declval<error_type>() == std::declval<Error>())){
-	return !valid() && error() == err;
+    return !valid() && error() == err;
   }
 };
 
@@ -1466,7 +1468,7 @@ class expected<void, E> : detail::expected::expected_base<void, E>{
          ;
   }
   template<typename Exception, typename F, std::enable_if_t<std::is_same<std::result_of_t<F(Exception&)>, this_type>::value>* = nullptr>
-  this_type catch_exception(F&& f)const noexcept(noexcept(f(std::declval<Exception&>())) && std::is_nothrow_constructible<this_type, std::result_of_t<F(Exception&)>>::value && std::is_nothrow_copy_constructible<this_type>::value){
+  this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>())) && std::is_nothrow_constructible<this_type, std::result_of_t<F(Exception&)>>::value && std::is_nothrow_copy_constructible<this_type>::value){
     try{
       if(!valid())
         std::rethrow_exception(error());
@@ -1478,7 +1480,7 @@ class expected<void, E> : detail::expected::expected_base<void, E>{
     return std::move_if_noexcept(*this);
   }
   template<typename Exception, typename F, std::enable_if_t<std::is_same<std::result_of_t<F(Exception&)>, value_type>::value>* = nullptr>
-  this_type catch_exception(F&& f)const noexcept(noexcept(f(std::declval<Exception&>())) && std::is_nothrow_copy_constructible<this_type>::value){
+  this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>())) && std::is_nothrow_copy_constructible<this_type>::value){
     try{
       if(!valid())
         std::rethrow_exception(error());
@@ -1499,12 +1501,12 @@ class expected<void, E> : detail::expected::expected_base<void, E>{
     catch(Exception&){
       return true;
     }
-	catch(...){}
+    catch(...){}
     return false;
   }
   template<typename Error>
   constexpr bool has_error(const Error& err)const noexcept(noexcept(std::declval<error_type>() == std::declval<Error>())){
-	return !valid() && error() == err;
+    return !valid() && error() == err;
   }
 };
 
@@ -1689,6 +1691,40 @@ catch(...){
 template<typename T, typename E>
 constexpr unexpected_type<E> make_unexpected(expected<T,E>& ex)noexcept(std::is_nothrow_copy_constructible<E>::value){
   return unexpected_type<E>(ex.error());
+}
+
+template<typename Ex, typename F, std::enable_if_t<!std::is_same<std::decay_t<decltype(std::declval<F>()())>, void>::value>* = nullptr>
+auto do_(F&& f)->expected<decltype(f()), Ex>
+try{
+  return f();
+}catch(...){
+  return make_unexpected(error_traits<Ex>::make_error_from_current_exception());
+}
+
+template<typename Ex, typename F, std::enable_if_t<std::is_same<std::decay_t<decltype(std::declval<F>()())>, void>::value>* = nullptr>
+auto do_(F&& f)->expected<void, Ex>
+try{
+  f();
+  return {};
+}catch(...){
+  return make_unexpected(error_traits<Ex>::make_error_from_current_exception());
+}
+
+template<typename F, std::enable_if_t<!std::is_same<std::decay_t<decltype(std::declval<F>()())>, void>::value>* = nullptr>
+auto do_(F&& f)->expected<decltype(f())>
+try{
+  return f();
+}catch(...){
+  return make_unexpected_from_current_exception();
+}
+
+template<typename F, std::enable_if_t<std::is_same<std::decay_t<decltype(std::declval<F>()())>, void>::value>* = nullptr>
+auto do_(F&& f)->expected<void>
+try{
+  f();
+  return {};
+}catch(...){
+  return make_unexpected_from_current_exception();
 }
 
 }//End : namespace will

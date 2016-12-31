@@ -119,7 +119,7 @@ public:
 #ifdef UNICODE
 		to_string(
 #endif
-		(tstring(e.get_func_name()) + _T(" : ") + e.get_error_message().value().get()).c_str()
+		(tstring(ec.get_func_name()) + _T(" : ") + ec.get_error_message().value().get()).c_str()
 #ifdef UNICODE
 		, -1, CP_ACP).value()
 #endif
@@ -142,7 +142,7 @@ struct error_traits<winapi_last_error>{
 	static winapi_last_error make_error_from_current_exception()try{
 		throw;
 	}catch(winapi_last_error_exception& e){
-		return winapi_last_error(e.value());
+		return e.value();
 	}catch(...){
 		return winapi_last_error{_T("(no_error)"), 0};
 	}
