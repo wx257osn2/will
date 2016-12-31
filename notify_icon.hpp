@@ -26,10 +26,10 @@ public:
 		PROPERTYDECL(id, const GUID&, guidItem, |= NIF_GUID)
 		PROPERTYDECL(callback_message, UINT, uCallbackMessage, |= NIF_MESSAGE)
 		PROPERTYDECL(icon, HICON, hIcon, |= NIF_ICON)
-		data& tooltip(const TCHAR* t, bool standard_tooltip = true){std::tcscpy(nid.szTip, t); if(standard_tooltip)nid.uFlags |= NIF_SHOWTIP; else nid.uFlags &= (~NIF_SHOWTIP); nid.uFlags |= NIF_TIP; return *this;}
+		data& tooltip(const TCHAR* t, bool standard_tooltip = true){tcscpy(nid.szTip, t); if(standard_tooltip)nid.uFlags |= NIF_SHOWTIP; else nid.uFlags &= (~NIF_SHOWTIP); nid.uFlags |= NIF_TIP; return *this;}
 		data& hidden(bool flag){if(flag)nid.dwState |= NIS_HIDDEN; else nid.dwState &= (~NIS_HIDDEN); nid.dwStateMask |= NIS_HIDDEN; nid.uFlags |= NIF_STATE; return *this;}
 		data& shared(bool flag){if(flag)nid.dwState |= NIS_SHAREDICON; else nid.dwState &= (~NIS_SHAREDICON); nid.dwStateMask |= NIS_SHAREDICON; nid.uFlags |= NIF_STATE; return *this;}
-		data& balloon(const TCHAR* title, const TCHAR* info, DWORD flags, bool real_time = false){if(title)std::tcscpy(nid.szInfoTitle, title); if(info)std::tcscpy(nid.szInfo, info); nid.dwInfoFlags = flags; if(real_time)nid.uFlags |= NIF_REALTIME; else nid.uFlags &= (~NIF_REALTIME); nid.uFlags |= NIF_INFO; return *this;}
+		data& balloon(const TCHAR* title, const TCHAR* info, DWORD flags, bool real_time = false){if(title)tcscpy(nid.szInfoTitle, title); if(info)tcscpy(nid.szInfo, info); nid.dwInfoFlags = flags; if(real_time)nid.uFlags |= NIF_REALTIME; else nid.uFlags &= (~NIF_REALTIME); nid.uFlags |= NIF_INFO; return *this;}
 		data& balloon_icon(HICON t){nid.hBalloonIcon = t; return *this;}
 #undef  PROPERTYDECL
 		operator NOTIFYICONDATA&()noexcept{return nid;}

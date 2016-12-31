@@ -1,25 +1,24 @@
 #pragma once
 #include"_windows.hpp"
+#include"_2dim.hpp"
 namespace will{
 class mouse{
-	static POINT _getpos(){POINT p;GetCursorPos(&p);return p;}
-	struct _x{
-		operator int()const{return _getpos().x;}
-		_x& operator=(int t){SetCursorPos(t, _getpos().y);return *this;}
-	};
-	struct _y{
-		operator int()const{return _getpos().y;}
-		_y& operator=(int t){SetCursorPos(_getpos().x, t);return *this;}
-	};
-	struct _xy{
-		operator two_dim::xy<int>()const{auto pos = _getpos(); return {pos.x, pos.y};}
-		_xy& operator=(const two_dim::xy<int>& t){SetCursorPos(t.x, t.y);return *this;}
-	};
+	static expected<POINT, winapi_last_error> _getpos(){POINT p;if(GetCursorPos(&p) != 0)return p;return make_unexpected<winapi_last_error>(_T(__FUNCTION__));}
+	static expected<void, winapi_last_error> _setpos(int x, int y){if(SetCursorPos(x, y) != 0)return {};return make_unexpected<winapi_last_error>(_T(__FUNCTION__));}
 	HCURSOR cursor = nullptr;
 public:
-	_x x;
-	_y y;
-	_xy xy;
+	expected<two_dim::xy<int>, winapi_last_error> get_pos()const{return _getpos().map([](POINT&& p){return two_dim::xy<int>{p.x, p.y};});}
+	expected<void, winapi_last_error> set_pos(int x, int y){return _setpos(x, y);}
+	expected<void, winapi_last_error> set_pos(const two_dim::xy<int>& xy){return _setpos(xy.x, xy.y);}
+	int get_x()const{return get_pos()--->x;}
+	void set_x(int x){+set_pos(x, get_pos()--->y);}
+	__declspec(property(get=get_x, put=set_x)) int x;
+	int get_y()const{return get_pos()--->y;}
+	void set_y(int y){+set_pos(get_pos()--->x, y);}
+	__declspec(property(get=get_y, put=set_y)) int y;
+	two_dim::xy<int> get_xy()const{return +get_pos();}
+	void set_xy(const two_dim::xy<int>& xy){+set_pos(x, y);}
+	__declspec(property(get=get_xy, put=set_xy)) two_dim::xy<int> xy;
 	bool show(){
 	  if(cursor)
 	    SetCursor(cursor);

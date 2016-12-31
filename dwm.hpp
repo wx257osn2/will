@@ -1,5 +1,6 @@
 #pragma once
 #include<dwmapi.h>
+#include"_expected.hpp"
 #pragma comment(lib,"dwmapi.lib")
 namespace will{
 class blur_behind{
@@ -14,6 +15,6 @@ public:
 	template<typename Region>
 	blur_behind& region(Region&& rgn){return region(rgn.cget());}
 	blur_behind& transition_on_maximized(bool f){bb.fTransitionOnMaximized = f; bb.dwFlags |= DWM_BB_TRANSITIONONMAXIMIZED; return *this;}
-	HRESULT operator()(HWND hwnd)const{return ::DwmEnableBlurBehindWindow(hwnd, &bb);}
+	expected<void, HRESULT> operator()(HWND hwnd)const{const auto hr = ::DwmEnableBlurBehindWindow(hwnd, &bb);if(SUCCEEDED(hr))return {};return make_unexpected(hr);}
 };
 }
