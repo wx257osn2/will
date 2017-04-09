@@ -30,6 +30,162 @@ public:
 	};
 	struct fill_t{}static constexpr fill = {};
 	static UINT32 rgb(std::uint8_t r, std::uint8_t g, std::uint8_t b){return static_cast<UINT32>(r)<<16 | static_cast<UINT32>(g)<<8 | b;}
+	struct alpha_mode{
+		alpha_mode() = delete;
+		struct{
+			constexpr operator D2D1_ALPHA_MODE()const noexcept{return D2D1_ALPHA_MODE_UNKNOWN;}
+			constexpr operator DXGI_ALPHA_MODE()const noexcept{return DXGI_ALPHA_MODE_UNSPECIFIED;}
+		}static constexpr unknown = {}, unspecified = {};
+		struct{
+			constexpr operator D2D1_ALPHA_MODE()const noexcept{return D2D1_ALPHA_MODE_PREMULTIPLIED;}
+			constexpr operator D2D1_COLORMANAGEMENT_ALPHA_MODE()const noexcept{return D2D1_COLORMANAGEMENT_ALPHA_MODE_PREMULTIPLIED;}
+			constexpr operator D2D1_COLORMATRIX_ALPHA_MODE()const noexcept{return D2D1_COLORMATRIX_ALPHA_MODE_PREMULTIPLIED;}
+			constexpr operator D2D1_BITMAPSOURCE_ALPHA_MODE()const noexcept{return D2D1_BITMAPSOURCE_ALPHA_MODE_PREMULTIPLIED;}
+			constexpr operator DXGI_ALPHA_MODE()const noexcept{return DXGI_ALPHA_MODE_PREMULTIPLIED;}
+		}static constexpr premultiplied = {};
+		struct{
+			constexpr operator D2D1_ALPHA_MODE()const noexcept{return D2D1_ALPHA_MODE_STRAIGHT;}
+			constexpr operator D2D1_COLORMANAGEMENT_ALPHA_MODE()const noexcept{return D2D1_COLORMANAGEMENT_ALPHA_MODE_STRAIGHT;}
+			constexpr operator D2D1_COLORMATRIX_ALPHA_MODE()const noexcept{return D2D1_COLORMATRIX_ALPHA_MODE_STRAIGHT;}
+			constexpr operator D2D1_BITMAPSOURCE_ALPHA_MODE()const noexcept{return D2D1_BITMAPSOURCE_ALPHA_MODE_STRAIGHT;}
+			constexpr operator DXGI_ALPHA_MODE()const noexcept{return DXGI_ALPHA_MODE_STRAIGHT;}
+		}static constexpr straight = {};
+		struct{
+			constexpr operator D2D1_ALPHA_MODE()const noexcept{return D2D1_ALPHA_MODE_IGNORE;}
+			constexpr operator DXGI_ALPHA_MODE()const noexcept{return DXGI_ALPHA_MODE_IGNORE;}
+		}static constexpr ignore = {};
+	};
+	struct interpolation_mode{
+		interpolation_mode() = delete;
+		struct{
+			constexpr operator D2D1_INTERPOLATION_MODE()const noexcept{return D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_BITMAP_INTERPOLATION_MODE()const noexcept{return D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_DPICOMPENSATION_INTERPOLATION_MODE()const noexcept{return D2D1_DPICOMPENSATION_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_BITMAPSOURCE_INTERPOLATION_MODE()const noexcept{return D2D1_BITMAPSOURCE_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_3DTRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DTRANSFORM_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_SCALE_INTERPOLATION_MODE()const noexcept{return D2D1_SCALE_INTERPOLATION_MODE_NEAREST_NEIGHBOR;}
+		}static constexpr nearest_neighbor = {};
+		struct{
+			constexpr operator D2D1_INTERPOLATION_MODE()const noexcept{return D2D1_INTERPOLATION_MODE_LINEAR;}
+			constexpr operator D2D1_BITMAP_INTERPOLATION_MODE()const noexcept{return D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;}
+			constexpr operator D2D1_DPICOMPENSATION_INTERPOLATION_MODE()const noexcept{return D2D1_DPICOMPENSATION_INTERPOLATION_MODE_LINEAR;}
+			constexpr operator D2D1_BITMAPSOURCE_INTERPOLATION_MODE()const noexcept{return D2D1_BITMAPSOURCE_INTERPOLATION_MODE_LINEAR;}
+			constexpr operator D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR;}
+			constexpr operator D2D1_3DTRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DTRANSFORM_INTERPOLATION_MODE_LINEAR;}
+			constexpr operator D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE_LINEAR;}
+			constexpr operator D2D1_SCALE_INTERPOLATION_MODE()const noexcept{return D2D1_SCALE_INTERPOLATION_MODE_LINEAR;}
+		}static constexpr linear = {};
+		struct{
+			constexpr operator D2D1_INTERPOLATION_MODE()const noexcept{return D2D1_INTERPOLATION_MODE_CUBIC;}
+			constexpr operator D2D1_DPICOMPENSATION_INTERPOLATION_MODE()const noexcept{return D2D1_DPICOMPENSATION_INTERPOLATION_MODE_CUBIC;}
+			constexpr operator D2D1_BITMAPSOURCE_INTERPOLATION_MODE()const noexcept{return D2D1_BITMAPSOURCE_INTERPOLATION_MODE_CUBIC;}
+			constexpr operator D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_CUBIC;}
+			constexpr operator D2D1_3DTRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DTRANSFORM_INTERPOLATION_MODE_CUBIC;}
+			constexpr operator D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE_CUBIC;}
+			constexpr operator D2D1_SCALE_INTERPOLATION_MODE()const noexcept{return D2D1_SCALE_INTERPOLATION_MODE_CUBIC;}
+		}static constexpr cubic = {};
+		struct{
+			constexpr operator D2D1_INTERPOLATION_MODE()const noexcept{return D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_DPICOMPENSATION_INTERPOLATION_MODE()const noexcept{return D2D1_DPICOMPENSATION_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_3DTRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DTRANSFORM_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_SCALE_INTERPOLATION_MODE()const noexcept{return D2D1_SCALE_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR;}
+		}static constexpr multi_sample_linear = {};
+		struct{
+			constexpr operator D2D1_INTERPOLATION_MODE()const noexcept{return D2D1_INTERPOLATION_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_DPICOMPENSATION_INTERPOLATION_MODE()const noexcept{return D2D1_DPICOMPENSATION_INTERPOLATION_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_3DTRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DTRANSFORM_INTERPOLATION_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_SCALE_INTERPOLATION_MODE()const noexcept{return D2D1_SCALE_INTERPOLATION_MODE_ANISOTROPIC;}
+		}static constexpr anisotropic = {};
+		struct{
+			constexpr operator D2D1_INTERPOLATION_MODE()const noexcept{return D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_DPICOMPENSATION_INTERPOLATION_MODE()const noexcept{return D2D1_DPICOMPENSATION_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE()const noexcept{return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_SCALE_INTERPOLATION_MODE()const noexcept{return D2D1_SCALE_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC;}
+		}static constexpr high_quality_cubic = {};
+		static constexpr D2D1_BITMAPSOURCE_INTERPOLATION_MODE fant = D2D1_BITMAPSOURCE_INTERPOLATION_MODE_FANT;
+		static constexpr D2D1_BITMAPSOURCE_INTERPOLATION_MODE mipmap_linear = D2D1_BITMAPSOURCE_INTERPOLATION_MODE_MIPMAP_LINEAR;
+	};
+	struct scale_mode{
+		scale_mode() = delete;
+		struct{
+			constexpr operator D2D1_CONVOLVEMATRIX_SCALE_MODE()const noexcept{return D2D1_CONVOLVEMATRIX_SCALE_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_DISTANTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_DISTANTDIFFUSE_SCALE_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_DISTANTSPECULAR_SCALE_MODE()const noexcept{return D2D1_DISTANTSPECULAR_SCALE_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_POINTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_POINTDIFFUSE_SCALE_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_POINTSPECULAR_SCALE_MODE()const noexcept{return D2D1_POINTSPECULAR_SCALE_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_SPOTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_SPOTDIFFUSE_SCALE_MODE_NEAREST_NEIGHBOR;}
+			constexpr operator D2D1_SPOTSPECULAR_SCALE_MODE()const noexcept{return D2D1_SPOTSPECULAR_SCALE_MODE_NEAREST_NEIGHBOR;}
+		}static constexpr nearest_neighbor = {};
+		struct{
+			constexpr operator D2D1_CONVOLVEMATRIX_SCALE_MODE()const noexcept{return D2D1_CONVOLVEMATRIX_SCALE_MODE_LINEAR;}
+			constexpr operator D2D1_DISTANTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_DISTANTDIFFUSE_SCALE_MODE_LINEAR;}
+			constexpr operator D2D1_DISTANTSPECULAR_SCALE_MODE()const noexcept{return D2D1_DISTANTSPECULAR_SCALE_MODE_LINEAR;}
+			constexpr operator D2D1_POINTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_POINTDIFFUSE_SCALE_MODE_LINEAR;}
+			constexpr operator D2D1_POINTSPECULAR_SCALE_MODE()const noexcept{return D2D1_POINTSPECULAR_SCALE_MODE_LINEAR;}
+			constexpr operator D2D1_SPOTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_SPOTDIFFUSE_SCALE_MODE_LINEAR;}
+			constexpr operator D2D1_SPOTSPECULAR_SCALE_MODE()const noexcept{return D2D1_SPOTSPECULAR_SCALE_MODE_LINEAR;}
+		}static constexpr linear = {};
+		struct{
+			constexpr operator D2D1_CONVOLVEMATRIX_SCALE_MODE()const noexcept{return D2D1_CONVOLVEMATRIX_SCALE_MODE_CUBIC;}
+			constexpr operator D2D1_DISTANTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_DISTANTDIFFUSE_SCALE_MODE_CUBIC;}
+			constexpr operator D2D1_DISTANTSPECULAR_SCALE_MODE()const noexcept{return D2D1_DISTANTSPECULAR_SCALE_MODE_CUBIC;}
+			constexpr operator D2D1_POINTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_POINTDIFFUSE_SCALE_MODE_CUBIC;}
+			constexpr operator D2D1_POINTSPECULAR_SCALE_MODE()const noexcept{return D2D1_POINTSPECULAR_SCALE_MODE_CUBIC;}
+			constexpr operator D2D1_SPOTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_SPOTDIFFUSE_SCALE_MODE_CUBIC;}
+			constexpr operator D2D1_SPOTSPECULAR_SCALE_MODE()const noexcept{return D2D1_SPOTSPECULAR_SCALE_MODE_CUBIC;}
+		}static constexpr cubic = {};
+		struct{
+			constexpr operator D2D1_CONVOLVEMATRIX_SCALE_MODE()const noexcept{return D2D1_CONVOLVEMATRIX_SCALE_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_DISTANTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_DISTANTDIFFUSE_SCALE_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_DISTANTSPECULAR_SCALE_MODE()const noexcept{return D2D1_DISTANTSPECULAR_SCALE_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_POINTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_POINTDIFFUSE_SCALE_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_POINTSPECULAR_SCALE_MODE()const noexcept{return D2D1_POINTSPECULAR_SCALE_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_SPOTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_SPOTDIFFUSE_SCALE_MODE_MULTI_SAMPLE_LINEAR;}
+			constexpr operator D2D1_SPOTSPECULAR_SCALE_MODE()const noexcept{return D2D1_SPOTSPECULAR_SCALE_MODE_MULTI_SAMPLE_LINEAR;}
+		}static constexpr multi_sample_linear = {};
+		struct{
+			constexpr operator D2D1_CONVOLVEMATRIX_SCALE_MODE()const noexcept{return D2D1_CONVOLVEMATRIX_SCALE_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_DISTANTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_DISTANTDIFFUSE_SCALE_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_DISTANTSPECULAR_SCALE_MODE()const noexcept{return D2D1_DISTANTSPECULAR_SCALE_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_POINTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_POINTDIFFUSE_SCALE_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_POINTSPECULAR_SCALE_MODE()const noexcept{return D2D1_POINTSPECULAR_SCALE_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_SPOTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_SPOTDIFFUSE_SCALE_MODE_ANISOTROPIC;}
+			constexpr operator D2D1_SPOTSPECULAR_SCALE_MODE()const noexcept{return D2D1_SPOTSPECULAR_SCALE_MODE_ANISOTROPIC;}
+		}static constexpr anisotropic = {};
+		struct{
+			constexpr operator D2D1_CONVOLVEMATRIX_SCALE_MODE()const noexcept{return D2D1_CONVOLVEMATRIX_SCALE_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_DISTANTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_DISTANTDIFFUSE_SCALE_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_DISTANTSPECULAR_SCALE_MODE()const noexcept{return D2D1_DISTANTSPECULAR_SCALE_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_POINTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_POINTDIFFUSE_SCALE_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_POINTSPECULAR_SCALE_MODE()const noexcept{return D2D1_POINTSPECULAR_SCALE_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_SPOTDIFFUSE_SCALE_MODE()const noexcept{return D2D1_SPOTDIFFUSE_SCALE_MODE_HIGH_QUALITY_CUBIC;}
+			constexpr operator D2D1_SPOTSPECULAR_SCALE_MODE()const noexcept{return D2D1_SPOTSPECULAR_SCALE_MODE_HIGH_QUALITY_CUBIC;}
+		}static constexpr high_quality_cubic = {};
+	};
+	struct optimization{
+		optimization() = delete;
+		struct{
+			constexpr operator D2D1_DIRECTIONALBLUR_OPTIMIZATION()const noexcept{return D2D1_DIRECTIONALBLUR_OPTIMIZATION_SPEED;}
+			constexpr operator D2D1_GAUSSIANBLUR_OPTIMIZATION()const noexcept{return D2D1_GAUSSIANBLUR_OPTIMIZATION_SPEED;}
+			constexpr operator D2D1_SHADOW_OPTIMIZATION()const noexcept{return D2D1_SHADOW_OPTIMIZATION_SPEED;}
+		}static constexpr speed = {};
+		struct{
+			constexpr operator D2D1_DIRECTIONALBLUR_OPTIMIZATION()const noexcept{return D2D1_DIRECTIONALBLUR_OPTIMIZATION_BALANCED;}
+			constexpr operator D2D1_GAUSSIANBLUR_OPTIMIZATION()const noexcept{return D2D1_GAUSSIANBLUR_OPTIMIZATION_BALANCED;}
+			constexpr operator D2D1_SHADOW_OPTIMIZATION()const noexcept{return D2D1_SHADOW_OPTIMIZATION_BALANCED;}
+		}static constexpr balanced = {};
+		struct{
+			constexpr operator D2D1_DIRECTIONALBLUR_OPTIMIZATION()const noexcept{return D2D1_DIRECTIONALBLUR_OPTIMIZATION_QUALITY;}
+			constexpr operator D2D1_GAUSSIANBLUR_OPTIMIZATION()const noexcept{return D2D1_GAUSSIANBLUR_OPTIMIZATION_QUALITY;}
+			constexpr operator D2D1_SHADOW_OPTIMIZATION()const noexcept{return D2D1_SHADOW_OPTIMIZATION_QUALITY;}
+		}static constexpr quality = {};
+	};
 	explicit d2d(D2D1_FACTORY_TYPE t = D2D1_FACTORY_TYPE_MULTI_THREADED):d2d{+create_factory(t)}{}
 	struct stroke_style : d2d_resource<ID2D1StrokeStyle1>{
 		using d2d_resource::d2d_resource;
@@ -364,6 +520,570 @@ public:
 			template<typename Prop, typename Value>
 			expected<effect , hresult_error> set(Prop p, Value&& v)&&{const auto hr = (*this)->SetValue(p, std::forward<Value>(v));if(SUCCEEDED(hr))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
 		};
+		class builtin_effects{
+		template<typename T, const CLSID& ClassId>
+		class impl : effect{protected:using self = T;using effect::set;using effect::operator|=;using effect::operator[];public:using effect::effect;using effect::get_factory;using effect::get;using effect::operator->;using effect::operator bool;using effect::operator=;using effect::swap;static const CLSID& clsid(){return ClassId;}};
+		public:
+		builtin_effects() = delete;
+#define PROPERTYDECL(name, prop, type, default_value, precond, set_expression) \
+			expected<self&, hresult_error> set_##name(type v = default_value)& {precond;const auto result = this->set(prop, set_expression);if(result)return           *this ;return make_unexpected(std::move(result.error()));}\
+			expected<self , hresult_error> set_##name(type v = default_value)&&{precond;const auto result = this->set(prop, set_expression);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}\
+			__declspec(property(put=set_##name)) std::decay_t<type> name;
+		struct color{
+		color() = delete;
+			//(Win10)CLSID_D2D1LookupTable3D
+			struct color_management : impl<color_management, CLSID_D2D1ColorManagement>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(source_context,      D2D1_COLORMANAGEMENT_PROP_SOURCE_COLOR_CONTEXT,         ID2D1ColorContext*,                    nullptr,                                          , v)
+				template<typename ColorContext>
+				expected<self&, hresult_error> set_source_context(ColorContext&& v)& {return set_source_context(std::forward<ColorContext>(v).get());}
+				template<typename ColorContext>
+				expected<self , hresult_error> set_source_context(ColorContext&& v)&&{return set_source_context(std::forward<ColorContext>(v).get());}
+				PROPERTYDECL(source_intent,       D2D1_COLORMANAGEMENT_PROP_SOURCE_RENDERING_INTENT,      D2D1_COLORMANAGEMENT_RENDERING_INTENT, D2D1_COLORMANAGEMENT_RENDERING_INTENT_PERCEPTUAL, , v)
+				PROPERTYDECL(destination_context, D2D1_COLORMANAGEMENT_PROP_DESTINATION_COLOR_CONTEXT,    ID2D1ColorContext*,                    nullptr,                                          , v)
+				template<typename ColorContext>
+				expected<self&, hresult_error> set_destination_context(ColorContext&& v)& {return set_destination_context(std::forward<ColorContext>(v).get());}
+				template<typename ColorContext>
+				expected<self , hresult_error> set_destination_context(ColorContext&& v)&&{return set_destination_context(std::forward<ColorContext>(v).get());}
+				PROPERTYDECL(destination_intent,  D2D1_COLORMANAGEMENT_PROP_DESTINATION_RENDERING_INTENT, D2D1_COLORMANAGEMENT_RENDERING_INTENT, D2D1_COLORMANAGEMENT_RENDERING_INTENT_PERCEPTUAL, , v)
+				PROPERTYDECL(alpha_mode,          D2D1_COLORMANAGEMENT_PROP_ALPHA_MODE,                   D2D1_COLORMANAGEMENT_ALPHA_MODE,       D2D1_COLORMANAGEMENT_ALPHA_MODE_PREMULTIPLIED,    , v)
+				PROPERTYDECL(quality,             D2D1_COLORMANAGEMENT_PROP_QUALITY,                      D2D1_COLORMANAGEMENT_QUALITY,          D2D1_COLORMANAGEMENT_QUALITY_NORMAL,              , v)
+			};
+		private:
+			struct _color_matrix_effect : impl<_color_matrix_effect, CLSID_D2D1ColorMatrix>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(color_matrix, D2D1_COLORMATRIX_PROP_COLOR_MATRIX, const D2D1_MATRIX_5X4_F&,    D2D1::Matrix5x4F(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0), , v               )
+				PROPERTYDECL(alpha_mode,   D2D1_COLORMATRIX_PROP_ALPHA_MODE,   D2D1_COLORMATRIX_ALPHA_MODE, D2D1_COLORMATRIX_ALPHA_MODE_PREMULTIPLIED,                 , v               )
+				PROPERTYDECL(clamp_output, D2D1_COLORMATRIX_PROP_CLAMP_OUTPUT, bool,                        false,                                                     , v ? TRUE : FALSE)
+			};
+		public:
+			using color_matrix = _color_matrix_effect;
+			struct discrete_transfer : impl<discrete_transfer, CLSID_D2D1DiscreteTransfer>{
+				using impl::impl;
+				using impl::operator|=;
+				expected<self&, hresult_error> set_red  (const std::vector<float>& v = {0.f, 1.f})& {if(v.empty()){const auto result = this->set(D2D1_DISCRETETRANSFER_PROP_RED_DISABLE,   TRUE);if(result)return           *this ;return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_DISCRETETRANSFER_PROP_RED_TABLE,   reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_red  (const std::vector<float>& v = {0.f, 1.f})&&{if(v.empty()){const auto result = this->set(D2D1_DISCRETETRANSFER_PROP_RED_DISABLE,   TRUE);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_DISCRETETRANSFER_PROP_RED_TABLE,   reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_red))   std::vector<float> red;
+				expected<self&, hresult_error> set_green(const std::vector<float>& v = {0.f, 1.f})& {if(v.empty()){const auto result = this->set(D2D1_DISCRETETRANSFER_PROP_GREEN_DISABLE, TRUE);if(result)return           *this ;return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_DISCRETETRANSFER_PROP_GREEN_TABLE, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_green(const std::vector<float>& v = {0.f, 1.f})&&{if(v.empty()){const auto result = this->set(D2D1_DISCRETETRANSFER_PROP_GREEN_DISABLE, TRUE);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_DISCRETETRANSFER_PROP_GREEN_TABLE, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_green)) std::vector<float> green;
+				expected<self&, hresult_error> set_blue (const std::vector<float>& v = {0.f, 1.f})& {if(v.empty()){const auto result = this->set(D2D1_DISCRETETRANSFER_PROP_BLUE_DISABLE,  TRUE);if(result)return           *this ;return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_DISCRETETRANSFER_PROP_BLUE_TABLE,  reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_blue (const std::vector<float>& v = {0.f, 1.f})&&{if(v.empty()){const auto result = this->set(D2D1_DISCRETETRANSFER_PROP_BLUE_DISABLE,  TRUE);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_DISCRETETRANSFER_PROP_BLUE_TABLE,  reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_blue))  std::vector<float> blue;
+				PROPERTYDECL(clamp_output, D2D1_DISCRETETRANSFER_PROP_CLAMP_OUTPUT, bool, false, , v ? TRUE : FALSE)
+			};
+			struct dpi_compensation : impl<dpi_compensation, CLSID_D2D1DpiCompensation>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(interpolation_mode, D2D1_DPICOMPENSATION_PROP_INTERPOLATION_MODE, D2D1_DPICOMPENSATION_INTERPOLATION_MODE, D2D1_DPICOMPENSATION_INTERPOLATION_MODE_LINEAR, , v)
+				PROPERTYDECL(border_mode,        D2D1_DPICOMPENSATION_PROP_BORDER_MODE,        D2D1_BORDER_MODE,                        D2D1_BORDER_MODE_SOFT,                          , v)
+				PROPERTYDECL(input_dpi,          D2D1_DPICOMPENSATION_PROP_INPUT_DPI,          float,                                   96.f,                                           , v)
+			};
+			struct gamma_transfer : impl<gamma_transfer, CLSID_D2D1GammaTransfer>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(  red_amplitude, D2D1_GAMMATRANSFER_PROP_RED_AMPLITUDE,   float, 1.f,   , v               )
+				PROPERTYDECL(  red_exponent,  D2D1_GAMMATRANSFER_PROP_RED_EXPONENT,    float, 1.f,   , v               )
+				PROPERTYDECL(  red_offset,    D2D1_GAMMATRANSFER_PROP_RED_OFFSET,      float, 0.f,   , v               )
+				PROPERTYDECL(  red_enable,    D2D1_GAMMATRANSFER_PROP_RED_DISABLE,     bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL(green_amplitude, D2D1_GAMMATRANSFER_PROP_GREEN_AMPLITUDE, float, 1.f,   , v               )
+				PROPERTYDECL(green_exponent,  D2D1_GAMMATRANSFER_PROP_GREEN_EXPONENT,  float, 1.f,   , v               )
+				PROPERTYDECL(green_offset,    D2D1_GAMMATRANSFER_PROP_GREEN_OFFSET,    float, 0.f,   , v               )
+				PROPERTYDECL(green_enable,    D2D1_GAMMATRANSFER_PROP_GREEN_DISABLE,   bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL( blue_amplitude, D2D1_GAMMATRANSFER_PROP_BLUE_AMPLITUDE,  float, 1.f,   , v               )
+				PROPERTYDECL( blue_exponent,  D2D1_GAMMATRANSFER_PROP_BLUE_EXPONENT,   float, 1.f,   , v               )
+				PROPERTYDECL( blue_offset,    D2D1_GAMMATRANSFER_PROP_BLUE_OFFSET,     float, 0.f,   , v               )
+				PROPERTYDECL( blue_enable,    D2D1_GAMMATRANSFER_PROP_BLUE_DISABLE,    bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL(alpha_amplitude, D2D1_GAMMATRANSFER_PROP_ALPHA_AMPLITUDE, float, 1.f,   , v               )
+				PROPERTYDECL(alpha_exponent,  D2D1_GAMMATRANSFER_PROP_ALPHA_EXPONENT,  float, 1.f,   , v               )
+				PROPERTYDECL(alpha_offset,    D2D1_GAMMATRANSFER_PROP_ALPHA_OFFSET,    float, 0.f,   , v               )
+				PROPERTYDECL(alpha_enable,    D2D1_GAMMATRANSFER_PROP_ALPHA_DISABLE,   bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL(clamp_output,    D2D1_GAMMATRANSFER_PROP_CLAMP_OUTPUT,    bool,  false, , v ? TRUE : FALSE)
+			};
+			//(Win10)CLSID_D2D1HueToRgb
+			struct hue_rotation : impl<hue_rotation, CLSID_D2D1HueRotation>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(angle, D2D1_HUEROTATION_PROP_ANGLE, float, 0.f, , v)
+			};
+			struct linear_transfer : impl<linear_transfer, CLSID_D2D1LinearTransfer>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(  red_y_intercept, D2D1_LINEARTRANSFER_PROP_RED_Y_INTERCEPT,   float, 0.f,   , v               )
+				PROPERTYDECL(  red_slope,       D2D1_LINEARTRANSFER_PROP_RED_SLOPE,         float, 1.f,   , v               )
+				PROPERTYDECL(  red_enable,      D2D1_LINEARTRANSFER_PROP_RED_DISABLE,       bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL(green_y_intercept, D2D1_LINEARTRANSFER_PROP_GREEN_Y_INTERCEPT, float, 0.f,   , v               )
+				PROPERTYDECL(green_slope,       D2D1_LINEARTRANSFER_PROP_GREEN_SLOPE,       float, 1.f,   , v               )
+				PROPERTYDECL(green_enable,      D2D1_LINEARTRANSFER_PROP_GREEN_DISABLE,     bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL( blue_y_intercept, D2D1_LINEARTRANSFER_PROP_BLUE_Y_INTERCEPT,  float, 0.f,   , v               )
+				PROPERTYDECL( blue_slope,       D2D1_LINEARTRANSFER_PROP_BLUE_SLOPE,        float, 1.f,   , v               )
+				PROPERTYDECL( blue_enable,      D2D1_LINEARTRANSFER_PROP_BLUE_DISABLE,      bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL(alpha_y_intercept, D2D1_LINEARTRANSFER_PROP_ALPHA_Y_INTERCEPT, float, 0.f,   , v               )
+				PROPERTYDECL(alpha_slope,       D2D1_LINEARTRANSFER_PROP_ALPHA_SLOPE,       float, 0.f,   , v               )
+				PROPERTYDECL(alpha_enable,      D2D1_LINEARTRANSFER_PROP_ALPHA_DISABLE,     bool,  true,  , v ? FALSE : TRUE)
+				PROPERTYDECL(clamp_output,      D2D1_LINEARTRANSFER_PROP_CLAMP_OUTPUT,      bool,  false, , v ? TRUE : FALSE)
+			};
+			struct opacity_metadata : impl<opacity_metadata, CLSID_D2D1OpacityMetadata>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(output_rect, D2D1_OPACITYMETADATA_PROP_INPUT_OPAQUE_RECT, const D2D1_VECTOR_4F&, D2D1::Vector4F(-FLT_MAX, -FLT_MAX, FLT_MAX, FLT_MAX), , v)
+			};
+			struct premultiply : impl<premultiply, CLSID_D2D1Premultiply>{
+				using impl::impl;
+				using impl::operator|=;
+			};
+			//(Win10)CLSID_D2D1RgbToHue
+		private:
+			struct _saturation_effect : impl<_saturation_effect, CLSID_D2D1Saturation>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(saturation, D2D1_SATURATION_PROP_SATURATION, float, .5f, if(v < 0.f || 1.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+			};
+		public:
+			using saturation = _saturation_effect;
+			struct table_transfer : impl<table_transfer, CLSID_D2D1TableTransfer>{
+				using impl::impl;
+				using impl::operator|=;
+				expected<self&, hresult_error> set_red  (const std::vector<float>& v = {0.f, 1.f})& {if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_RED_DISABLE,   TRUE);if(result)return           *this ;return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_RED_TABLE,   reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_red  (const std::vector<float>& v = {0.f, 1.f})&&{if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_RED_DISABLE,   TRUE);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_RED_TABLE,   reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_red))   std::vector<float> red;
+				expected<self&, hresult_error> set_green(const std::vector<float>& v = {0.f, 1.f})& {if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_GREEN_DISABLE, TRUE);if(result)return           *this ;return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_GREEN_TABLE, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_green(const std::vector<float>& v = {0.f, 1.f})&&{if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_GREEN_DISABLE, TRUE);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_GREEN_TABLE, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_green)) std::vector<float> green;
+				expected<self&, hresult_error> set_blue (const std::vector<float>& v = {0.f, 1.f})& {if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_BLUE_DISABLE,  TRUE);if(result)return           *this ;return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_BLUE_TABLE,  reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_blue (const std::vector<float>& v = {0.f, 1.f})&&{if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_BLUE_DISABLE,  TRUE);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_BLUE_TABLE,  reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_blue))  std::vector<float> blue;
+				expected<self&, hresult_error> set_alpha(const std::vector<float>& v = {0.f, 1.f})& {if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_ALPHA_DISABLE, TRUE);if(result)return           *this ;return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_ALPHA_TABLE, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_alpha(const std::vector<float>& v = {0.f, 1.f})&&{if(v.empty()){const auto result = this->set(D2D1_TABLETRANSFER_PROP_ALPHA_DISABLE, TRUE);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}for(auto&& x : v)if(x < 0.f || 1.f < x)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG);const auto result = (*this)->SetValue(D2D1_TABLETRANSFER_PROP_ALPHA_TABLE, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_alpha)) std::vector<float> alpha;
+				PROPERTYDECL(clamp_output, D2D1_TABLETRANSFER_PROP_CLAMP_OUTPUT, bool, false, , v ? TRUE : FALSE)
+			};
+			//(Win10)CLSID_D2D1Tint
+			struct unpremultiply : impl<unpremultiply, CLSID_D2D1UnPremultiply>{
+				using impl::impl;
+				using impl::operator|=;
+			};
+			//(Win10)CLSID_D2D1YCbCr
+		};
+		using color_management = color::color_management;
+		using color_matrix = color::color_matrix;
+		using discrete_transfer = color::discrete_transfer;
+		using dpi_compensation = color::dpi_compensation;
+		using gamma_transfer = color::gamma_transfer;
+		using hue_rotation = color::hue_rotation;
+		using linear_transfer = color::linear_transfer;
+		using opacity_metadata = color::opacity_metadata;
+		using premultiply = color::premultiply;
+		using saturation = color::saturation;
+		using table_transfer = color::table_transfer;
+		using unpremultiply = color::unpremultiply;
+		struct composition{
+		composition() = delete;
+			//(Win10)CLSID_D2D1AlphaMask
+			struct arithmetic_composite : impl<arithmetic_composite, CLSID_D2D1ArithmeticComposite>{
+				using impl::impl;
+				auto operator[](_In_range_(0, 1) UINT32 i){if(i > 1U)throw std::invalid_argument(__FUNCTION__);return impl::operator[](i);}
+				PROPERTYDECL(coefficients, D2D1_ARITHMETICCOMPOSITE_PROP_COEFFICIENTS, const D2D1_VECTOR_4F&, D2D1::Vector4F(1.f, 0.f, 0.f, 0.f), , v               )
+				PROPERTYDECL(clamp_output, D2D1_ARITHMETICCOMPOSITE_PROP_CLAMP_OUTPUT, bool,                  false,                              , v ? TRUE : FALSE)
+			};
+			struct blend : impl<blend, CLSID_D2D1Blend>{
+				using impl::impl;
+				auto operator[](_In_range_(0, 1) UINT32 i){if(i > 1U)throw std::invalid_argument(__FUNCTION__);return impl::operator[](i);}
+				PROPERTYDECL(mode, D2D1_BLEND_PROP_MODE, D2D1_BLEND_MODE, D2D1_BLEND_MODE_MULTIPLY, , v)
+			};
+			struct composite : impl<composite, CLSID_D2D1Composite>{
+				using impl::impl;
+				using impl::operator[];
+				PROPERTYDECL(mode, D2D1_COMPOSITE_PROP_MODE, D2D1_COMPOSITE_MODE, D2D1_COMPOSITE_MODE_SOURCE_OVER, , v)
+			};
+			//(Win10)CLSID_D2D1CrossFade
+		};
+		using arithmetic_composite = composition::arithmetic_composite;
+		using blend = composition::blend;
+		using composite = composition::composite;
+		struct filter{
+		filter() = delete;
+			class convolve_matrix : public impl<convolve_matrix, CLSID_D2D1ConvolveMatrix>{
+				class _kernel_size{
+					convolve_matrix& cm;
+				public:
+					explicit _kernel_size(convolve_matrix& cm_):cm{cm_}{}
+					expected<convolve_matrix&, hresult_error> set_x(UINT32 v = 3u)& {const auto result = cm.set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_X, v);if(result)return           cm ;return make_unexpected(std::move(result.error()));}
+					expected<convolve_matrix , hresult_error> set_x(UINT32 v = 3u)&&{const auto result = cm.set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_X, v);if(result)return std::move(cm);return make_unexpected(std::move(result.error()));}
+					__declspec(property(put=set_x)) UINT32 x;
+					expected<convolve_matrix&, hresult_error> set_y(UINT32 v = 3u)& {const auto result = cm.set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_Y, v);if(result)return           cm ;return make_unexpected(std::move(result.error()));}
+					expected<convolve_matrix , hresult_error> set_y(UINT32 v = 3u)&&{const auto result = cm.set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_Y, v);if(result)return std::move(cm);return make_unexpected(std::move(result.error()));}
+					__declspec(property(put=set_y)) UINT32 y;
+				};
+				friend _kernel_size;
+			public:
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(kernel_unit_length, D2D1_CONVOLVEMATRIX_PROP_KERNEL_UNIT_LENGTH, float,                          1.f,                                   , v               )
+				PROPERTYDECL(scale_mode,         D2D1_CONVOLVEMATRIX_PROP_SCALE_MODE,         D2D1_CONVOLVEMATRIX_SCALE_MODE, D2D1_CONVOLVEMATRIX_SCALE_MODE_LINEAR, , v               )
+				expected<self&, hresult_error> set_kernel_size_x(UINT32 v = 3u)& {const auto result = this->set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_X, v);if(result)return           *this ;return make_unexpected(std::move(result.error()));}
+				expected<self , hresult_error> set_kernel_size_x(UINT32 v = 3u)&&{const auto result = this->set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_X, v);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}
+				expected<self&, hresult_error> set_kernel_size_y(UINT32 v = 3u)& {const auto result = this->set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_Y, v);if(result)return           *this ;return make_unexpected(std::move(result.error()));}
+				expected<self , hresult_error> set_kernel_size_y(UINT32 v = 3u)&&{const auto result = this->set(D2D1_CONVOLVEMATRIX_PROP_KERNEL_SIZE_Y, v);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}
+				_kernel_size get_kernel_size()noexcept{return _kernel_size{*this};}
+				expected<self&, hresult_error> set_kernel_size(const two_dim::wh<UINT32>& v = {3, 3})& {return                  set_kernel_size_x(v.w).bind([&v](self&  s){return           s .set_kernel_size_y(v.h);});}
+				expected<self , hresult_error> set_kernel_size(const two_dim::wh<UINT32>& v = {3, 3})&&{return std::move(*this).set_kernel_size_x(v.w).bind([&v](self&& s){return std::move(s).set_kernel_size_y(v.h);});}
+				__declspec(property(get=get_kernel_size, put=set_kernel_size)) _kernel_size kernel_size;
+				expected<self&, hresult_error> set_kernel_matrix(const std::vector<float>& v = {0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f})& {const auto result = (*this)->SetValue(D2D1_CONVOLVEMATRIX_PROP_KERNEL_MATRIX, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				expected<self , hresult_error> set_kernel_matrix(const std::vector<float>& v = {0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f})&&{const auto result = (*this)->SetValue(D2D1_CONVOLVEMATRIX_PROP_KERNEL_MATRIX, reinterpret_cast<const BYTE*>(v.data()), static_cast<UINT32>(v.size() * sizeof(float)));if(SUCCEEDED(result))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), result);}
+				__declspec(property(put=set_kernel_matrix)) std::vector<float> kernel_matrix;
+				PROPERTYDECL(divisor,            D2D1_CONVOLVEMATRIX_PROP_DIVISOR,            float,                          1.f,                                   , v               )
+				PROPERTYDECL(bias,               D2D1_CONVOLVEMATRIX_PROP_BIAS,               float,                          0.f,                                   , v               )
+				PROPERTYDECL(kernel_offset,      D2D1_CONVOLVEMATRIX_PROP_KERNEL_OFFSET,      const D2D1_VECTOR_2F&,          D2D1::Vector2F(0.f, 0.f),              , v               )
+				PROPERTYDECL(preserve_alpha,     D2D1_CONVOLVEMATRIX_PROP_PRESERVE_ALPHA,     bool,                           false,                                 , v ? TRUE : FALSE)
+				PROPERTYDECL(border_mode,        D2D1_CONVOLVEMATRIX_PROP_BORDER_MODE,        D2D1_BORDER_MODE,               D2D1_BORDER_MODE_SOFT,                 , v               )
+				PROPERTYDECL(clamp_output,       D2D1_CONVOLVEMATRIX_PROP_CLAMP_OUTPUT,       bool,                           false,                                 , v ? TRUE : FALSE)
+			};
+			struct directional_blur : impl<directional_blur, CLSID_D2D1DirectionalBlur>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(standard_deviation, D2D1_DIRECTIONALBLUR_PROP_STANDARD_DEVIATION, float,                             3.f,                                        , v)
+				PROPERTYDECL(angle,              D2D1_DIRECTIONALBLUR_PROP_ANGLE,              float,                             0.f,                                        , v)
+				PROPERTYDECL(optimization,       D2D1_DIRECTIONALBLUR_PROP_OPTIMIZATION,       D2D1_DIRECTIONALBLUR_OPTIMIZATION, D2D1_DIRECTIONALBLUR_OPTIMIZATION_BALANCED, , v)
+				PROPERTYDECL(border_mode,        D2D1_DIRECTIONALBLUR_PROP_BORDER_MODE,        D2D1_BORDER_MODE,                  D2D1_BORDER_MODE_SOFT,                      , v)
+			};
+			//(Win10)CLSID_D2D1EdgeDetection
+			struct gaussian_blur : impl<gaussian_blur, CLSID_D2D1GaussianBlur>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(standard_deviation, D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, FLOAT,                          3.f,                                     , v)
+				PROPERTYDECL(optimization,       D2D1_GAUSSIANBLUR_PROP_OPTIMIZATION,       D2D1_GAUSSIANBLUR_OPTIMIZATION, D2D1_GAUSSIANBLUR_OPTIMIZATION_BALANCED, , v)
+				PROPERTYDECL(border_mode,        D2D1_GAUSSIANBLUR_PROP_BORDER_MODE,        D2D1_BORDER_MODE,               D2D1_BORDER_MODE_SOFT,                   , v)
+			};
+			struct morphology : impl<morphology, CLSID_D2D1Morphology>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(mode,   D2D1_MORPHOLOGY_PROP_MODE,   D2D1_MORPHOLOGY_MODE, D2D1_MORPHOLOGY_MODE_ERODE, ,                                                                                          v)
+				PROPERTYDECL(width,  D2D1_MORPHOLOGY_PROP_WIDTH,  UINT,                 1,                          if(v < 1 || 100 < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(height, D2D1_MORPHOLOGY_PROP_HEIGHT, UINT,                 1,                          if(v < 1 || 100 < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				expected<self&, hresult_error> set_kernel_size(const two_dim::wh<UINT>& v = {1, 1})& {return                  set_width(v.w).bind([&v](self&  s){return           s .set_height(v.h);});}
+				expected<self , hresult_error> set_kernel_size(const two_dim::wh<UINT>& v = {1, 1})&&{return std::move(*this).set_width(v.w).bind([&v](self&& s){return std::move(s).set_height(v.h);});}
+				__declspec(property(put=set_kernel_size)) two_dim::wh<UINT> kernel_size;
+			};
+		};
+		using convolve_matrix = filter::convolve_matrix;
+		using directional_blur = filter::directional_blur;
+		using gaussian_blur = filter::gaussian_blur;
+		using morphology = filter::morphology;
+		struct lighting_and_stylizing{
+		lighting_and_stylizing() = delete;
+			struct displacement_map : impl<displacement_map, CLSID_D2D1DisplacementMap>{
+				using impl::impl;
+				auto operator[](_In_range_(0, 1) UINT32 i){if(i > 1U)throw std::invalid_argument(__FUNCTION__);return impl::operator[](i);}
+				PROPERTYDECL(scale,             D2D1_DISPLACEMENTMAP_PROP_SCALE,            float,                 0.f,                     , v)
+				PROPERTYDECL(x_channnel_select, D2D1_DISPLACEMENTMAP_PROP_X_CHANNEL_SELECT, D2D1_CHANNEL_SELECTOR, D2D1_CHANNEL_SELECTOR_A, , v)
+				PROPERTYDECL(y_channnel_select, D2D1_DISPLACEMENTMAP_PROP_Y_CHANNEL_SELECT, D2D1_CHANNEL_SELECTOR, D2D1_CHANNEL_SELECTOR_A, , v)
+			};
+			struct distant_diffuse : impl<distant_diffuse, CLSID_D2D1DistantDiffuse>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(azimuth,            D2D1_DISTANTDIFFUSE_PROP_AZIMUTH,            float,                          0.f,                                   if(v < 0.f || 360.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(elevation,          D2D1_DISTANTDIFFUSE_PROP_ELEVATION,          float,                          0.f,                                   if(v < 0.f || 360.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(diffuse_constant,   D2D1_DISTANTDIFFUSE_PROP_DIFFUSE_CONSTANT,   float,                          1.f,                                   if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(surface_scale,      D2D1_DISTANTDIFFUSE_PROP_SURFACE_SCALE,      float,                          1.f,                                   if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(color,              D2D1_DISTANTDIFFUSE_PROP_COLOR,              const D2D1_VECTOR_3F&,          D2D1::Vector3F(1.f, 1.f, 1.f),         ,                                                                                                v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})& {return                  set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+				PROPERTYDECL(kernel_unit_length, D2D1_DISTANTDIFFUSE_PROP_KERNEL_UNIT_LENGTH, const D2D1_VECTOR_2F&,          D2D1::Vector2F(1.f, 1.f),              ,                                                                                                v)
+				PROPERTYDECL(scale_mode,         D2D1_DISTANTDIFFUSE_PROP_SCALE_MODE,         D2D1_DISTANTDIFFUSE_SCALE_MODE, D2D1_DISTANTDIFFUSE_SCALE_MODE_LINEAR, ,                                                                                                v)
+			};
+			struct distant_specular : impl<distant_specular, CLSID_D2D1DistantSpecular>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(azimuth,            D2D1_DISTANTSPECULAR_PROP_AZIMUTH,            float,                           0.f,                                    if(v < 0.f || 360.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(elevation,          D2D1_DISTANTSPECULAR_PROP_ELEVATION,          float,                           0.f,                                    if(v < 0.f || 360.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(specular_exponent,  D2D1_DISTANTSPECULAR_PROP_SPECULAR_EXPONENT,  float,                           1.f,                                    if(v < 1.f || 128.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(specular_constant,  D2D1_DISTANTSPECULAR_PROP_SPECULAR_CONSTANT,  float,                           1.f,                                    if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(surface_scale,      D2D1_DISTANTSPECULAR_PROP_SURFACE_SCALE,      float,                           1.f,                                    if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(color,              D2D1_DISTANTSPECULAR_PROP_COLOR,              const D2D1_VECTOR_3F&,           D2D1::Vector3F(1.f, 1.f, 1.f),          ,                                                                                                v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})& {return                  set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+				PROPERTYDECL(kernel_unit_length, D2D1_DISTANTSPECULAR_PROP_KERNEL_UNIT_LENGTH, const D2D1_VECTOR_2F&,           D2D1::Vector2F(1.f, 1.f),               ,                                                                                                v)
+				PROPERTYDECL(scale_mode,         D2D1_DISTANTSPECULAR_PROP_SCALE_MODE,         D2D1_DISTANTSPECULAR_SCALE_MODE, D2D1_DISTANTSPECULAR_SCALE_MODE_LINEAR, ,                                                                                                v)
+			};
+			//(Win10)CLSID_D2D1Emboss
+			struct point_diffuse : impl<point_diffuse, CLSID_D2D1PointDiffuse>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(light_position,     D2D1_POINTDIFFUSE_PROP_LIGHT_POSITION,     const D2D1_VECTOR_3F&,        D2D1::Vector3F(0.f, 0.f, 0.f),       ,                                                                                                v)
+				PROPERTYDECL(diffuse_constant,   D2D1_POINTDIFFUSE_PROP_DIFFUSE_CONSTANT,   float,                        1.f,                                 if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(surface_scale,      D2D1_POINTDIFFUSE_PROP_SURFACE_SCALE,      float,                        1.f,                                 if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(color,              D2D1_POINTDIFFUSE_PROP_COLOR,              const D2D1_VECTOR_3F&,        D2D1::Vector3F(1.f, 1.f, 1.f),       ,                                                                                                v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})& {return                  set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+				PROPERTYDECL(kernel_unit_length, D2D1_POINTDIFFUSE_PROP_KERNEL_UNIT_LENGTH, const D2D1_VECTOR_2F&,        D2D1::Vector2F(1.f, 1.f),            ,                                                                                                v)
+				PROPERTYDECL(scale_mode,         D2D1_POINTDIFFUSE_PROP_SCALE_MODE,         D2D1_POINTDIFFUSE_SCALE_MODE, D2D1_POINTDIFFUSE_SCALE_MODE_LINEAR, ,                                                                                                v)
+			};
+			struct point_specular : impl<point_specular, CLSID_D2D1PointSpecular>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(light_position,     D2D1_POINTSPECULAR_PROP_LIGHT_POSITION,     const D2D1_VECTOR_3F&,         D2D1::Vector3F(0.f, 0.f, 0.f),        ,                                                                                                v)
+				PROPERTYDECL(specular_exponent,  D2D1_POINTSPECULAR_PROP_SPECULAR_EXPONENT,  float,                         1.f,                                  if(v < 1.f || 128.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(specular_constant,  D2D1_POINTSPECULAR_PROP_SPECULAR_CONSTANT,  float,                         1.f,                                  if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(surface_scale,      D2D1_POINTSPECULAR_PROP_SURFACE_SCALE,      float,                         1.f,                                  if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(color,              D2D1_POINTSPECULAR_PROP_COLOR,              const D2D1_VECTOR_3F&,         D2D1::Vector3F(1.f, 1.f, 1.f),        ,                                                                                                v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})& {return                  set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+				PROPERTYDECL(kernel_unit_length, D2D1_POINTSPECULAR_PROP_KERNEL_UNIT_LENGTH, const D2D1_VECTOR_2F&,         D2D1::Vector2F(1.f, 1.f),             ,                                                                                                v)
+				PROPERTYDECL(scale_mode,         D2D1_POINTSPECULAR_PROP_SCALE_MODE,         D2D1_POINTSPECULAR_SCALE_MODE, D2D1_POINTSPECULAR_SCALE_MODE_LINEAR, ,                                                                                                v)
+			};
+			//(Win10)CLSID_D2D1Posterize
+			struct shadow : impl<shadow, CLSID_D2D1Shadow>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(blur_standard_deviation, D2D1_SHADOW_PROP_BLUR_STANDARD_DEVIATION, float,                    3.f,                                , v)
+				PROPERTYDECL(color,                   D2D1_SHADOW_PROP_COLOR                  , const D2D1_VECTOR_4F&,    D2D1::Vector4F(0.f, 0.f, 0.f, 1.f), , v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {0.f, 0.f, 0.f, 1.f})& {return                  set_color(D2D1::Vector4F(v.r, v.g, v.b, v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {0.f, 0.f, 0.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector4F(v.r, v.g, v.b, v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::Black)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::Black)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+				PROPERTYDECL(optimization,            D2D1_SHADOW_PROP_OPTIMIZATION           , D2D1_SHADOW_OPTIMIZATION, D2D1_SHADOW_OPTIMIZATION_BALANCED,  , v)
+			};
+			struct spot_diffuse : impl<spot_diffuse, CLSID_D2D1SpotDiffuse>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(light_position,      D2D1_SPOTDIFFUSE_PROP_LIGHT_POSITION,      const D2D1_VECTOR_3F&,       D2D1::Vector3F(0.f, 0.f, 0.f),      ,                                                                                                v)
+				PROPERTYDECL(points_at,           D2D1_SPOTDIFFUSE_PROP_POINTS_AT,           const D2D1_VECTOR_3F&,       D2D1::Vector3F(0.f, 0.f, 0.f),      ,                                                                                                v)
+				PROPERTYDECL(focus,               D2D1_SPOTDIFFUSE_PROP_FOCUS,               float,                       1.f,                                if(v < 0.f || 200.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(limiting_cone_angle, D2D1_SPOTDIFFUSE_PROP_LIMITING_CONE_ANGLE, float,                       90.f,                               if(v < 0.f || 90.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),    v)
+				PROPERTYDECL(diffuse_constant,    D2D1_SPOTDIFFUSE_PROP_DIFFUSE_CONSTANT,    float,                       1.f,                                if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(surface_scale,       D2D1_SPOTDIFFUSE_PROP_SURFACE_SCALE,       float,                       1.f,                                if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(color,               D2D1_SPOTDIFFUSE_PROP_COLOR,               const D2D1_VECTOR_3F&,       D2D1::Vector3F(1.f, 1.f, 1.f),      ,                                                                                                v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})& {return                  set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+				PROPERTYDECL(kernel_unit_length,  D2D1_SPOTDIFFUSE_PROP_KERNEL_UNIT_LENGTH,  const D2D1_VECTOR_2F&,       D2D1::Vector2F(1.f, 1.f),           ,                                                                                                v)
+				PROPERTYDECL(scale_mode,          D2D1_SPOTDIFFUSE_PROP_SCALE_MODE,          D2D1_SPOTDIFFUSE_SCALE_MODE, D2D1_SPOTDIFFUSE_SCALE_MODE_LINEAR, ,                                                                                                v)
+			};
+			struct spot_specular : impl<spot_specular, CLSID_D2D1SpotSpecular>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(light_position,      D2D1_SPOTSPECULAR_PROP_LIGHT_POSITION,      const D2D1_VECTOR_3F&,        D2D1::Vector3F(0.f, 0.f, 0.f),       ,                                                                                                v)
+				PROPERTYDECL(points_at,           D2D1_SPOTSPECULAR_PROP_POINTS_AT,           const D2D1_VECTOR_3F&,        D2D1::Vector3F(0.f, 0.f, 0.f),       ,                                                                                                v)
+				PROPERTYDECL(focus,               D2D1_SPOTSPECULAR_PROP_FOCUS,               float,                        1.f,                                 if(v < 0.f || 200.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(limiting_cone_angle, D2D1_SPOTSPECULAR_PROP_LIMITING_CONE_ANGLE, float,                        90.f,                                if(v < 0.f || 90.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),    v)
+				PROPERTYDECL(specular_exponent,   D2D1_SPOTSPECULAR_PROP_SPECULAR_EXPONENT,   float,                        1.f,                                 if(v < 1.f || 128.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),   v)
+				PROPERTYDECL(specular_constant,   D2D1_SPOTSPECULAR_PROP_SPECULAR_CONSTANT,   float,                        1.f,                                 if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(surface_scale,       D2D1_SPOTSPECULAR_PROP_SURFACE_SCALE,       float,                        1.f,                                 if(v < 0.f || 10000.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(color,               D2D1_SPOTSPECULAR_PROP_COLOR,               const D2D1_VECTOR_3F&,        D2D1::Vector3F(1.f, 1.f, 1.f),       ,                                                                                                v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})& {return                  set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {1.f, 1.f, 1.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector3F(v.r * v.a, v.g * v.a, v.b * v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::White)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+				PROPERTYDECL(kernel_unit_length,  D2D1_SPOTSPECULAR_PROP_KERNEL_UNIT_LENGTH,  const D2D1_VECTOR_2F&,        D2D1::Vector2F(1.f, 1.f),            ,                                                                                                v)
+				PROPERTYDECL(scale_mode,          D2D1_SPOTSPECULAR_PROP_SCALE_MODE,          D2D1_SPOTSPECULAR_SCALE_MODE, D2D1_SPOTSPECULAR_SCALE_MODE_LINEAR, ,                                                                                                v)
+			};
+		};
+		using displacement_map = lighting_and_stylizing::displacement_map;
+		using distant_diffuse = lighting_and_stylizing::distant_diffuse;
+		using distant_specular = lighting_and_stylizing::distant_specular;
+		using point_diffuse = lighting_and_stylizing::point_diffuse;
+		using point_specular = lighting_and_stylizing::point_specular;
+		using shadow = lighting_and_stylizing::shadow;
+		using spot_diffuse = lighting_and_stylizing::spot_diffuse;
+		using spot_specular = lighting_and_stylizing::spot_specular;
+		struct photo{
+		photo() = delete;
+			struct brightness : impl<brightness, CLSID_D2D1Brightness>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(white_point, D2D1_BRIGHTNESS_PROP_WHITE_POINT, const D2D1_VECTOR_2F&, D2D1::Vector2F(1.f, 1.f), if(v.x < 0.f || 1.f < v.x || v.y < 0.f || 1.f < v.y)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(black_point, D2D1_BRIGHTNESS_PROP_BLACK_POINT, const D2D1_VECTOR_2F&, D2D1::Vector2F(0.f, 0.f), if(v.x < 0.f || 1.f < v.x || v.y < 0.f || 1.f < v.y)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+			};
+			//(Win10)CLSID_D2D1Contrast
+			//(Win10)CLSID_D2D1Exposure
+			//(Win10)CLSID_D2D1Glayscale
+			//(Win10)CLSID_D2D1HilightsShadows
+			struct histogram : impl<histogram, CLSID_D2D1Histogram>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(num_bins,         D2D1_HISTOGRAM_PROP_NUM_BINS,         UINT32,                256,                     , v)
+				PROPERTYDECL(channel_select,   D2D1_HISTOGRAM_PROP_CHANNEL_SELECT,   D2D1_CHANNEL_SELECTOR, D2D1_CHANNEL_SELECTOR_R, , v)
+				expected<std::vector<float>, hresult_error> output()const{
+					UINT32 c;
+					{
+						const auto hr = (*this)->GetValue(D2D1_HISTOGRAM_PROP_NUM_BINS, &c);
+						if(FAILED(hr))
+							return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
+					}
+					std::vector<float> vec;
+					vec.resize(c);
+					const auto hr = (*this)->GetValue(D2D1_HISTOGRAM_PROP_HISTOGRAM_OUTPUT, reinterpret_cast<BYTE*>(vec.data()), c * sizeof(float));
+					if(FAILED(hr))
+						return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
+					return vec;
+				}
+				std::vector<float> operator()()const{return *output();}
+			};
+			//(Win10)CLSID_D2D1Invert
+			//(Win10)CLSID_D2D1Sepia
+			//(Win10)CLSID_D2D1Sharpen
+			//(Win10)CLSID_D2D1Straighten
+			//(Win10)CLSID_D2D1TemperatureTint
+			//(Win10)CLSID_D2D1Vignette
+		};
+		using brightness = photo::brightness;
+		using histogram = photo::histogram;
+		struct source{
+		source() = delete;
+			struct bitmap_source : impl<bitmap_source, CLSID_D2D1BitmapSource>{
+				using impl::impl;
+				PROPERTYDECL(wic_bitmap_source,     D2D1_BITMAPSOURCE_PROP_WIC_BITMAP_SOURCE,     IWICBitmapSource*,                        nullptr,                                     ,                                                                                                v               )
+				template<typename WICBitmapSource>
+				expected<self&, hresult_error> set_wic_bitmap_source(WICBitmapSource&& v)& {return set_wic_bitmap_source(std::forward<WICBitmapSource>(v).get());}
+				template<typename WICBitmapSource>
+				expected<self , hresult_error> set_wic_bitmap_source(WICBitmapSource&& v)&&{return set_Wic_bitmap_source(std::forward<WICBitmapSource>(v).get());}
+				PROPERTYDECL(scale,                 D2D1_BITMAPSOURCE_PROP_SCALE,                 const D2D1_VECTOR_2F&,                    D2D1::Vector2F(1.f, 1.f),                    if(v.x < 0.f || v.y < 0.f)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v               )
+				PROPERTYDECL(interpolation_mode,    D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE,    D2D1_BITMAPSOURCE_INTERPOLATION_MODE,     D2D1_BITMAPSOURCE_INTERPOLATION_MODE_LINEAR, ,                                                                                                v               )
+				PROPERTYDECL(enable_dpi_correction, D2D1_BITMAPSOURCE_PROP_ENABLE_DPI_CORRECTION, bool,                                     false,                                       ,                                                                                                v ? TRUE : FALSE)
+				PROPERTYDECL(alpha_mode,            D2D1_BITMAPSOURCE_PROP_ALPHA_MODE,            D2D1_BITMAPSOURCE_ALPHA_MODE,             D2D1_BITMAPSOURCE_ALPHA_MODE_PREMULTIPLIED,  ,                                                                                                v               )
+				PROPERTYDECL(orientation,           D2D1_BITMAPSOURCE_PROP_ORIENTATION,           D2D1_BITMAPSOURCE_ORIENTATION,            D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT,       ,                                                                                                v               )
+			};
+			struct flood : impl<flood, CLSID_D2D1Flood>{
+				using impl::impl;
+				PROPERTYDECL(color, D2D1_FLOOD_PROP_COLOR, const D2D1_VECTOR_4F&, D2D1::Vector4F(0.f, 0.f, 0.f, 1.f), , v)
+				expected<self&, hresult_error> set_color(const D2D1_COLOR_F& v = {0.f, 0.f, 0.f, 1.f})& {return                  set_color(D2D1::Vector4F(v.r, v.g, v.b, v.a));}
+				expected<self , hresult_error> set_color(const D2D1_COLOR_F& v = {0.f, 0.f, 0.f, 1.f})&&{return std::move(*this).set_color(D2D1::Vector4F(v.r, v.g, v.b, v.a));}
+				expected<self&, hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::Black)& {return                  set_color(D2D1::ColorF(v));}
+				expected<self , hresult_error> set_color(const D2D1::ColorF::Enum& v = D2D1::ColorF::Black)&&{return std::move(*this).set_color(D2D1::ColorF(v));}
+			};
+			struct turbulence : impl<turbulence, CLSID_D2D1Turbulence>{
+				using impl::impl;
+				PROPERTYDECL(offset,         D2D1_TURBULENCE_PROP_OFFSET,         const D2D1_VECTOR_2F&, D2D1::Vector2F(0.f, 0.f),          ,                                                                                                  v               )
+				PROPERTYDECL(base_frequency, D2D1_TURBULENCE_PROP_BASE_FREQUENCY, const D2D1_VECTOR_2F&, D2D1::Vector2F(.01f, .01f),        if(v.x <= 0.f || v.y <= 0.f)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v               )
+				PROPERTYDECL(num_octaves,    D2D1_TURBULENCE_PROP_NUM_OCTAVES,    UINT32,                1u,                                if(v == 0u)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),                  v               )
+				PROPERTYDECL(seed,           D2D1_TURBULENCE_PROP_SEED,           UINT32,                0u,                                ,                                                                                                  v               )
+				PROPERTYDECL(noise,          D2D1_TURBULENCE_PROP_NOISE,          D2D1_TURBULENCE_NOISE, D2D1_TURBULENCE_NOISE_FRACTAL_SUM, ,                                                                                                  v               )
+				PROPERTYDECL(stitchable,     D2D1_TURBULENCE_PROP_STITCHABLE,     bool,                  false,                             ,                                                                                                  v ? TRUE : FALSE)
+			};
+		};
+		using bitmap_source = source::bitmap_source;
+		using flood = source::flood;
+		using turbulence = source::turbulence;
+		struct transform{
+		transform() = delete;
+			struct _2d_affine_transform : impl<_2d_affine_transform, CLSID_D2D12DAffineTransform>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(interpolation_mode, D2D1_2DAFFINETRANSFORM_PROP_INTERPOLATION_MODE, D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE, D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR, ,                                                                                             v)
+				PROPERTYDECL(border_mode,        D2D1_2DAFFINETRANSFORM_PROP_BORDER_MODE,        D2D1_BORDER_MODE,                          D2D1_BORDER_MODE_SOFT,                            ,                                                                                             v)
+				PROPERTYDECL(transform_matrix,   D2D1_2DAFFINETRANSFORM_PROP_TRANSFORM_MATRIX,   D2D1_MATRIX_3X2_F,                         D2D1::Matrix3x2F::Identity(),                     ,                                                                                             v)
+				PROPERTYDECL(sharpness,          D2D1_2DAFFINETRANSFORM_PROP_SHARPNESS,          float,                                     1.f,                                              if(v < 0.f || 1.f < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+			};
+			struct _3d_transform : impl<_3d_transform, CLSID_D2D13DTransform>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(interpolation_mode, D2D1_3DTRANSFORM_PROP_INTERPOLATION_MODE, D2D1_3DTRANSFORM_INTERPOLATION_MODE, D2D1_3DTRANSFORM_INTERPOLATION_MODE_LINEAR,                                                       , v)
+				PROPERTYDECL(border_mode,        D2D1_3DTRANSFORM_PROP_BORDER_MODE,        D2D1_BORDER_MODE,                    D2D1_BORDER_MODE_SOFT,                                                                            , v)
+				PROPERTYDECL(transform_matrix,   D2D1_3DTRANSFORM_PROP_TRANSFORM_MATRIX,   const D2D1_MATRIX_4X4_F&,            D2D1::Matrix4x4F(1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f), , v)
+			};
+			struct _3d_perspective_transform : impl<_3d_perspective_transform, CLSID_D2D13DPerspectiveTransform>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(interpolation_mode, D2D1_3DPERSPECTIVETRANSFORM_PROP_INTERPOLATION_MODE, D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE, D2D1_3DPERSPECTIVETRANSFORM_INTERPOLATION_MODE_LINEAR, ,                                                                                  v)
+				PROPERTYDECL(border_mode,        D2D1_3DPERSPECTIVETRANSFORM_PROP_BORDER_MODE,        D2D1_BORDER_MODE,                               D2D1_BORDER_MODE_SOFT,                                 ,                                                                                  v)
+				PROPERTYDECL(depth,              D2D1_3DPERSPECTIVETRANSFORM_PROP_DEPTH,              float,                                          1000.f,                                                if(v <= 0.f)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(perspective_origin, D2D1_3DPERSPECTIVETRANSFORM_PROP_PERSPECTIVE_ORIGIN, const D2D1_VECTOR_2F&,                          D2D1::Vector2F(0.f, 0.f),                              ,                                                                                  v)
+				expected<self&, hresult_error> set_perspective_origin(const D2D1_VECTOR_3F& v = {0.f, 0.f, 1000.f})& {return                  set_perspective_origin(D2D1::Vector2F(v.x, v.y)).bind([&v](self&  x){return           x .set_depth(v.z);});}
+				expected<self , hresult_error> set_perspective_origin(const D2D1_VECTOR_3F& v = {0.f, 0.f, 1000.f})&&{return std::move(*this).set_perspective_origin(D2D1::Vector2F(v.x, v.y)).bind([&v](self&& x){return std::move(x).set_depth(v.z);});}
+				PROPERTYDECL(local_offset,       D2D1_3DPERSPECTIVETRANSFORM_PROP_LOCAL_OFFSET,       const D2D1_VECTOR_3F&,                          D2D1::Vector3F(0.f, 0.f, 0.f),                         ,                                                                                  v)
+				PROPERTYDECL(global_offset,      D2D1_3DPERSPECTIVETRANSFORM_PROP_GLOBAL_OFFSET,      const D2D1_VECTOR_3F&,                          D2D1::Vector3F(0.f, 0.f, 0.f),                         ,                                                                                  v)
+				PROPERTYDECL(rotation_origin,    D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION_ORIGIN,    const D2D1_VECTOR_3F&,                          D2D1::Vector3F(0.f, 0.f, 0.f),                         ,                                                                                  v)
+				PROPERTYDECL(rotation,           D2D1_3DPERSPECTIVETRANSFORM_PROP_ROTATION,           const D2D1_VECTOR_3F&,                          D2D1::Vector3F(0.f, 0.f, 0.f),                         ,                                                                                  v)
+			};
+			class border : public impl<border, CLSID_D2D1Border>{
+				//template<typename T>
+				class _edge_mode{
+					border& b;
+				public:
+					explicit _edge_mode(border& b_):b{b_}{}
+					expected<border&, hresult_error> set_x(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)& {const auto result = b.set(D2D1_BORDER_PROP_EDGE_MODE_X, v);if(result)return           b ;return make_unexpected(std::move(result.error()));}
+					expected<border , hresult_error> set_x(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)&&{const auto result = b.set(D2D1_BORDER_PROP_EDGE_MODE_X, v);if(result)return std::move(b);return make_unexpected(std::move(result.error()));}
+					__declspec(property(put=set_x)) D2D1_BORDER_EDGE_MODE x;
+					expected<border&, hresult_error> set_y(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)& {const auto result = b.set(D2D1_BORDER_PROP_EDGE_MODE_Y, v);if(result)return           b ;return make_unexpected(std::move(result.error()));}
+					expected<border , hresult_error> set_y(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)&&{const auto result = b.set(D2D1_BORDER_PROP_EDGE_MODE_Y, v);if(result)return std::move(b);return make_unexpected(std::move(result.error()));}
+					__declspec(property(put=set_y)) D2D1_BORDER_EDGE_MODE y;
+				};
+				friend _edge_mode/*<D2D1_BORDER_EDGE_MODE>*/;
+			public:
+				using impl::impl;
+				using impl::operator|=;
+				expected<self&, hresult_error> set_edge_mode_x(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)& {const auto result = this->set(D2D1_BORDER_PROP_EDGE_MODE_X, v);if(result)return           *this ;return make_unexpected(std::move(result.error()));}
+				expected<self , hresult_error> set_edge_mode_x(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)&&{const auto result = this->set(D2D1_BORDER_PROP_EDGE_MODE_X, v);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}
+				expected<self&, hresult_error> set_edge_mode_y(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)& {const auto result = this->set(D2D1_BORDER_PROP_EDGE_MODE_Y, v);if(result)return           *this ;return make_unexpected(std::move(result.error()));}
+				expected<self , hresult_error> set_edge_mode_y(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)&&{const auto result = this->set(D2D1_BORDER_PROP_EDGE_MODE_Y, v);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}
+				_edge_mode/*<D2D1_BORDER_EDGE_MODE>*/ get_edge_mode()noexcept{return _edge_mode/*<D2D1_BORDER_EDGE_MODE>*/{*this};}
+				expected<self&, hresult_error> set_edge_mode(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)& {return                  set_edge_mode_x(v).bind([&v](self&  x){return           x .set_edge_mode_y(v);});}
+				expected<self , hresult_error> set_edge_mode(D2D1_BORDER_EDGE_MODE v = D2D1_BORDER_EDGE_MODE_CLAMP)&&{return std::move(*this).set_edge_mode_x(v).bind([&v](self&& x){return std::move(x).set_edge_mode_y(v);});}
+				__declspec(property(get=get_edge_mode, put=set_edge_mode)) _edge_mode/*<D2D1_BORDER_EDGE_MODE>*/ edge_mode;
+			};
+			struct crop : impl<crop, CLSID_D2D1Crop>{
+				using impl::impl;
+				using impl::operator|=;
+				expected<self&, hresult_error> set_rect(const D2D1_VECTOR_4F& v = {-FLT_MAX, -FLT_MAX, FLT_MAX, FLT_MAX})& {const auto result = this->set(D2D1_CROP_PROP_RECT, v);if(result)return           *this ;return make_unexpected(std::move(result.error()));}
+				expected<self , hresult_error> set_rect(const D2D1_VECTOR_4F& v = {-FLT_MAX, -FLT_MAX, FLT_MAX, FLT_MAX})&&{const auto result = this->set(D2D1_CROP_PROP_RECT, v);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}
+				expected<self&, hresult_error> set_rect(const two_dim::xywh<float>& v = {{-FLT_MAX, -FLT_MAX}, {FLT_MAX, FLT_MAX}})& {return                  set_rect(D2D1::Vector4F(v.xy.x, v.xy.y, v.wh.w, v.wh.h));}
+				expected<self , hresult_error> set_rect(const two_dim::xywh<float>& v = {{-FLT_MAX, -FLT_MAX}, {FLT_MAX, FLT_MAX}})&&{return std::move(*this).set_rect(D2D1::Vector4F(v.xy.x, v.xy.y, v.wh.w, v.wh.h));}
+				__declspec(property(put=set_rect)) two_dim::xywh<float> rect;
+				PROPERTYDECL(border_mode, D2D1_CROP_PROP_BORDER_MODE, D2D1_BORDER_MODE, D2D1_BORDER_MODE_SOFT, , v)
+			};
+		private:
+			struct _scale_effect : impl<_scale_effect, CLSID_D2D1Scale>{
+				using impl::impl;
+				using impl::operator|=;
+				PROPERTYDECL(scale,              D2D1_SCALE_PROP_SCALE,              const D2D1_VECTOR_2F&,         D2D1::Vector2F(1.f, 1.f),             if(v.x < 0 || v.y < 0)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG), v)
+				PROPERTYDECL(center_point,       D2D1_SCALE_PROP_CENTER_POINT,       const D2D1_VECTOR_2F&,         D2D1::Vector2F(0.f, 0.f),             ,                                                                                            v)
+				PROPERTYDECL(border_mode,        D2D1_SCALE_PROP_BORDER_MODE,        D2D1_BORDER_MODE,              D2D1_BORDER_MODE_SOFT,                ,                                                                                            v)
+				PROPERTYDECL(sharpness,          D2D1_SCALE_PROP_SHARPNESS,          float,                         0.f,                                  if(v < 0 || 1 < v)return make_unexpected<hresult_error>(_T(__FUNCTION__), E_INVALIDARG),     v)
+				PROPERTYDECL(interpolation_mode, D2D1_SCALE_PROP_INTERPOLATION_MODE, D2D1_SCALE_INTERPOLATION_MODE, D2D1_SCALE_INTERPOLATION_MODE_LINEAR, ,                                                                                            v)
+			};
+		public:
+			using scale = _scale_effect;
+			struct tile : impl<tile, CLSID_D2D1Tile>{
+				using impl::impl;
+				using impl::operator|=;
+				expected<self&, hresult_error> set_rect(const D2D1_VECTOR_4F& v = {0.f, 0.f, 100.f, 100.f})& {const auto result = this->set(D2D1_TILE_PROP_RECT, v);if(result)return           *this ;return make_unexpected(std::move(result.error()));}
+				expected<self , hresult_error> set_rect(const D2D1_VECTOR_4F& v = {0.f, 0.f, 100.f, 100.f})&&{const auto result = this->set(D2D1_TILE_PROP_RECT, v);if(result)return std::move(*this);return make_unexpected(std::move(result.error()));}
+				expected<self&, hresult_error> set_rect(const two_dim::xyxy<float>& v = {{0.f, 0.f}, {100.f, 100.f}})& {return                  set_rect(D2D1::Vector4F(v._1.x, v._1.y, v._2.x, v._2.y));}
+				expected<self , hresult_error> set_rect(const two_dim::xyxy<float>& v = {{0.f, 0.f}, {100.f, 100.f}})&&{return std::move(*this).set_rect(D2D1::Vector4F(v._1.x, v._1.y, v._2.x, v._2.y));}
+				__declspec(property(put=set_rect)) two_dim::xyxy<float> rect;
+			};
+		};
+		using _2d_affine_transform = transform::_2d_affine_transform;
+		using _3d_transform = transform::_3d_transform;
+		using _3d_perspective_transform = transform::_3d_perspective_transform;
+		using border = transform::border;
+		using crop = transform::crop;
+		using scale = transform::scale;
+		using tile = transform::tile;
+		struct transparency{
+		transparency() = delete;
+			//(Win10)CLSID_D2D1ChromaKey
+			struct luminance_to_alpha : impl<luminance_to_alpha, CLSID_D2D1LuminanceToAlpha>{
+				using impl::impl;
+				using impl::operator|=;
+			};
+			//(Win10)CLSID_D2D1Opacity
+		};
+		using luminance_to_alpha = transparency::luminance_to_alpha;
+#undef  PROPERTYDECL
+		};
 		struct layer : d2d_resource<ID2D1Layer>{
 			using d2d_resource::d2d_resource;
 			struct parameter : detail::property<D2D1_LAYER_PARAMETERS1>{
@@ -417,16 +1137,16 @@ public:
 			};
 			region get_region(const D2D1_RECT_U& r)const{return {get(), r};}
 			class renderer{
-				com_ptr<ID2D1DeviceContext> c;
+				ID2D1DeviceContext* c;
 			public:
-				explicit renderer(com_ptr<ID2D1DeviceContext>&& r):c(std::move(r)){}
+				explicit renderer(ID2D1DeviceContext* r):c(std::move(r)){}
 				renderer(const renderer&) = delete;
 				renderer(renderer&&) = default;
 				renderer& operator=(const renderer&) = delete;
 				renderer& operator=(renderer&&) = default;
 				~renderer() = default;
 				ID2D1DeviceContext* get()const{return c;}
-				const com_ptr<ID2D1DeviceContext>& operator->()const{return c;}
+				ID2D1DeviceContext* operator->()const{return get();}
 				template<typename F>
 				renderer& layer(const D2D1_LAYER_PARAMETERS1& params, ID2D1Layer* layer, F&& f){(*this)->PushLayer(&params, layer);f(*this);(*this)->PopLayer();return *this;}
 				template<typename Layer, typename F>
@@ -556,18 +1276,20 @@ public:
 		struct bitmap_render_target : render_target<ID2D1BitmapRenderTarget>{
 			using render_target::render_target;
 			expected<bitmap, hresult_error> get_bitmap()const{return detail::convert_to_rich_interface<bitmap>(com_create_resource<ID2D1Bitmap1>([&](ID2D1Bitmap1** ptr){return (*this)->GetBitmap(reinterpret_cast<ID2D1Bitmap**>(ptr));}), _T(__FUNCTION__));}
-			expected<renderer, hresult_error> get_renderer()const{return query_interface<ID2D1DeviceContext>(get()).emap([](HRESULT hr){return make_unexpected<hresult_error>(_T("will::d2d::device::bitmap_render_target::get_renderer"), hr);}).map([](com_ptr<ID2D1DeviceContext>&& ptr){return renderer{std::move(ptr)};});}
 			template<typename F>
 			expected<void, hresult_error> draw(F&& f){
-				return get_renderer().bind([&](renderer&& x)->expected<void, hresult_error>{
+				return query_interface<ID2D1DeviceContext>(get()).emap([](HRESULT hr){return make_unexpected<hresult_error>(_T("will::d2d::device::bitmap_render_target::get_renderer"), hr);})
+				                                                 .bind([&](ID2D1DeviceContext* x)->expected<void, hresult_error>{
+					com_ptr<ID2D1DeviceContext> devcon = std::move(x);
+					renderer r{devcon.get()};
 					(*this)->BeginDraw();
-					f(x);
+					f(r);
 					std::pair<D2D1_TAG, D2D1_TAG> tag;
 					const auto hr = (*this)->EndDraw(&tag.first, &tag.second);
 					if(SUCCEEDED(hr))
 						return {};
 					set_tags(tag);
-					return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
+					return make_unexpected<hresult_error>(_T("will::d2d::device::bitmap_render_target::draw"), hr);
 				});
 			}
 		};
@@ -589,6 +1311,7 @@ public:
 		void clear_resource(const std::chrono::milliseconds& since_use)const{(*this)->ClearResources(static_cast<UINT>(since_use.count()));}
 		class context : public render_target<ID2D1DeviceContext>{
 			using render_target::render_target;
+			renderer get_renderer(){return renderer{get()};}
 		public:
 			static expected<context, hresult_error> create(IDXGISurface2* surface, const D2D1_CREATION_PROPERTIES* prop = nullptr){return detail::convert_to_rich_interface<context>(com_create_resource<ID2D1DeviceContext>([&](ID2D1DeviceContext** ptr){return D2D1CreateDeviceContext(surface, prop, ptr);}), _T(__FUNCTION__));}
 			static expected<context, hresult_error> create(IDXGISurface2* surface, const D2D1_CREATION_PROPERTIES& prop){return create(surface, &prop);}
@@ -603,7 +1326,6 @@ public:
 			template<typename Surface>
 			explicit context(Surface&& surf, const D2D1_CREATION_PROPERTIES& prop):context(+create(std::forward<Surface>(surf).get(), prop)){}
 			device get_device()const{ID2D1Device* ptr;(*this)->GetDevice(&ptr);return device{std::move(ptr)};}
-			renderer get_renderer(){(*this)->AddRef();return renderer{get()};}
 			template<typename D2D1_GRADIENT_STOP_ARRAY>
 			expected<gradient_stop_collection, hresult_error> create_gradient_stop_collection(const D2D1_GRADIENT_STOP_ARRAY& gradient_stops, D2D1_COLOR_SPACE preinterpolation_space = D2D1_COLOR_SPACE_SRGB, D2D1_COLOR_SPACE postinterpolation_space = D2D1_COLOR_SPACE_SCRGB, D2D1_BUFFER_PRECISION buffer_precision = D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB, D2D1_EXTEND_MODE extend_mode = D2D1_EXTEND_MODE_CLAMP, D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode = D2D1_COLOR_INTERPOLATION_MODE_STRAIGHT){
 				return detail::convert_to_rich_interface<gradient_stop_collection>(com_create_resource<ID2D1GradientStopCollection1>([&](ID2D1GradientStopCollection1** x){return (*this)->CreateGradientStopCollection(gradient_stops.data(), static_cast<UINT32>(gradient_stops.size()), preinterpolation_space, postinterpolation_space, buffer_precision, extend_mode, color_interpolation_mode, x);}), _T(__FUNCTION__));
@@ -616,6 +1338,129 @@ public:
 			}
 			expected<effect, hresult_error> create_effect(const CLSID& clsid)const{
 				return detail::convert_to_rich_interface<effect>(com_create_resource<ID2D1Effect>([&](ID2D1Effect** ptr){return (*this)->CreateEffect(clsid, ptr);}), _T(__FUNCTION__));
+			}
+			template<typename T>
+			expected<T, hresult_error> create_builtin_effect()const{
+				return com_create_resource<ID2D1Effect>([&](ID2D1Effect** ptr){return (*this)->CreateEffect(T::clsid(), ptr);})
+					.emap([](HRESULT hr){return make_unexpected<hresult_error>(_T("will::d2d::device::context::create_builtin_effect"), hr);})
+					.map([](ID2D1Effect* eff){return T{std::move(eff)};});
+			}
+			expected<builtin_effects::color::color_management, hresult_error> create_color_management_effect()const{
+				return create_builtin_effect<builtin_effects::color::color_management>();
+			}
+			expected<builtin_effects::color::color_matrix, hresult_error> create_color_matrix_effect()const{
+				return create_builtin_effect<builtin_effects::color::color_matrix>();
+			}
+			expected<builtin_effects::color::discrete_transfer, hresult_error> create_discrete_transfer_effect()const{
+				return create_builtin_effect<builtin_effects::color::discrete_transfer>();
+			}
+			expected<builtin_effects::color::dpi_compensation, hresult_error> create_dpi_compensation_effect()const{
+				return create_builtin_effect<builtin_effects::color::dpi_compensation>();
+			}
+			expected<builtin_effects::color::gamma_transfer, hresult_error> create_gamma_transfer_effect()const{
+				return create_builtin_effect<builtin_effects::color::gamma_transfer>();
+			}
+			expected<builtin_effects::color::hue_rotation, hresult_error> create_hue_rotation_effect()const{
+				return create_builtin_effect<builtin_effects::color::hue_rotation>();
+			}
+			expected<builtin_effects::color::linear_transfer, hresult_error> create_linear_transfer_effect()const{
+				return create_builtin_effect<builtin_effects::color::linear_transfer>();
+			}
+			expected<builtin_effects::color::opacity_metadata, hresult_error> create_opacity_metadata_effect()const{
+				return create_builtin_effect<builtin_effects::color::opacity_metadata>();
+			}
+			expected<builtin_effects::color::premultiply, hresult_error> create_premultiply_effect()const{
+				return create_builtin_effect<builtin_effects::color::premultiply>();
+			}
+			expected<builtin_effects::color::saturation, hresult_error> create_saturation_effect()const{
+				return create_builtin_effect<builtin_effects::color::saturation>();
+			}
+			expected<builtin_effects::color::table_transfer, hresult_error> create_table_transfer_effect()const{
+				return create_builtin_effect<builtin_effects::color::table_transfer>();
+			}
+			expected<builtin_effects::color::unpremultiply, hresult_error> create_unpremultiply_effect()const{
+				return create_builtin_effect<builtin_effects::color::unpremultiply>();
+			}
+			expected<builtin_effects::composition::arithmetic_composite, hresult_error> create_arithmetic_composite_effect()const{
+				return create_builtin_effect<builtin_effects::composition::arithmetic_composite>();
+			}
+			expected<builtin_effects::composition::blend, hresult_error> create_blend_effect()const{
+				return create_builtin_effect<builtin_effects::composition::blend>();
+			}
+			expected<builtin_effects::composition::composite, hresult_error> create_composite_effect()const{
+				return create_builtin_effect<builtin_effects::composition::composite>();
+			}
+			expected<builtin_effects::filter::convolve_matrix, hresult_error> create_convolve_matrix_effect()const{
+				return create_builtin_effect<builtin_effects::filter::convolve_matrix>();
+			}
+			expected<builtin_effects::filter::directional_blur, hresult_error> create_directional_blur_effect()const{
+				return create_builtin_effect<builtin_effects::filter::directional_blur>();
+			}
+			expected<builtin_effects::filter::gaussian_blur, hresult_error> create_gaussian_blur_effect()const{
+				return create_builtin_effect<builtin_effects::filter::gaussian_blur>();
+			}
+			expected<builtin_effects::filter::morphology, hresult_error> create_morphology_effect()const{
+				return create_builtin_effect<builtin_effects::filter::morphology>();
+			}
+			expected<builtin_effects::lighting_and_stylizing::displacement_map, hresult_error> create_displacement_map_effect()const{
+				return create_builtin_effect<builtin_effects::lighting_and_stylizing::displacement_map>();
+			}
+			expected<builtin_effects::lighting_and_stylizing::distant_diffuse, hresult_error> create_distant_diffuse_effect()const{
+				return create_builtin_effect<builtin_effects::lighting_and_stylizing::distant_diffuse>();
+			}
+			expected<builtin_effects::lighting_and_stylizing::point_diffuse, hresult_error> create_point_diffuse_effect()const{
+				return create_builtin_effect<builtin_effects::lighting_and_stylizing::point_diffuse>();
+			}
+			expected<builtin_effects::lighting_and_stylizing::point_specular, hresult_error> create_point_specular_effect()const{
+				return create_builtin_effect<builtin_effects::lighting_and_stylizing::point_specular>();
+			}
+			expected<builtin_effects::lighting_and_stylizing::shadow, hresult_error> create_shadow_effect()const{
+				return create_builtin_effect<builtin_effects::lighting_and_stylizing::shadow>();
+			}
+			expected<builtin_effects::lighting_and_stylizing::spot_diffuse, hresult_error> create_spot_diffuse_effect()const{
+				return create_builtin_effect<builtin_effects::lighting_and_stylizing::spot_diffuse>();
+			}
+			expected<builtin_effects::lighting_and_stylizing::spot_specular, hresult_error> create_spot_specular_effect()const{
+				return create_builtin_effect<builtin_effects::lighting_and_stylizing::spot_specular>();
+			}
+			expected<builtin_effects::photo::brightness, hresult_error> create_brightness_effect()const{
+				return create_builtin_effect<builtin_effects::photo::brightness>();
+			}
+			expected<builtin_effects::photo::histogram, hresult_error> create_histogram_effect()const{
+				return create_builtin_effect<builtin_effects::photo::histogram>();
+			}
+			expected<builtin_effects::source::bitmap_source, hresult_error> create_bitmap_source_effect()const{
+				return create_builtin_effect<builtin_effects::source::bitmap_source>();
+			}
+			expected<builtin_effects::source::flood, hresult_error> create_flood_effect()const{
+				return create_builtin_effect<builtin_effects::source::flood>();
+			}
+			expected<builtin_effects::source::turbulence, hresult_error> create_turbulence_effect()const{
+				return create_builtin_effect<builtin_effects::source::turbulence>();
+			}
+			expected<builtin_effects::transform::_2d_affine_transform, hresult_error> create_2d_affine_transform_effect()const{
+				return create_builtin_effect<builtin_effects::transform::_2d_affine_transform>();
+			}
+			expected<builtin_effects::transform::_3d_transform, hresult_error> create_3d_transform_effect()const{
+				return create_builtin_effect<builtin_effects::transform::_3d_transform>();
+			}
+			expected<builtin_effects::transform::_3d_perspective_transform, hresult_error> create_3d_perspective_transform_effect()const{
+				return create_builtin_effect<builtin_effects::transform::_3d_perspective_transform>();
+			}
+			expected<builtin_effects::transform::border, hresult_error> create_border_effect()const{
+				return create_builtin_effect<builtin_effects::transform::border>();
+			}
+			expected<builtin_effects::transform::crop, hresult_error> create_crop_effect()const{
+				return create_builtin_effect<builtin_effects::transform::crop>();
+			}
+			expected<builtin_effects::transform::scale, hresult_error> create_scale_effect()const{
+				return create_builtin_effect<builtin_effects::transform::scale>();
+			}
+			expected<builtin_effects::transform::tile, hresult_error> create_tile_effect()const{
+				return create_builtin_effect<builtin_effects::transform::tile>();
+			}
+			expected<builtin_effects::transparency::luminance_to_alpha, hresult_error> create_luminance_to_alpha_effect()const{
+				return create_builtin_effect<builtin_effects::transparency::luminance_to_alpha>();
 			}
 			template<typename RandomAccessableContainer>
 			expected<stroke_style, hresult_error> create_stroke_style(const D2D1_STROKE_STYLE_PROPERTIES1& prop, RandomAccessableContainer&& dashes)const{
@@ -708,6 +1553,7 @@ public:
 	using bitmap_brush =  device::bitmap_brush;
 	using bitmap =  device::bitmap;
 	using effect =  device::effect;
+	using builtin_effects = device::builtin_effects;
 	using bitmap_render_target =  device::bitmap_render_target;
 	template<typename RandomAccessableContainer>
 	expected<stroke_style, hresult_error> create_stroke_style(const D2D1_STROKE_STYLE_PROPERTIES1& prop, RandomAccessableContainer&& dashes)const{

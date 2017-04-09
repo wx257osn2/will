@@ -30,7 +30,7 @@ public:
   static expected<layered_window, winapi_last_error> create(Hwnd&& hwnd){return create(std::forward<Hwnd>(hwnd).get());}
   explicit layered_window(HWND hwnd) : layered_window(+create(hwnd)){}
   template<typename Hwnd>
-  explicit layered_window(Hwnd hwnd) : layered_window(std::forward<Hwnd>(hwnd).get()){}
+  explicit layered_window(Hwnd&& hwnd) : layered_window(std::forward<Hwnd>(hwnd).get()){}
   layered_window(layered_window&& other)noexcept:hwnd(other.hwnd), src_pos(other.src_pos), win_pos(other.win_pos), size(other.size), blend(other.blend),
     info({
       sizeof(UPDATELAYEREDWINDOWINFO),

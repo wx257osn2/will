@@ -94,10 +94,21 @@ constexpr bool operator>=(const unexpected_type<std::exception_ptr>& x, const un
   return x==y;
 }
 
+namespace detail{
+
+namespace expected{
+
+template<typename>
+struct is_unexpected_impl : std::false_type{};
 template<typename E>
-struct is_unexpected : std::false_type{};
-template<typename E>
-struct is_unexpected<unexpected_type<E>> : std::true_type{};
+struct is_unexpected_impl<unexpected_type<E>> : std::true_type{};
+
+}
+
+}
+
+template<typename T>
+using is_unexpected = detail::expected::is_unexpected_impl<std::decay_t<T>>;
 
 inline unexpected_type<std::exception_ptr> make_unexpected_from_current_exception()noexcept(std::is_nothrow_move_constructible<std::exception_ptr>::value){
   return unexpected_type<std::exception_ptr>(std::current_exception());
@@ -266,7 +277,6 @@ struct trivial_expected_base{
   explicit constexpr trivial_expected_base(expect_t, Args&&... args)noexcept(std::is_nothrow_constructible<T, Args&&...>::value) : has_value(true), storage(expect, std::forward<Args>(args)...){}
   template<typename... Args>
   explicit constexpr trivial_expected_base(unexpect_t, Args&&... args)noexcept(std::is_nothrow_constructible<E, Args&&...>::value) : has_value(false), storage(unexpect, std::forward<Args>(args)...){}
-  template<bool Dummy = std::is_copy_constructible<T>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<T>::value && std::is_copy_constructible<E>::value)>* = nullptr>
   trivial_expected_base(const trivial_expected_base& rhs)noexcept(std::is_nothrow_copy_constructible<T>::value && std::is_nothrow_copy_constructible<E>::value):storage(only_set_initialized){
     if(rhs.has_value)
       ::new(value_ptr()) T(rhs.storage.value);
@@ -297,7 +307,6 @@ struct trivial_expected_base<void, E>{
   constexpr trivial_expected_base(expect_t)noexcept : has_value(true), storage(expect){}
   template<typename... Args>
   explicit constexpr trivial_expected_base(unexpect_t, Args&&... args)noexcept(std::is_nothrow_constructible<E, Args&&...>::value) : has_value(false), storage(unexpect, std::forward<Args>(args)...){}
-  template<bool Dummy = std::is_copy_constructible<E>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<E>::value)>* = nullptr>
   trivial_expected_base(const trivial_expected_base& rhs)noexcept(std::is_nothrow_copy_constructible<E>::value){
     if(!rhs.has_value)
       ::new(error_ptr()) E(rhs.storage.error);
@@ -324,7 +333,6 @@ struct no_trivial_expected_base{
   explicit constexpr no_trivial_expected_base(expect_t, Args&&... args)noexcept(std::is_nothrow_constructible<T, Args&&...>::value) : has_value(true), storage(expect, std::forward<Args>(args)...){}
   template<typename... Args>
   explicit constexpr no_trivial_expected_base(unexpect_t, Args&&... args)noexcept(std::is_nothrow_constructible<E, Args&&...>::value) : has_value(false), storage(unexpect, std::forward<Args>(args)...){}
-  template<bool Dummy = std::is_copy_constructible<T>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<T>::value && std::is_copy_constructible<E>::value)>* = nullptr>
   no_trivial_expected_base(const no_trivial_expected_base& rhs)noexcept(std::is_nothrow_copy_constructible<T>::value && std::is_nothrow_copy_constructible<E>::value) : has_value(rhs.has_value), storage(only_set_initialized){
     if(rhs.has_value)
       ::new(value_ptr()) T(rhs.storage.value);
@@ -358,7 +366,6 @@ struct no_trivial_expected_base<void, E>{
   constexpr no_trivial_expected_base(expect_t)noexcept : has_value(true), storage(expect){}
   template<typename... Args>
   explicit constexpr no_trivial_expected_base(unexpect_t, Args&&... args)noexcept(std::is_nothrow_constructible<E, Args&&...>::value) : has_value(false), storage(unexpect, std::forward<Args>(args)...){}
-  template<bool Dummy = std::is_copy_constructible<E>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<E>::value)>* = nullptr>
   no_trivial_expected_base(const no_trivial_expected_base& rhs)noexcept(std::is_nothrow_copy_constructible<E>::value){
     if(!rhs.has_value)
       ::new(error_ptr()) E(rhs.storage.error);
@@ -690,14 +697,17 @@ struct catch_all<void, E, false>{
   }
 };
 
+template<typename>
+struct is_expected_impl : std::false_type{};
+template<typename T, typename E>
+struct is_expected_impl<expected<T, E>> : std::true_type{};
+
 }//End : namespace expected
 
 }//End : namespace detail
 
 template<typename T>
-struct is_expected : std::false_type{};
-template<typename T, typename E>
-struct is_expected<expected<T, E>> : std::true_type{};
+using is_expected = detail::expected::is_expected_impl<std::decay_t<T>>;
 
 template<typename T, typename E>
 class expected : detail::expected::expected_base<T, E>{
@@ -722,7 +732,6 @@ class expected : detail::expected::expected_base<T, E>{
   constexpr expected(const value_type& v)noexcept(std::is_nothrow_copy_constructible<value_type>::value) : base_type(expect, v){}
   template<bool Dummy = std::is_move_constructible<value_type>::value, std::enable_if_t<(Dummy, std::is_move_constructible<value_type>::value)>* = nullptr>
   constexpr expected(value_type&& v)noexcept(std::is_nothrow_move_constructible<value_type>::value) : base_type(expect, std::move(v)){}
-  template<bool Dummy = std::is_copy_constructible<value_type>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<value_type>::value && std::is_copy_constructible<error_type>::value)>* = nullptr>
   expected(const expected& rhs)noexcept(std::is_nothrow_copy_constructible<value_type>::value && std::is_nothrow_copy_constructible<error_type>::value) : base_type(static_cast<const base_type&>(rhs)){}
   template<bool Dummy = std::is_move_constructible<value_type>::value, std::enable_if_t<(Dummy, std::is_move_constructible<value_type>::value && std::is_move_constructible<error_type>::value)>* = nullptr>
   expected(expected&& rhs)noexcept(std::is_nothrow_move_constructible<value_type>::value && std::is_nothrow_move_constructible<error_type>::value) : base_type(static_cast<base_type&&>(rhs)){}
@@ -1308,7 +1317,6 @@ class expected<void, E> : detail::expected::expected_base<void, E>{
   template<typename T>
   using rebind = expected<T, error_type>;
   using type_constructor = expected<detail::expected::holder, error_type>;
-  template<bool Dummy = std::is_copy_constructible<error_type>::value, std::enable_if_t<(Dummy, std::is_copy_constructible<error_type>::value)>* = nullptr>
   expected(const expected& rhs)noexcept(std::is_nothrow_copy_constructible<error_type>::value) : base_type(static_cast<const base_type&>(rhs)){}
   template<bool Dummy = std::is_move_constructible<error_type>::value, std::enable_if_t<(Dummy, std::is_move_constructible<error_type>::value)>* = nullptr>
   expected(expected&& rhs)noexcept(std::is_nothrow_move_constructible<error_type>::value) : base_type(static_cast<base_type&&>(rhs)){}
@@ -1651,7 +1659,7 @@ constexpr expected<std::decay_t<T>> make_expected(T&& v)noexcept(std::is_nothrow
   return expected<std::decay_t<T>>(std::forward<T>(v));
 }
 inline expected<void> make_expected()noexcept{
-  return expected<void>();
+  return {};
 }
 template<typename T>
 inline expected<T> make_expected_from_current_exception()noexcept{

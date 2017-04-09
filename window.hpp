@@ -28,8 +28,15 @@ struct attribute<xywh<long>, ::RECT> {
 class window{
 	HWND hwnd;
 	static LRESULT CALLBACK proc_(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp){
-		const auto it = reinterpret_cast<window*>(GetWindowLongPtr(hwnd, 0));
-		return it ? it->procedure(msg, wp, lp) : DefWindowProc(hwnd, msg, wp, lp);
+		::SetLastError(0);
+		const auto it = reinterpret_cast<window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+		if(it == nullptr){
+			const auto le = ::GetLastError();
+			if(le != 0)
+				throw winapi_last_error_exception{_T("will::window::get_long_ptr")};
+			return ::DefWindowProc(hwnd, msg, wp, lp);
+		}
+		return it->procedure(msg, wp, lp);
 	}
 	static expected<RECT, winapi_last_error> _getwrect(HWND hwnd){RECT r;if(::GetWindowRect(hwnd, &r) != 0)return r;return make_unexpected<winapi_last_error>(_T(__FUNCTION__));}
 	static expected<RECT, winapi_last_error> _getcrect(HWND hwnd){RECT r;if(::GetClientRect(hwnd, &r) != 0)return r;return make_unexpected<winapi_last_error>(_T(__FUNCTION__));}
@@ -178,21 +185,35 @@ class window{
 		friend window;
 	};
 	template<typename T, typename U>friend struct will::two_dim::detail::attribute;
-	expected<LONG_PTR, winapi_last_error> set_long_ptr(LONG_PTR value)noexcept{
+	expected<LONG_PTR, winapi_last_error> set_long_ptr(int index, LONG_PTR value)noexcept{
 		::SetLastError(0);
-		const auto prev = ::SetWindowLongPtr(get(), 0, value);
+		const auto prev = ::SetWindowLongPtr(get(), index, value);
 		if(prev == 0){
 			const auto le = ::GetLastError();
 			if(le != 0)
 				return make_unexpected(winapi_last_error{_T(__FUNCTION__), le});
 		}
-		return prev;
+		return _setrect(get(), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED).map([&]{return prev;});
 	}
-	window(HWND hw)noexcept:hwnd{hw}{set_long_ptr(reinterpret_cast<LONG_PTR>(this));}
+	template<typename T>
+	expected<T, winapi_last_error> set_long_ptr(int index, T t)noexcept{return set_long_ptr(index, static_cast<LONG_PTR>(t)).map([](LONG_PTR ret){return static_cast<T>(ret);});}
+	expected<LONG_PTR, winapi_last_error> get_long_ptr(int index)const noexcept{
+		::SetLastError(0);
+		const auto ret = ::GetWindowLongPtr(get(), index);
+		if(ret == 0){
+			const auto le = ::GetLastError();
+			if(le != 0)
+				return make_unexpected(winapi_last_error{_T(__FUNCTION__), le});
+		}
+		return ret;
+	}
+	template<typename T>
+	expected<T, winapi_last_error> get_long_ptr(int index)const noexcept{return get_long_ptr(index).map([](LONG_PTR ret){return static_cast<T>(ret);});}
+	window(HWND hw):hwnd{hw}{+set_long_ptr(GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));}
 	static LRESULT wm_destroy(window&, WPARAM, LPARAM){::PostQuitMessage(0);return 0;}
 public:
 	window(const window&) = delete;
-	window(window&& other):hwnd{other.hwnd}{+set_long_ptr(reinterpret_cast<LONG_PTR>(this)); messenger = std::move(other.messenger); other.hwnd = nullptr;}
+	window(window&& other):hwnd{other.hwnd}{+set_long_ptr(GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this)); messenger = std::move(other.messenger); other.hwnd = nullptr;}
 	struct property{
 		DWORD _exstyle = 0;
 		LPCTSTR _window_name;
@@ -203,7 +224,7 @@ public:
 		LPVOID _param = nullptr;
 		property(){}
 #define PROPERTYDECL(name, type, membername) property& name(type t)&{membername = t;return *this;} property&& name(type t)&&{membername = t;return std::move(*this);}
-		PROPERTYDECL(extra_style, DWORD, _exstyle)
+		PROPERTYDECL(extended_style, DWORD, _exstyle)
 		PROPERTYDECL(title, LPCTSTR, _window_name)
 		PROPERTYDECL(style, DWORD, _style)
 		PROPERTYDECL(x, int, _x)
@@ -222,6 +243,7 @@ public:
 	public:
 		class property{
 			WNDCLASSEX wcx;
+			using procedure_type = LRESULT (CALLBACK*)(HWND, UINT, WPARAM, LPARAM);
 		public:
 			property():wcx(){wcx.cbSize = sizeof(WNDCLASSEX); wcx.lpfnWndProc = window::proc_; wcx.cbWndExtra = sizeof(window*); wcx.hCursor = *resource::load_cursor(IDC_ARROW);}
 	#define PROPERTYDECL(name, type, membername) property& name(type t)&{wcx.membername = t;return *this;} property&& name(type t)&&{wcx.membername = t;return std::move(*this);}
@@ -231,11 +253,8 @@ public:
 			PROPERTYDECL(background, HBRUSH, hbrBackground)
 			PROPERTYDECL(class_name, LPCTSTR, lpszClassName)
 			PROPERTYDECL(instance_handle, HINSTANCE, hInstance)
+			PROPERTYDECL(procedure, procedure_type, lpfnWndProc)
 	#undef  PROPERTYDECL
-			operator WNDCLASSEX&()&{return wcx;}
-			WNDCLASSEX& get()&{return wcx;}
-			operator WNDCLASSEX&&()&&{return std::move(wcx);}
-			WNDCLASSEX&& get()&&{return std::move(wcx);}
 			operator const WNDCLASSEX&()const&{return wcx;}
 			const WNDCLASSEX& get()const&{return wcx;}
 		};
@@ -343,6 +362,18 @@ public:
 	void _set_title_unsecured(LPCTSTR str){SetWindowText(get(), str);}
 	void _set_title_unsecured(const tstring& str){_set_title_unsecured(str.c_str());}
 	__declspec(property(get=_get_title_unsecured, put=_set_title_unsecured)) tstring title;
+	expected<DWORD, winapi_last_error> get_extended_style()const{return get_long_ptr<DWORD>(GWL_EXSTYLE);}
+	expected<DWORD, winapi_last_error> set_extended_style(DWORD ex_style){return set_long_ptr(GWL_EXSTYLE, ex_style);}
+	DWORD _get_extended_style_unsecured()const{return static_cast<DWORD>(::GetWindowLongPtr(get(), GWL_EXSTYLE));}
+	DWORD _set_extended_style_unsecured(DWORD ex_style)const{return static_cast<DWORD>(::SetWindowLongPtr(get(), GWL_EXSTYLE, ex_style));}
+	__declspec(property(get=_get_extended_style_unsecured, put=_set_extended_style_unsecured)) DWORD extended_style;
+	expected<DWORD, winapi_last_error> get_style()const{return get_long_ptr<DWORD>(GWL_STYLE);}
+	expected<DWORD, winapi_last_error> set_style(DWORD style){return set_long_ptr(GWL_STYLE, style);}
+	DWORD _get_style_unsecured()const{return static_cast<DWORD>(::GetWindowLongPtr(get(), GWL_STYLE));}
+	DWORD _set_style_unsecured(DWORD style)const{return static_cast<DWORD>(::SetWindowLongPtr(get(), GWL_STYLE, style));}
+	__declspec(property(get=_get_style_unsecured, put=_set_style_unsecured)) DWORD style;
+	expected<HINSTANCE, winapi_last_error> get_hinstance()const{return get_long_ptr(GWLP_HINSTANCE).map([](LONG_PTR t){return reinterpret_cast<HINSTANCE>(t);});}
+	expected<HINSTANCE, winapi_last_error> set_hinstance(HINSTANCE hinstance){return set_long_ptr(GWLP_HINSTANCE, reinterpret_cast<LONG_PTR>(hinstance)).map([](LONG_PTR t){return reinterpret_cast<HINSTANCE>(t);});}
 	static expected<window, winapi_last_error> create(const class_& c, const property& prop){
 		return c.create_window(prop);
 	}
