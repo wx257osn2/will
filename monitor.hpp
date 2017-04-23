@@ -1,5 +1,10 @@
 ﻿#pragma once
 #include"_windows.hpp"
+#if _WIN32_WINNT >= _WIN32_WINNT_WINBLUE
+#include<ShellScalingApi.h>
+#pragma comment(lib, "Shcore.lib")
+#include"com.hpp"
+#endif
 
 namespace will{
 
@@ -39,36 +44,36 @@ public:
 	static monitor from_window(HWND hwnd, default_to d = default_to::null){return monitor{::MonitorFromWindow(hwnd, static_cast<std::underlying_type_t<default_to>>(d))};}
 	template<typename Window, std::enable_if_t<!std::is_same<std::decay_t<Window>, HWND>::value>* = nullptr>
 	static monitor from_window(Window&& w, default_to d = default_to::null){return from_window(std::forward<Window>(w).get(), d);}
-	template<typename BOOL（HMONITOR，const_RECT＆）>
-	static expected<void, winapi_last_error> enum_display(BOOL（HMONITOR，const_RECT＆）&& f){
-		using F = BOOL（HMONITOR，const_RECT＆）;
+	template<typename bool（const_will_monitor＆，const_RECT＆）>
+	static expected<void, winapi_last_error> enum_display(bool（const_will_monitor＆，const_RECT＆）&& f){
+		using F = bool（const_will_monitor＆，const_RECT＆）;
 		if(::EnumDisplayMonitors(nullptr, nullptr, [](HMONITOR hm, HDC, LPRECT lpr, LPARAM f)->BOOL{
-			return (std::is_pointer<F>::value ? reinterpret_cast<F>(f) : *reinterpret_cast<F*>(f))(monitor{hm}, *lpr);
-		}, std::is_pointer<F>::value ? reinterpret_cast<LPARAM>(f) : reinterpret_cast<LPARAM>(&f)) != 0)return {};
+			return (*reinterpret_cast<F*>(f))(monitor{hm}, *lpr) ? TRUE : FALSE;
+		}, reinterpret_cast<LPARAM>(&f)) != 0)return {};
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	}
-	template<typename BOOL（HMONITOR，HDC，const_RECT＆）>
-	static bool enum_display(BOOL（HMONITOR，HDC，const_RECT＆）&& f, HDC hdc){
-		using F = BOOL（HMONITOR，HDC，const_RECT＆）;
+	template<typename bool（const_will_monitor＆，HDC，const_RECT＆）>
+	static bool enum_display(bool（const_will_monitor＆，HDC，const_RECT＆）&& f, HDC hdc){
+		using F = bool（const_will_monitor＆，HDC，const_RECT＆）;
 		if(::EnumDisplayMonitors(hdc, nullptr, [](HMONITOR hm, HDC hdc, LPRECT lpr, LPARAM f)->BOOL{
-			return (std::is_pointer<F>::value ? reinterpret_cast<F>(f) : *reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr);
-		}, std::is_pointer<F>::value ? reinterpret_cast<LPARAM>(f) : reinterpret_cast<LPARAM>(&f)) != 0)return {};
+			return (*reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr) : TRUE : FALSE;
+		}, reinterpret_cast<LPARAM>(&f)) != 0)return {};
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	}
-	template<typename BOOL（HMONITOR，const_RECT＆）>
-	static bool enum_display(BOOL（HMONITOR，const_RECT＆）&& f, const RECT& r){
-		using F = BOOL（HMONITOR，const_RECT＆）;
+	template<typename bool（const_will_monitor＆，const_RECT＆）>
+	static bool enum_display(bool（const_will_monitor＆，const_RECT＆）&& f, const RECT& r){
+		using F = bool（const_will_monitor＆，const_RECT＆）;
 		if(::EnumDisplayMonitors(nullptr, &r, [](HMONITOR hm, HDC, LPRECT lpr, LPARAM f)->BOOL{
-			return (std::is_pointer<F>::value ? reinterpret_cast<F>(f) : *reinterpret_cast<F*>(f))(monitor{hm}, *lpr);
-		}, std::is_pointer<F>::value ? reinterpret_cast<LPARAM>(f) : reinterpret_cast<LPARAM>(&f)) != 0)return {};
+			return (*reinterpret_cast<F*>(f))(monitor{hm}, *lpr) : TRUE : FALSE;
+		}, reinterpret_cast<LPARAM>(&f)) != 0)return {};
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	}
-	template<typename BOOL（HMONITOR，HDC，const_RECT＆）>
-	static bool enum_display(BOOL（HMONITOR，HDC，const_RECT＆）&& f, HDC hdc, const RECT& r){
-		using F = BOOL（HMONITOR，HDC，const_RECT＆）;
+	template<typename bool（const_will_monitor＆，HDC，const_RECT＆）>
+	static bool enum_display(bool（const_will_monitor＆，HDC，const_RECT＆）&& f, HDC hdc, const RECT& r){
+		using F = bool（const_will_monitor＆，HDC，const_RECT＆）;
 		if(::EnumDisplayMonitors(hdc, &r, [](HMONITOR hm, HDC hdc, LPRECT lpr, LPARAM f)->BOOL{
-			return (std::is_pointer<F>::value ? reinterpret_cast<F>(f) : *reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr);
-		}, std::is_pointer<F>::value ? reinterpret_cast<LPARAM>(f) : reinterpret_cast<LPARAM>(&f)) != 0)return {};
+			return (*reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr) : TRUE : FALSE;
+		}, reinterpret_cast<LPARAM>(&f)) != 0)return {};
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	}
 	expected<::MONITORINFO, winapi_last_error> get_info()const{
@@ -77,6 +82,15 @@ public:
 	expected<::MONITORINFOEX, winapi_last_error> get_info_ex()const{
 		return get_info_impl<::MONITORINFOEX>();
 	}
+#if _WIN32_WINNT >= _WIN32_WINNT_WINBLUE
+	expected<two_dim::xy<UINT>, hresult_error> get_dpi(MONITOR_DPI_TYPE type)const{
+		two_dim::xy<UINT> xy;
+		const auto hr = ::GetDpiForMonitor(h, type, &xy.x, &xy.y);
+		if(SUCCEEDED(hr))
+			return xy;
+		return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
+	}
+#endif
 };
 
 }

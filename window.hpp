@@ -403,8 +403,8 @@ public:
 	device_context_handle get_dc(){return device_context_handle{*this};}
 	device_context_handle get_device_context_handle()const{return device_context_handle{*this};}
 	bool is_active()const noexcept{return ::GetActiveWindow() == hwnd;}
-	void show(){
-		::ShowWindow(hwnd, SW_SHOW);
+	void show(int cmd = SW_SHOW){
+		::ShowWindow(hwnd, cmd);
 		::UpdateWindow(hwnd);
 	}
 	void hide(){::ShowWindow(hwnd, SW_HIDE);}

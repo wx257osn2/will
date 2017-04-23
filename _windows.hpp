@@ -32,6 +32,8 @@ inline namespace tchar{
 	using tstringstream = std::basic_stringstream<TCHAR>;
 	template<typename T>
 	tstring to_tstring(T&& t){
+		using std::to_string;
+		using std::to_wstring;
 		return
 #ifdef UNICODE
 			to_wstring

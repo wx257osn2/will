@@ -1555,6 +1555,9 @@ public:
 	using effect =  device::effect;
 	using builtin_effects = device::builtin_effects;
 	using bitmap_render_target =  device::bitmap_render_target;
+	expected<d2d&, hresult_error> reload_system_metrics()& {const auto hr = (*this)->ReloadSystemMetrics();if(SUCCEEDED(hr))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
+	expected<d2d , hresult_error> reload_system_metrics()&&{const auto hr = (*this)->ReloadSystemMetrics();if(SUCCEEDED(hr))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
+	expected<two_dim::xy<float>, hresult_error> get_desktop_dpi(){return reload_system_metrics().map([&](auto&& t){two_dim::xy<float> ddpi;(*this)->GetDesktopDpi(&ddpi.x, &ddpi.y);return ddpi;});}
 	template<typename RandomAccessableContainer>
 	expected<stroke_style, hresult_error> create_stroke_style(const D2D1_STROKE_STYLE_PROPERTIES1& prop, RandomAccessableContainer&& dashes)const{
 		return detail::convert_to_rich_interface<stroke_style>(com_create_resource<ID2D1StrokeStyle1>([&](ID2D1StrokeStyle1** ptr){return (*this)->CreateStrokeStyle(prop, dashes.data(), static_cast<UINT32>(dashes.size()), ptr);}), _T(__FUNCTION__));
