@@ -1,3 +1,7 @@
+//Copyright (C) 2014-2017 I
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #pragma once
 #include<objbase.h>
 #include<cassert>
@@ -9,11 +13,23 @@ namespace will{
 class hresult_error{
 	::LPCTSTR func_name;
 	::HRESULT hr;
+#ifdef WILL_USE_STACK_TRACE
+	std::vector<void*> sf;
+#define WILL_WLE_NOEXCEPT
+#else
+#define WILL_WLE_NOEXCEPT noexcept
+#endif
 public:
-	hresult_error(::LPCTSTR fn, ::HRESULT ec)noexcept:func_name(fn), hr(ec){}
-	hresult_error(const hresult_error&)noexcept = default;
+	hresult_error(::LPCTSTR fn, ::HRESULT ec)noexcept:func_name(fn), hr(ec){
+#ifdef WILL_USE_STACK_TRACE
+		auto csf = capture_stack_back_trace(1, 62);
+		if(csf)
+			sf = std::move(*csf);
+#endif
+	}
+	hresult_error(const hresult_error&)WILL_WLE_NOEXCEPT = default;
 	hresult_error(hresult_error&&)noexcept = default;
-	hresult_error& operator=(const hresult_error&)noexcept = default;
+	hresult_error& operator=(const hresult_error&)WILL_WLE_NOEXCEPT = default;
 	hresult_error& operator=(hresult_error&&)noexcept = default;
 	::LPCTSTR get_func_name()const noexcept{return func_name;}
 	::HRESULT get_error_code()const noexcept{return hr;}
@@ -23,12 +39,18 @@ public:
 			return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 		return {ptr};
 	}
+#ifdef WILL_USE_STACK_TRACE
+	will::stack_frames stack_frames(symbol_handler&& symh)const noexcept{
+		return will::stack_frames::to_stack_frames(sf)(std::move(symh));
+	}
+#endif
+#undef WILL_WLE_NOEXCEPT
 };
 
-class hresult_error_exception : public std::runtime_error{
+class hresult_error_exception : public will::runtime_error{
 	hresult_error e;
 public:
-	hresult_error_exception(const hresult_error& err):std::runtime_error(
+	hresult_error_exception(const hresult_error& err):runtime_error(
 #ifdef UNICODE
 		to_string(
 #endif
@@ -41,7 +63,33 @@ public:
 	::LPCTSTR get_func_name()const noexcept{return e.get_func_name();}
 	::HRESULT get_error_code()const noexcept{return e.get_error_code();}
 	expected<formatted_message, winapi_last_error> get_error_message()const noexcept{return e.get_error_message();}
-	hresult_error value()const noexcept{return e;}
+	const hresult_error& value()const noexcept{return e;}
+	hresult_error value()noexcept{return std::move(e);}
+#ifdef WILL_USE_STACK_TRACE
+	virtual const char* what()const noexcept{
+		if(cache.empty())
+			try{
+				auto symh = will::symbol_handler::create();
+				if(!symh)
+					return message();
+				auto stack_frame = value().stack_frames(std::move(*symh));
+				if(stack_frame.empty())
+					return message();
+				std::stringstream ss;
+				ss << runtime_error::what() << '\n';
+				ss << "------------------------------\n"
+				      "STACK BACK TRACE (INNER ERROR)\n"
+				      "------------------------------\n";
+				ss << stack_frame << std::endl;
+				cache = std::move(ss.str());
+			}catch(...){
+				return message();
+			}
+		return cache.c_str();
+	}
+protected:
+	virtual const char* exception_name()const noexcept{return "will::hresult_error";}
+#endif
 };
 
 template<>
@@ -56,7 +104,7 @@ struct error_traits<hresult_error>{
 	static hresult_error make_error_from_current_exception()try{
 		throw;
 	}catch(hresult_error_exception& e){
-		return e.value();
+		return std::move(e.value());
 	}catch(...){
 		return hresult_error{_T("(no_error)"), 0};
 	}
@@ -74,10 +122,10 @@ public:
 		multi  = COINIT_MULTITHREADED
 	};
 	static expected<com_apartment, hresult_error> initialize(thread t){
-		const auto hr = ::CoInitializeEx(nullptr, static_cast<COINIT>(t));
+		const auto hr = ::CoInitializeEx(nullptr, static_cast<COINIT>(t)|COINIT_DISABLE_OLE1DDE);
 		if(SUCCEEDED(hr))
 			return com_apartment{true};
-		return make_unexpected(hresult_error{_T(__FUNCTION__), hr});
+		return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 	}
 	com_apartment(thread t):com_apartment{+initialize(t)}{}
 	~com_apartment(){if(scope)::CoUninitialize();}
@@ -99,8 +147,8 @@ inline expected<T*, HRESULT> query_interface(U* u){
 class bstr{
 	BSTR bs;
 public:
-	struct sys_alloc_string_failed:std::runtime_error{
-		using std::runtime_error::runtime_error;
+	struct sys_alloc_string_failed:will::runtime_error{
+		using will::runtime_error::runtime_error;
 	};
 	static expected<bstr> make(LPCWSTR str)noexcept{
 		auto ret = ::SysAllocString(str);
@@ -367,7 +415,7 @@ class variant{
 		return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 	}
 public:
-	struct bad_cast:std::runtime_error{using std::runtime_error::runtime_error;};
+	struct bad_cast:will::runtime_error{using will::runtime_error::runtime_error;};
 	using bool_ = variant_bool;
 	template<typename U>
 	static constexpr VARTYPE type_to_vt()noexcept{return detail::type_to_vt<U>();}

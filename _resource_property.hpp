@@ -1,3 +1,7 @@
+//Copyright (C) 2014-2017 I
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #pragma once
 #include<utility>
 #include<type_traits>
@@ -26,11 +30,15 @@ public:
 	void swap(resource<T>& other)noexcept{res.swap(other.res);}
 };
 
-template<typename>struct get_interface;
-template<typename T>struct get_interface<resource<T>>{using type = T;};
+struct get_interface_impl{
+	template<typename T>static T type(resource<T>);
+	template<typename T, std::enable_if_t<std::is_base_of<resource<std::remove_pointer_t<decltype(std::declval<T>().get())>>, T>::value, std::nullptr_t> = nullptr>static std::remove_pointer_t<decltype(std::declval<T>().get())> type(T);
+};
+template<typename T>
+using get_interface = decltype(get_interface_impl::type(std::declval<T>()));
 template<typename T, std::enable_if_t<std::is_base_of<resource<std::remove_pointer_t<decltype(std::declval<T>().get())>>, T>::value>* = nullptr>
 inline expected::expected<T, hresult_error> convert_to_rich_interface(expected::expected<decltype(std::declval<T>().get()), HRESULT>&& e, const TCHAR* f){
-	using I = std::remove_pointer_t<decltype(std::declval<T>().get())>;
+	using I = get_interface<T>;
 	return e.map([](I* t){return T{std::move(t)};}).emap([&](HRESULT e){return make_unexpected<hresult_error>(f, e);});
 }
 

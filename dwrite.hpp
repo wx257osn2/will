@@ -1,8 +1,14 @@
+//Copyright (C) 2014-2017 I
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #pragma once
 #include"com.hpp"
 #include"_windows.hpp"
 #include<dwrite_1.h>
 #pragma comment(lib, "DWrite.lib")
+#include<vector>
+#include<utility>
 namespace will{
 class dwrite : public detail::resource<IDWriteFactory1>{
 	using resource::resource;
@@ -180,7 +186,7 @@ public:
 		DWRITE_RENDERING_MODE get_rendering_mode()const{return (*this)->GetRenderingMode();}
 		FLOAT get_grayscale_enhanced_contrast()const{return (*this)->GetGrayscaleEnhancedContrast();}
 	};
-	expected<format, hresult_error> create_format(const wchar_t* fontname, FLOAT size, DWRITE_FONT_WEIGHT weight= DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE style = DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL, const wchar_t* locale = L"ja-jp"){
+	expected<format, hresult_error> create_format(const wchar_t* fontname, FLOAT size, DWRITE_FONT_WEIGHT weight = DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE style = DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL, const wchar_t* locale = L"ja-jp"){
 		return detail::convert_to_rich_interface<format>(com_create_resource<IDWriteTextFormat>([&](IDWriteTextFormat** ptr){return (*this)->CreateTextFormat(fontname, nullptr, weight, style, stretch, size, locale, ptr);}), _T(__FUNCTION__));
 	}
 	expected<format, hresult_error> create_format(const wchar_t* fontname, FLOAT size, IDWriteFontCollection* collection, DWRITE_FONT_WEIGHT weight= DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE style = DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL, const wchar_t* locale = L"ja-jp"){

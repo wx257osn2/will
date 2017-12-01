@@ -1,9 +1,13 @@
+//Copyright (C) 2014-2017 I
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #pragma once
 #include"com.hpp"
 #include"_2dim.hpp"
 #include"_resource_property.hpp"
 #include"dwrite.hpp"
-#include<dxgi1_2.h>
+#include"dxgi.hpp"
 #include<wincodec.h>
 #include<d2d1_1.h>
 #pragma comment(lib, "d2d1.lib")
@@ -186,7 +190,13 @@ public:
 			constexpr operator D2D1_SHADOW_OPTIMIZATION()const noexcept{return D2D1_SHADOW_OPTIMIZATION_QUALITY;}
 		}static constexpr quality = {};
 	};
-	explicit d2d(D2D1_FACTORY_TYPE t = D2D1_FACTORY_TYPE_MULTI_THREADED):d2d{+create_factory(t)}{}
+	explicit d2d(D2D1_FACTORY_TYPE t = D2D1_FACTORY_TYPE_MULTI_THREADED, D2D1_DEBUG_LEVEL dlv =
+#ifdef _DEBUG
+		D2D1_DEBUG_LEVEL_WARNING
+#else
+		D2D1_DEBUG_LEVEL_NONE
+#endif
+	):d2d{+create_factory(t, dlv)}{}
 	struct stroke_style : d2d_resource<ID2D1StrokeStyle1>{
 		using d2d_resource::d2d_resource;
 		struct property : detail::property<D2D1_STROKE_STYLE_PROPERTIES1>{
@@ -340,14 +350,24 @@ public:
 			gradient_stop_collection get_gradient_stop_collection()const{ID2D1GradientStopCollection1* ptr;(*this)->GetGradientStopCollection(reinterpret_cast<ID2D1GradientStopCollection**>(&ptr));return gradient_stop_collection{std::move(ptr)};}
 		};
 		class bitmap : public d2d_resource<ID2D1Bitmap1>{
-			class copy_impl{
-			protected:
-				const context& devcont;
-				const bitmap& bm;
-			public:
-				copy_impl(const context& devcont, const bitmap& bm):devcont(devcont), bm(bm){}
-				friend bitmap;
-			};
+			expected<void, hresult_error> copy_from_bitmap(const ::D2D1_POINT_2U* dest_point, ID2D1Bitmap1* bmp, const ::D2D1_RECT_U* src_rect){
+				const auto hr = (*this)->CopyFromBitmap(dest_point, bmp, src_rect);
+				if(FAILED(hr))
+					return make_unexpected<hresult_error>(_T("__FUNCTION__"), hr);
+				return {};
+			}
+			expected<void, hresult_error> copy_from_render_target(const ::D2D1_POINT_2U* dest_point, ::ID2D1RenderTarget* rt, const ::D2D1_RECT_U* src_rect){
+				const auto hr = (*this)->CopyFromRenderTarget(dest_point, rt, src_rect);
+				if(FAILED(hr))
+					return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
+				return {};
+			}
+			expected<void, hresult_error> copy_from_memory(const ::D2D1_RECT_U* dest_rect, const void* src_data, ::UINT32 pitch){
+				const auto hr = (*this)->CopyFromMemory(dest_rect, src_data, pitch);
+				if(FAILED(hr))
+					return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
+				return {};
+			}
 		public:
 			using d2d_resource::d2d_resource;
 			class property : public detail::property<D2D1_BITMAP_PROPERTIES1>{
@@ -376,8 +396,8 @@ public:
 		#undef  PROPERTYDECL
 			};
 			struct memory_data{
-				const void* data;
 				UINT32 pitch;
+				const void* data;
 			};
 			struct region{
 				const bitmap& bm;
@@ -409,9 +429,28 @@ public:
 				lazy_manipulator& rotate_arbitary_axis(float x, float y, float z, float degrees){return perspective_transform(D2D1::Matrix4x4F::RotationArbitraryAxis(x, y, z, degrees));}
 				expected<bitmap, hresult_error> freeze(const context& c)const{return c.prerender([&](auto&& r){r.bitmap(bm, 1.f, D2D1_INTERPOLATION_MODE_LINEAR, mat);});}
 			};
+			class scoped_readonly_mapped_rect : public ::D2D1_MAPPED_RECT{
+				const bitmap& bm;
+				scoped_readonly_mapped_rect(::D2D1_MAPPED_RECT&& mr, const bitmap& bitm)noexcept: ::D2D1_MAPPED_RECT{std::move(mr)}, bm{bitm}{}
+			public:
+				scoped_readonly_mapped_rect(const bitmap& bitm): ::D2D1_MAPPED_RECT(+bitm.map_read()), bm{bitm}{}
+				scoped_readonly_mapped_rect(scoped_readonly_mapped_rect&& t): ::D2D1_MAPPED_RECT{std::move(static_cast<::D2D1_MAPPED_RECT&>(t))}, bm{t.bm}{t.bits = nullptr;}
+				~scoped_readonly_mapped_rect()noexcept{if(bits)bm.unmap();}
+				operator const memory_data&()const{return *reinterpret_cast<const memory_data*>(this);}
+				friend bitmap;
+			};
+			class scoped_mapped_rect : public ::D2D1_MAPPED_RECT{
+				bitmap& bm;
+				scoped_mapped_rect(::D2D1_MAPPED_RECT&& s, bitmap& bitm)noexcept: ::D2D1_MAPPED_RECT{std::move(s)}, bm{bitm}{}
+			public:
+				scoped_mapped_rect(bitmap& bitm, std::underlying_type_t<::D2D1_MAP_OPTIONS> option): ::D2D1_MAPPED_RECT(+bitm.map(option)), bm{bitm}{}
+				scoped_mapped_rect(scoped_mapped_rect&& t): ::D2D1_MAPPED_RECT{std::move(static_cast<::D2D1_MAPPED_RECT&>(t))}, bm{t.bm}{t.bits = nullptr;}
+				~scoped_mapped_rect()noexcept{if(bits)bm.unmap();}
+				operator const memory_data&()const{return *reinterpret_cast<const memory_data*>(this);}
+				friend bitmap;
+			};
 			bitmap(bitmap&&) = default;
-			bitmap(const copy_impl& c):bitmap{[](const copy_impl& c){const auto dpi = c.bm.get_dpi();return std::move(+c.devcont.create_bitmap(c.bm.get_pixel_size(), D2D1::BitmapProperties1(c.bm.get_bitmap_options(), c.bm.get_pixel_format(), dpi.x, dpi.y, c.bm.get_color_context())) = c);}(c)}{}
-			copy_impl copy(const context& c)const{return {c, *this};}
+			expected<bitmap, hresult_error> clone(const context& devcont)const{const auto dpi = get_dpi();return devcont.create_bitmap(get_pixel_size(), D2D1::BitmapProperties1(get_bitmap_options(), get_pixel_format(), dpi.x, dpi.y, get_color_context())).bind([&](will::d2d::bitmap&& bm){return bm.copy_from(*this).map([&](){return std::move(bm);});});}
 			lazy_manipulator perspective_transform(const D2D1::Matrix4x4F& m = {}){return lazy_manipulator{*this}.perspective_transform(m);}
 			lazy_manipulator scale_x(float x = 1.f)const{return lazy_manipulator{*this}.scale_x(x);}
 			lazy_manipulator scale_y(float y = 1.f)const{return lazy_manipulator{*this}.scale_y(y);}
@@ -435,16 +474,45 @@ public:
 			D2D1_PIXEL_FORMAT get_pixel_format()const{return (*this)->GetPixelFormat();}
 			D2D1_BITMAP_OPTIONS get_bitmap_options()const{return (*this)->GetOptions();}
 			ID2D1ColorContext* get_color_context()const{ID2D1ColorContext* ptr;(*this)->GetColorContext(&ptr);return ptr;}
+			expected<will::dxgi::surface, hresult_error> get_surface()const{return com_create_resource<IDXGISurface>([&](IDXGISurface** ptr){return (*this)->GetSurface(ptr);}).emap([](HRESULT hr){return make_unexpected<hresult_error>(_T("will::d2d::bitmap::get_surface"), hr);}).bind([](IDXGISurface* ptr){return com_ptr<IDXGISurface>{std::move(ptr)}.as<IDXGISurface2>();}).map([](com_ptr<IDXGISurface2>&& ptr){return will::dxgi::surface{std::move(ptr)};});}
+			expected<::D2D1_MAPPED_RECT, hresult_error> map(std::underlying_type_t<::D2D1_MAP_OPTIONS> option){::D2D1_MAPPED_RECT rect;const auto hr = (*this)->Map(static_cast<::D2D1_MAP_OPTIONS>(option), &rect);if(FAILED(hr))return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);return rect;}
+			expected<::D2D1_MAPPED_RECT, hresult_error> map_read()const{::D2D1_MAPPED_RECT rect;const auto hr = (*this)->Map(::D2D1_MAP_OPTIONS_READ, &rect);if(FAILED(hr))return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);return rect;}
+			expected<void, hresult_error> unmap()const{const auto hr = (*this)->Unmap();if(FAILED(hr))return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);return {};}
+			expected<scoped_readonly_mapped_rect, hresult_error> scoped_map()const{return map_read().map([&](::D2D1_MAPPED_RECT&& m){return scoped_readonly_mapped_rect{std::move(m), *this};});}
+			expected<scoped_mapped_rect, hresult_error> scoped_map(std::underlying_type_t<::D2D1_MAP_OPTIONS> option){return map(option).map([&](::D2D1_MAPPED_RECT&& m){return scoped_mapped_rect{std::move(m), *this};});}
+			expected<void, hresult_error> copy_from(ID2D1Bitmap1* bmp){return copy_from_bitmap(nullptr, bmp, nullptr);}
+			expected<void, hresult_error> copy_from(ID2D1Bitmap1* bmp, const ::D2D1_RECT_U& src_rect){return copy_from_bitmap(nullptr, bmp, &src_rect);}
+			expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, ID2D1Bitmap1* bmp){return copy_from_bitmap(&dest_point, bmp, nullptr);}
+			expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, ID2D1Bitmap1* bmp, const ::D2D1_RECT_U& src_rect){return copy_from_bitmap(&dest_point, bmp, &src_rect);}
+			expected<void, hresult_error> copy_from(const bitmap& bmp){return copy_from(bmp.get());}
+			expected<void, hresult_error> copy_from(const bitmap& bmp, const ::D2D1_RECT_U& src_rect){return copy_from(bmp.get(), src_rect);}
+			expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, const bitmap& bmp){return copy_from(dest_point, bmp.get());}
+			expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, const bitmap& bmp, const ::D2D1_RECT_U& src_rect){return copy_from(dest_point, bmp.get(), src_rect);}
+			expected<void, hresult_error> copy_from(ID2D1RenderTarget* rt){return copy_from_render_target(nullptr, rt, nullptr);}
+			expected<void, hresult_error> copy_from(ID2D1RenderTarget* rt, const ::D2D1_RECT_U& src_rect){return copy_from_render_target(nullptr, rt, &src_rect);}
+			expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, ID2D1RenderTarget* rt){return copy_from_render_target(&dest_point, rt, nullptr);}
+			expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, ID2D1RenderTarget* rt, const ::D2D1_RECT_U& src_rect){return copy_from_render_target(&dest_point, rt, &src_rect);}
+			template<typename I>expected<void, hresult_error> copy_from(const render_target<I>& rt){return copy_from(rt.get());}
+			template<typename I>expected<void, hresult_error> copy_from(const render_target<I>& rt, const ::D2D1_RECT_U& src_rect){return copy_from(rt.get(), src_rect);}
+			template<typename I>expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, const render_target<I>& rt){return copy_from(dest_point, rt.get());}
+			template<typename I>expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, const render_target<I>& rt, const ::D2D1_RECT_U& src_rect){return copy_from(dest_point, rt.get(), src_rect);}
+			expected<void, hresult_error> copy_from(const void* src_data, UINT32 pitch){return copy_from_memory(nullptr, src_data, pitch);}
+			expected<void, hresult_error> copy_from(const ::D2D1_RECT_U& dest_rect, const void* src_data, UINT32 pitch){return copy_from_memory(&dest_rect, src_data, pitch);}
+			expected<void, hresult_error> copy_from(const region& r){return copy_from(r.bm, r.rect);}
+			expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, const region& r){return copy_from(dest_point, r.bm, r.rect);}
+			template<typename I>expected<void, hresult_error> copy_from(const typename render_target<I>::region& r){return copy_from(r.rt, r.rect);}
+			template<typename I>expected<void, hresult_error> copy_from(const ::D2D1_POINT_2U& dest_point, const typename render_target<I>::region& r){return copy_from(dest_point, r.rt, r.rect);}
+			expected<void, hresult_error> copy_from(const memory_data& data){return copy_from(data.data, data.pitch);}
+			expected<void, hresult_error> copy_from(const ::D2D1_RECT_U& dest_rect, const memory_data& data){return copy_from(dest_rect, data.data, data.pitch);}
 			bitmap& operator=(bitmap&&) = default;
 			template<typename T, std::enable_if_t<!std::is_base_of<ID2D1RenderTarget, std::remove_pointer_t<std::decay_t<T>>>::value>* = nullptr>
 			bitmap& operator=(const T& t){return *this = t.get();}
-			bitmap& operator=(ID2D1Bitmap1* bm){(*this)->CopyFromBitmap(nullptr, bm, nullptr);return *this;}
-			bitmap& operator=(ID2D1RenderTarget* rt){(*this)->CopyFromRenderTarget(nullptr, rt, nullptr);return *this;}
-			bitmap& operator=(const copy_impl& c){return *this = c.bm.get();}
-			bitmap& operator=(const region& r){(*this)->CopyFromBitmap(nullptr, r.bm.get(), &r.rect);return *this;}
+			bitmap& operator=(ID2D1Bitmap1* bm){+copy_from(bm);return *this;}
+			bitmap& operator=(ID2D1RenderTarget* rt){+copy_from(rt);return *this;}
+			bitmap& operator=(const region& r){+copy_from(r);return *this;}
 			template<typename I>
-			bitmap& operator=(const typename render_target<I>::region& r){(*this)->CopyFromRenderTarget(nullptr, r.rt, &r.rect);return *this;}
-			bitmap& operator=(const memory_data& data){(*this)->CopyFromMemory(nullptr, data.data, data.pitch);return *this;}
+			bitmap& operator=(const typename render_target<I>::region& r){+copy_from(r);return *this;}
+			bitmap& operator=(const memory_data& data){+copy_from(data);return *this;}
 		};
 		class bitmap_brush : public brush<ID2D1BitmapBrush1>{
 			class extend_mode_impl{
@@ -481,7 +549,7 @@ public:
 				ID2D1Image* get()const{ID2D1Image* ptr;eff->GetInput(index, &ptr);return ptr;}
 			public:
 				io_impl(UINT32 i, effect& eff):index(i), eff(eff){}
-				io_impl& operator|=(ID2D1Image* input){eff->SetInput(index, input); return *this;}
+				io_impl& operator|=(ID2D1Bitmap1* input){eff->SetInput(index, input); return *this;}
 				io_impl& operator|=(ID2D1Effect* input){eff->SetInputEffect(index, input); return *this;}
 				template<typename Input>
 				io_impl& operator|=(Input&& input){return *this |= std::forward<Input>(input).get();}
@@ -1294,7 +1362,7 @@ public:
 			}
 		};
 		explicit device(IDXGIDevice* dev):device{+create(dev)}{}
-		device(IDXGIDevice* dev, const D2D1_CREATION_PROPERTIES& prop):device{+create(dev, prop)}{}
+		explicit device(IDXGIDevice* dev, const D2D1_CREATION_PROPERTIES& prop):device{+create(dev, prop)}{}
 		template<typename Device>
 		explicit device(Device&& dev):device{std::forward<Device>(dev)}{}
 		template<typename Device>
@@ -1487,7 +1555,7 @@ public:
 			expected<bitmap, hresult_error> create_bitmap(IDXGISurface2* surf, const D2D1_BITMAP_PROPERTIES1& prop)const{
 				return detail::convert_to_rich_interface<bitmap>(com_create_resource<ID2D1Bitmap1>([&](ID2D1Bitmap1** x){return (*this)->CreateBitmapFromDxgiSurface(surf, prop, x);}), _T(__FUNCTION__));
 			}
-			template<typename Source, std::enable_if_t<!std::is_base_of<IWICBitmapSource, std::remove_pointer_t<std::decay_t<Source>>>::value>* = nullptr>
+			template<typename Source, std::enable_if_t<!std::is_base_of<IWICBitmapSource, std::remove_pointer_t<std::decay_t<Source>>>::value && !std::is_same_v<D2D1_SIZE_U, std::decay_t<Source>>>* = nullptr>
 			expected<bitmap, hresult_error> create_bitmap(Source&& src)const{
 				return create_bitmap(std::forward<Source>(src).get());
 			}
@@ -1576,11 +1644,17 @@ public:
 	expected<drawing_state_block, hresult_error> create_drawing_state_block(DWriteRenderingParams&& p)const{return create_drawing_state_block(std::forward<DWriteRenderingParams>(p).get());}
 	expected<drawing_state_block, hresult_error> create_drawing_state_block(const D2D1_DRAWING_STATE_DESCRIPTION& d)const{return detail::convert_to_rich_interface<drawing_state_block>(com_create_resource<ID2D1DrawingStateBlock>([&](ID2D1DrawingStateBlock** ptr){return (*this)->CreateDrawingStateBlock(d, ptr);}), _T(__FUNCTION__));}
 	expected<drawing_state_block, hresult_error> create_drawing_state_block()const{return detail::convert_to_rich_interface<drawing_state_block>(com_create_resource<ID2D1DrawingStateBlock>([&](ID2D1DrawingStateBlock** ptr){return (*this)->CreateDrawingStateBlock(ptr);}), _T(__FUNCTION__));}
-	expected<device, hresult_error> create_device(IDXGIDevice2* dxgi_device)const{return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return (*this)->CreateDevice(dxgi_device, ptr);}), _T(__FUNCTION__));}
+	expected<device, hresult_error> create_device(IDXGIDevice* dxgi_device)const{return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return (*this)->CreateDevice(dxgi_device, ptr);}), _T(__FUNCTION__));}
 	template<typename DXGIDevice>
 	expected<device, hresult_error> create_device(DXGIDevice&& dev)const{return create_device(std::forward<DXGIDevice>(dev).get());}
-	static expected<d2d, hresult_error> create_factory(D2D1_FACTORY_TYPE t = D2D1_FACTORY_TYPE_MULTI_THREADED){
-		return detail::convert_to_rich_interface<d2d>(com_create_resource<ID2D1Factory1>([&](ID2D1Factory1** ptr){return D2D1CreateFactory(t, ptr);}), _T(__FUNCTION__));
+	static expected<d2d, hresult_error> create_factory(D2D1_FACTORY_TYPE t = D2D1_FACTORY_TYPE_MULTI_THREADED, D2D1_DEBUG_LEVEL dlv =
+#ifdef _DEBUG
+		D2D1_DEBUG_LEVEL_WARNING
+#else
+		D2D1_DEBUG_LEVEL_NONE
+#endif
+	){
+		return detail::convert_to_rich_interface<d2d>(com_create_resource<ID2D1Factory1>([&](ID2D1Factory1** ptr){return ::D2D1CreateFactory(t, {dlv}, ptr);}), _T(__FUNCTION__));
 	}
 };
 namespace two_dim{

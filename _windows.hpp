@@ -1,8 +1,14 @@
+//Copyright (C) 2014-2017 I
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #pragma once
 #include<cstddef>
 #include<utility>
 #include<chrono>
+#include<thread>
 #include<string>
+#include<string_view>
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -12,10 +18,9 @@
 #include<windows.h>
 #include<tchar.h>
 #include"_expected.hpp"
+#include"_exception_fwd.hpp"
 
 namespace will{
-
-inline void sleep(std::chrono::milliseconds ms)noexcept{::Sleep(static_cast<DWORD>(ms.count()));}
 
 inline namespace tchar{
 	template<std::size_t N>
@@ -30,6 +35,7 @@ inline namespace tchar{
 	}
 	using tstring = std::basic_string<TCHAR>;
 	using tstringstream = std::basic_stringstream<TCHAR>;
+	using tstring_view = std::basic_string_view<TCHAR>;
 	template<typename T>
 	tstring to_tstring(T&& t){
 		using std::to_string;
@@ -57,17 +63,43 @@ public:
 	::LPCTSTR get()const{return ptr;}
 };
 
-template<>struct error_traits<class winapi_last_error>;
+class winapi_last_error;
+
+template<>
+struct error_traits<winapi_last_error>{
+	static constexpr bool can_make_error_from_current_exception = true;
+	static winapi_last_error make_error(const winapi_last_error& e)noexcept;
+	static winapi_last_error make_error(::DWORD ec);
+	static winapi_last_error make_error_from_current_exception();
+	[[noreturn]] static void rethrow(const winapi_last_error& e);
+};
+
+#ifdef WILL_USE_STACK_TRACE
+inline expected<std::vector<void*>> capture_stack_back_trace(DWORD, DWORD)noexcept;
+#endif
 
 class winapi_last_error{
 	::LPCTSTR func_name;
 	::DWORD le;
+#ifdef WILL_USE_STACK_TRACE
+	std::vector<void*> sf;
+#define WILL_WLE_NOEXCEPT
+#else
+#define WILL_WLE_NOEXCEPT noexcept
+#endif
 public:
-	winapi_last_error(::LPCTSTR fn)noexcept:func_name(fn), le(::GetLastError()){}
-	winapi_last_error(::LPCTSTR fn, ::DWORD ec)noexcept:func_name(fn), le(ec){}
-	winapi_last_error(const winapi_last_error&)noexcept = default;
+	winapi_last_error(::LPCTSTR fn, ::DWORD ec)noexcept:func_name(fn), le(ec){
+#ifdef WILL_USE_STACK_TRACE
+		auto csf = capture_stack_back_trace(1, 62);
+		if(csf)
+			sf = std::move(*csf);
+#endif
+	}
+public:
+	winapi_last_error(::LPCTSTR fn)noexcept:winapi_last_error(fn, ::GetLastError()){}
+	winapi_last_error(const winapi_last_error&)WILL_WLE_NOEXCEPT = default;
+	winapi_last_error& operator=(const winapi_last_error&)WILL_WLE_NOEXCEPT = default;
 	winapi_last_error(winapi_last_error&&)noexcept = default;
-	winapi_last_error& operator=(const winapi_last_error&)noexcept = default;
 	winapi_last_error& operator=(winapi_last_error&&)noexcept = default;
 	::LPCTSTR get_func_name()const noexcept{return func_name;}
 	::DWORD get_error_code()const noexcept{return le;}
@@ -77,6 +109,10 @@ public:
 			return make_unexpected(winapi_last_error{_T(__FUNCTION__)});
 		return {ptr};
 	}
+#ifdef WILL_USE_STACK_TRACE
+	class stack_frames stack_frames(symbol_handler&&)const noexcept;
+#endif
+#undef WILL_WLE_NOEXCEPT
 };
 
 inline expected<formatted_message, winapi_last_error> get_system_error_message(DWORD error_code){
@@ -99,6 +135,7 @@ inline expected<std::string, winapi_last_error> to_string(const wchar_t* str){re
 template<std::size_t N>
 inline expected<std::string, winapi_last_error> to_string(const wchar_t (&str)[N], UINT code_page = CP_ACP){return to_string(str, static_cast<int>(N), code_page);}
 inline expected<std::string, winapi_last_error> to_string(const std::wstring& str, UINT code_page = CP_ACP){return to_string(str.c_str(), static_cast<int>(str.size()), code_page);}
+inline expected<std::string, winapi_last_error> to_string(const std::wstring_view& str, UINT code_page = CP_ACP){return to_string(str.data(), static_cast<int>(str.size()), code_page);}
 
 inline expected<std::wstring, winapi_last_error> to_wstring(const char* str, int len, UINT code_page){
 	std::wstring buf(::MultiByteToWideChar(code_page, 0, str, len, nullptr, 0), L'\0');
@@ -113,11 +150,14 @@ inline expected<std::wstring, winapi_last_error> to_wstring(const char* str){ret
 template<std::size_t N>
 inline expected<std::wstring, winapi_last_error> to_wstring(const char (&str)[N], UINT code_page = CP_ACP){return to_wstring(str, static_cast<int>(N), code_page);}
 inline expected<std::wstring, winapi_last_error> to_wstring(const std::string& str, UINT code_page = CP_ACP){return to_wstring(str.c_str(), static_cast<int>(str.size()), code_page);}
+inline expected<std::wstring, winapi_last_error> to_wstring(const std::string_view& str, UINT code_page = CP_ACP){return to_wstring(str.data(), static_cast<int>(str.size()), code_page);}
 
-class winapi_last_error_exception : public std::runtime_error{
+class winapi_last_error_exception : public will::runtime_error{
 	winapi_last_error e;
+protected:
+	virtual const char* exception_name()const noexcept{return "will::winapi_last_error";}
 public:
-	winapi_last_error_exception(const winapi_last_error& ec):std::runtime_error(
+	winapi_last_error_exception(const winapi_last_error& ec):runtime_error(
 #ifdef UNICODE
 		to_string(
 #endif
@@ -129,29 +169,29 @@ public:
 	winapi_last_error_exception(::LPCTSTR func_name):winapi_last_error_exception({func_name, ::GetLastError()}){}
 	::LPCTSTR get_func_name()const noexcept{return e.get_func_name();}
 	::DWORD get_error_code()const noexcept{return e.get_error_code();}
-	winapi_last_error value()const noexcept{return e;}
+	const winapi_last_error& value()const noexcept{return e;}
+	winapi_last_error value()noexcept{return std::move(e);}
+#ifdef WILL_USE_STACK_TRACE
+	virtual const char* what()const noexcept;
+#endif
 };
 
-template<>
-struct error_traits<winapi_last_error>{
-	static constexpr bool can_make_error_from_current_exception = true;
-	static winapi_last_error make_error(const winapi_last_error& e)noexcept{
-		return e;
-	}
-	static winapi_last_error make_error(::DWORD ec){
-		return winapi_last_error{_T("(unknown)"), ec};
-	}
-	static winapi_last_error make_error_from_current_exception()try{
-		throw;
-	}catch(winapi_last_error_exception& e){
-		return e.value();
-	}catch(...){
-		return winapi_last_error{_T("(no_error)"), 0};
-	}
-	[[noreturn]] static void rethrow(const winapi_last_error& e){
-		throw winapi_last_error_exception(e);
-	}
-};
+inline winapi_last_error error_traits<winapi_last_error>::make_error(const winapi_last_error& e)noexcept{
+	return e;
+}
+inline winapi_last_error error_traits<winapi_last_error>::make_error(::DWORD ec){
+	return winapi_last_error{_T("(unknown)"), ec};
+}
+inline winapi_last_error error_traits<winapi_last_error>::make_error_from_current_exception()try{
+	throw;
+}catch(winapi_last_error_exception& e){
+	return std::move(e.value());
+}catch(...){
+	return winapi_last_error{_T("(no_error)"), 0};
+}
+[[noreturn]] inline void error_traits<winapi_last_error>::rethrow(const winapi_last_error& e){
+	throw winapi_last_error_exception(e);
+}
 
 namespace detail{
 
@@ -160,6 +200,72 @@ inline will::expected<std::decay_t<T>, winapi_last_error> checked_return(LPCTSTR
 	return t == failed_value ? make_unexpected(winapi_last_error{fn}) : will::expected<std::decay_t<T>, winapi_last_error>{std::forward<T>(t)};
 }
 
+template<typename T>
+struct get_proc_addr_impl{
+	using result_type = T*;
+	static result_type impl(HMODULE hm, LPCSTR pn){return reinterpret_cast<result_type>(::GetProcAddress(hm, pn));}
+};
+template<typename Ret, typename... Args>
+struct get_proc_addr_impl<Ret(Args...)>{
+	using result_type = Ret(*)(Args...);
+	static result_type impl(HMODULE hm, LPCSTR pn){return reinterpret_cast<result_type>(::GetProcAddress(hm, pn));}
+};
+
+}
+
+class module_handle{
+	::HMODULE hmodule;
+public:
+	explicit module_handle(::HMODULE&& hmod):hmodule{hmod}{}
+	module_handle(module_handle&& other):hmodule{std::move(other.hmodule)}{other.hmodule = nullptr;}
+	module_handle& operator=(module_handle&& rhs){hmodule = std::move(rhs.hmodule);rhs.hmodule = nullptr;return *this;}
+	expected<void, winapi_last_error> free(){
+		if(hmodule){
+			if(::FreeLibrary(hmodule) == FALSE)
+				return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+			hmodule = nullptr;
+		}
+		return {};
+	}
+	expected<void, winapi_last_error> reset(::HMODULE&& other){
+		return free().map([&]{hmodule = std::move(other);});
+	}
+	void swap(module_handle& other)noexcept{
+		std::swap(hmodule, other.hmodule);
+	}
+	::HMODULE release()noexcept{
+		const auto hmod = hmodule;
+		hmodule = nullptr;
+		return hmod;
+	}
+	bool is_datafile()const{return (reinterpret_cast<ULONG_PTR>(hmodule) & static_cast<ULONG_PTR>(1)) != 0;}
+	bool is_image_mapping()const{return (reinterpret_cast<ULONG_PTR>(hmodule) & static_cast<ULONG_PTR>(2)) != 0;}
+	bool is_resource()const{return is_image_mapping() || is_datafile();}
+	template<typename T>
+	expected<typename detail::get_proc_addr_impl<T>::result_type, winapi_last_error> get_proc_address(LPCSTR proc_name)const{
+		auto addr = detail::get_proc_addr_impl<T>::impl(hmodule, proc_name);
+		if(addr == nullptr)
+			return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+		return addr;
+	}
+	template<typename T>
+	expected<typename detail::get_proc_addr_impl<T>::result_type, winapi_last_error> get_proc_address(const std::string& proc_name)const{return get_proc_address<T>(proc_name.c_str());}
+	~module_handle(){free();}
+};
+
+inline expected<module_handle, winapi_last_error> load_library(LPCTSTR file_name, DWORD flags = 0){
+	auto mod = ::LoadLibraryEx(file_name, nullptr, flags);
+	if(mod == nullptr)
+		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+	return module_handle{std::move(mod)};
+}
+inline expected<module_handle, winapi_last_error> load_library(const tchar::tstring& file_name, DWORD flags){return load_library(file_name.c_str(), flags);}
+
+template<typename T, typename... Args>
+inline expected<decltype(std::declval<T>()(std::declval<Args>()...)), winapi_last_error> call_dll_function(::LPCTSTR dll_name, ::LPCSTR function_name, Args&&... args){
+	return load_library(dll_name).bind([&](module_handle&& mh){return mh.get_proc_address<T>(function_name);}).map([&](typename detail::get_proc_addr_impl<T>::result_type&& proc_addr){return proc_addr(std::forward<Args>(args)...);});
 }
 
 }
+
+#include"_exception_impl.hpp"

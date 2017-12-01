@@ -1,3 +1,7 @@
+//Copyright (C) 2014-2017 I
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #pragma once
 #include"com.hpp"
 #include"_resource_property.hpp"
@@ -12,7 +16,7 @@ namespace will{
 
 namespace two_dim{namespace detail{
 
-template<>struct attribute<::WICRect, xywh<INT>>{static const ::WICRect& impl(const xywh<INT>& p)noexcept{return reinterpret_cast<const ::WICRect&>(p);}};
+template<>struct attribute<::WICRect, xywh<INT>>{static const ::WICRect& impl(const xywh<INT>& p)noexcept{return reinterpret_cast<const ::WICRect&>(p);}static ::WICRect impl(xywh<INT>&& p)noexcept{return {p.xy.x, p.xy.y, p.wh.w, p.wh.h};}};
 template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, INT>::value, ::WICRect>, xywh<T>>{static ::WICRect impl(const xywh<T>& p){return p.cast<INT>().attribute<::WICRect>();}};
 template<typename T>struct attribute<::WICRect, xyxy<T>>{static ::WICRect impl(const xyxy<T>& p){return static_cast<xywh<T>>(p).cast<INT>().attribute<::WICRect>();}};
 
