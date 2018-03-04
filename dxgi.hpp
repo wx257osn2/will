@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -156,7 +156,7 @@ public:
 	};
 	struct swap_chain : dxgi_resource<IDXGISwapChain1>{
 		struct description : detail::property<DXGI_SWAP_CHAIN_DESC1>{
-			description():property(){prop.Format = DXGI_FORMAT_B8G8R8A8_UNORM; prop.SampleDesc.Count = 1; prop.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; prop.BufferCount = 2;}
+			description():property(){prop.Format = DXGI_FORMAT_R8G8B8A8_UNORM; prop.SampleDesc.Count = 1; prop.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; prop.BufferCount = 2;}
 	#define PROPERTYDECL(name, type, membername) description& name(type t){prop.membername = t;return *this;}
 			PROPERTYDECL(width, UINT, Width)
 			PROPERTYDECL(height, UINT, Height)

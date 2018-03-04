@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -228,10 +228,10 @@ inline expected<To, hresult_error> reinterpret_convert(From&& from, Args&&... ar
 }
 
 class hwnd_render_target:protected d3d::device, protected dxgi::swap_chain, public d2d::device::context, public dwrite{
-	static expected<dxgi::swap_chain, hresult_error> create_swap_chain(HWND hwnd, d3d::device&& dev){
+	static expected<dxgi::swap_chain, hresult_error> create_swap_chain(HWND hwnd, d3d::device& dev, const DXGI_SWAP_CHAIN_DESC1& desc = will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM)){
 		return dxgi::device::create(dev).bind([&](dxgi::device&& dev2){
 			return dev2.get_factory().bind([&](dxgi&& dxgi_fac){
-				return dxgi_fac.create_swap_chain(dev, hwnd, will::dxgi::swap_chain::description{}).bind([&](dxgi::swap_chain&& sc){
+				return dxgi_fac.create_swap_chain(dev, hwnd, desc).bind([&](dxgi::swap_chain&& sc){
 					return dev2.set_maximum_frame_latency(1).map([&]()->dxgi::swap_chain{
 						return std::move(sc);
 					});
@@ -243,9 +243,9 @@ class hwnd_render_target:protected d3d::device, protected dxgi::swap_chain, publ
 	HRESULT status;
 	amp::accelerator_view av;
 	hwnd_render_target(d3d::device&& dev, dxgi::swap_chain&& sc, d2d::device::context&& devcon, dwrite&& dw, HWND hw, amp::accelerator_view&& accv) : device{std::move(dev)}, swap_chain{std::move(sc)}, d2d::device::context{std::move(devcon)}, dwrite{std::move(dw)}, hwnd(std::move(hw)), status(0ul), av{std::move(accv)}{}
-	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const D2D1_CREATION_PROPERTIES* prop, DWRITE_FACTORY_TYPE type, will::amp::queuing_mode qm){
+	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const DXGI_SWAP_CHAIN_DESC1& desc, const D2D1_CREATION_PROPERTIES* prop, DWRITE_FACTORY_TYPE type, will::amp::queuing_mode qm){
 		return d3d::device::create(flag).bind([&](d3d::device&& d3d_dev){
-			return create_swap_chain(hwnd, std::move(d3d_dev)).bind([&](dxgi::swap_chain&& sc){
+			return create_swap_chain(hwnd, d3d_dev, desc).bind([&](dxgi::swap_chain&& sc){
 				return sc.get_buffer().bind([&](dxgi::surface&& surf){
 					return d2d::device::context::create(surf, prop).bind([&](d2d::device::context&& devcon){
 						return dwrite::create_factory(type).bind([&](dwrite&& dw){
@@ -260,16 +260,23 @@ class hwnd_render_target:protected d3d::device, protected dxgi::swap_chain, publ
 		});
 	}
 public:
-	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, const D2D1_CREATION_PROPERTIES& prop){return create(hwnd, D3D11_CREATE_DEVICE_BGRA_SUPPORT, &prop, DWRITE_FACTORY_TYPE_SHARED, will::amp::queuing_mode_automatic);}
+	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, const D2D1_CREATION_PROPERTIES& prop){return create(hwnd, D3D11_CREATE_DEVICE_BGRA_SUPPORT, will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM), &prop, DWRITE_FACTORY_TYPE_SHARED, will::amp::queuing_mode_automatic);}
 	static expected<hwnd_render_target, hresult_error> create(HWND hwnd,
 #ifdef _DEBUG
 		std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag = D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS, const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_WARNING, D2D1_DEVICE_CONTEXT_OPTIONS_NONE}
 #else
 		std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag = D3D11_CREATE_DEVICE_BGRA_SUPPORT, const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_NONE, D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS}
 #endif
-	){return create(hwnd, flag, &prop, DWRITE_FACTORY_TYPE_SHARED, will::amp::queuing_mode_automatic);}
-	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type){return create(hwnd, flag, &prop, type, will::amp::queuing_mode_automatic);}
-	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type, amp::queuing_mode qm){return create(hwnd, flag, &prop, type, qm);}
+	){return create(hwnd, flag, will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM), &prop, DWRITE_FACTORY_TYPE_SHARED, will::amp::queuing_mode_automatic);}
+	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const DXGI_SWAP_CHAIN_DESC1& desc,
+#ifdef _DEBUG
+		const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_WARNING, D2D1_DEVICE_CONTEXT_OPTIONS_NONE}
+#else
+		const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_NONE, D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS}
+#endif
+	){return create(hwnd, flag, desc, &prop, DWRITE_FACTORY_TYPE_SHARED, will::amp::queuing_mode_automatic);}
+	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const DXGI_SWAP_CHAIN_DESC1& desc, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type){return create(hwnd, flag, desc, &prop, type, will::amp::queuing_mode_automatic);}
+	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const DXGI_SWAP_CHAIN_DESC1& desc, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type, amp::queuing_mode qm){return create(hwnd, flag, desc, &prop, type, qm);}
 	template<typename Window, typename... Args, std::enable_if_t<!std::is_same<std::decay_t<Window>, HWND>::value>* = nullptr>
 	static expected<hwnd_render_target, hresult_error> create(Window&& w, Args&&... args){return create(w.get(), std::forward<Args>(args)...);}
 	hwnd_render_target(HWND hwnd, const D2D1_CREATION_PROPERTIES& prop):hwnd_render_target{+create(hwnd, prop)}{}
@@ -280,8 +287,15 @@ public:
 		std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag = D3D11_CREATE_DEVICE_BGRA_SUPPORT, const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_NONE, D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS}
 #endif
 	):hwnd_render_target{+create(hwnd, flag, prop)}{}
-	hwnd_render_target(HWND hwnd, D3D11_CREATE_DEVICE_FLAG flag, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type):hwnd_render_target{+create(hwnd, flag, prop, type)}{}
-	hwnd_render_target(HWND hwnd, D3D11_CREATE_DEVICE_FLAG flag, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type, amp::queuing_mode qm):hwnd_render_target{+create(hwnd, flag, prop, type, qm)}{}
+	explicit hwnd_render_target(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const DXGI_SWAP_CHAIN_DESC1& desc,
+#ifdef _DEBUG
+		const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_WARNING, D2D1_DEVICE_CONTEXT_OPTIONS_NONE}
+#else
+		const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_NONE, D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS}
+#endif
+	):hwnd_render_target{+create(hwnd, flag, desc, prop)}{}
+	hwnd_render_target(HWND hwnd, D3D11_CREATE_DEVICE_FLAG flag, const DXGI_SWAP_CHAIN_DESC1& desc, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type):hwnd_render_target{+create(hwnd, flag, desc, prop, type)}{}
+	hwnd_render_target(HWND hwnd, D3D11_CREATE_DEVICE_FLAG flag, const DXGI_SWAP_CHAIN_DESC1& desc, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type, amp::queuing_mode qm):hwnd_render_target{+create(hwnd, flag, desc, prop, type, qm)}{}
 	template<typename Window, typename... Args, std::enable_if_t<!std::is_same<std::decay_t<Window>, HWND>::value>* = nullptr>
 	explicit hwnd_render_target(Window&& w, Args&&... args):hwnd_render_target(w.get(), std::forward<Args>(args)...){}
 	using d2d::device::context::get;

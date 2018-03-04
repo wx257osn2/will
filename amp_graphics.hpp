@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -67,8 +67,8 @@ inline expected<texture<ValueType, Rank>> make_texture(const concurrency::accele
 }catch(...){
 	return make_unexpected_from_current_exception();
 }
-template<typename ValueType, int Rank, typename D3DDevice, std::enable_if_t<!std::is_base_of<IUnknown, std::remove_pointer_t<std::decay_t<D3DDevice>>>::value, std::nullptr_t> = nullptr>
-inline expected<texture<ValueType, Rank>> make_texture(const concurrency::accelerator_view& av, D3DDevice&& d3d_texture, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN)restrict(cpu){
+template<typename ValueType, int Rank, typename D3DTexture, std::enable_if_t<!std::is_base_of<IUnknown, std::remove_pointer_t<std::decay_t<D3DTexture>>>::value, std::nullptr_t> = nullptr>
+inline expected<texture<ValueType, Rank>> make_texture(const concurrency::accelerator_view& av, D3DTexture&& d3d_texture, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN)restrict(cpu){
 	return make_texture<ValueType, Rank>(av, d3d_texture.get(), format);
 }
 
@@ -1386,8 +1386,8 @@ inline auto faceforward(const T& n, const U& i, const V& n_ref)restrict(cpu, amp
 
 template<typename F, typename G>
 class connector{
-	F f;
-	G g;
+	alignas(4) F f;
+	alignas(4) G g;
 public:
 	template<typename T, typename U>
 	connector(T&& t, U&& u)restrict(cpu, amp) : f(amp::forward<T>(t)), g(amp::forward<U>(u)){}
@@ -1407,7 +1407,7 @@ struct is_connector<connector<F, G>> : std::true_type{};
 
 template<typename F>
 class shader{
-	F f;
+	alignas(4) F f;
 public:
 	template<typename T>
 	shader(T&& t)restrict(cpu, amp) : f(amp::forward<T>(t)){}
