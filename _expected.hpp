@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -502,25 +502,25 @@ struct catch_all{
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static std::result_of_t<F(T)> type_type(F&& f, T&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static std::invoke_result_t<F, T> type_type(F&& f, T&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(t));
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static std::result_of_t<F(T)> type_type(F&& f, T& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static std::invoke_result_t<F, T> type_type(F&& f, T& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(t);
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static expected<std::result_of_t<F(T)>, E> type_etype(F&& f, T&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static expected<std::invoke_result_t<F, T>, E> type_etype(F&& f, T&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(t));
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static expected<std::result_of_t<F(T)>, E> type_etype(F&& f, T& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static expected<std::invoke_result_t<F, T>, E> type_etype(F&& f, T& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(t);
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
@@ -533,28 +533,28 @@ struct catch_all{
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static std::result_of_t<F(expected<T, E>)> etype_type(F&& f, expected<T, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static std::invoke_result_t<F, expected<T, E>> etype_type(F&& f, expected<T, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(t));
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static expected<std::result_of_t<F(expected<T, E>)>, E> etype_etype(F&& f, expected<T, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static expected<std::invoke_result_t<F, expected<T, E>>, E> etype_etype(F&& f, expected<T, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(t));
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static std::result_of_t<F(E)> error_type(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static std::invoke_result_t<F, E> error_type(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(e));
   }catch(...){
-    return make_unexpected(error_traits<typename std::result_of_t<F(E)>::error_type>::make_error_from_current_exception());
+    return make_unexpected(error_traits<typename std::invoke_result_t<F, E>::error_type>::make_error_from_current_exception());
   }
   template<typename F>
-  static expected<T, typename std::result_of_t<F(E)>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static expected<T, typename std::invoke_result_t<F, E>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(e));
   }catch(...){
-    return make_unexpected(error_traits<typename std::result_of_t<F(E)>::value_type>::make_error_from_current_exception());
+    return make_unexpected(error_traits<typename std::invoke_result_t<F, E>::value_type>::make_error_from_current_exception());
   }
 };
 
@@ -571,19 +571,19 @@ struct catch_all<T, E, false>{
     return {};
   }
   template<typename F>
-  static std::result_of_t<F(T)> type_type(F&& f, T&& t)noexcept(noexcept(f(std::declval<T>()))){
+  static std::invoke_result_t<F, T> type_type(F&& f, T&& t)noexcept(noexcept(f(std::declval<T>()))){
     return f(std::move(t));
   }
   template<typename F>
-  static std::result_of_t<F(T)> type_type(F&& f, T& t)noexcept(noexcept(f(std::declval<T&>()))){
+  static std::invoke_result_t<F, T> type_type(F&& f, T& t)noexcept(noexcept(f(std::declval<T&>()))){
     return f(t);
   }
   template<typename F>
-  static expected<std::result_of_t<F(T)>, E> type_etype(F&& f, T&& t)noexcept(noexcept(f(std::declval<T>())) && std::is_nothrow_constructible<expected<std::result_of_t<F(T)>, E>, std::result_of_t<F(T)>>::value){
+  static expected<std::invoke_result_t<F, T>, E> type_etype(F&& f, T&& t)noexcept(noexcept(f(std::declval<T>())) && std::is_nothrow_constructible<expected<std::invoke_result_t<F, T>, E>, std::invoke_result_t<F, T>>::value){
     return f(std::move(t));
   }
   template<typename F>
-  static expected<std::result_of_t<F(T)>, E> type_etype(F&& f, T& t)noexcept(noexcept(f(std::declval<T&>())) && std::is_nothrow_constructible<expected<std::result_of_t<F(T&)>, E>, std::result_of_t<F(T&)>>::value){
+  static expected<std::invoke_result_t<F, T>, E> type_etype(F&& f, T& t)noexcept(noexcept(f(std::declval<T&>())) && std::is_nothrow_constructible<expected<std::invoke_result_t<F, T&>, E>, std::invoke_result_t<F, T&>>::value){
     return f(t);
   }
   template<typename F>
@@ -592,19 +592,19 @@ struct catch_all<T, E, false>{
     return {};
   }
   template<typename F>
-  static std::result_of_t<F(expected<T, E>)> etype_type(F&& f, expected<T, E>&& t)noexcept(noexcept(f(std::declval<expected<T, E>>()))){
+  static std::invoke_result_t<F, expected<T, E>> etype_type(F&& f, expected<T, E>&& t)noexcept(noexcept(f(std::declval<expected<T, E>>()))){
     return f(std::move(t));
   }
   template<typename F>
-  static expected<std::result_of_t<F(expected<T, E>)>, E> etype_etype(F&& f, expected<T, E>&& t)noexcept(noexcept(f(std::declval<expected<T, E>>())) && std::is_nothrow_constructible<expected<std::result_of_t<F(expected<T, E>)>, E>, std::result_of_t<F(expected<T, E>)>>::value){
+  static expected<std::invoke_result_t<F, expected<T, E>>, E> etype_etype(F&& f, expected<T, E>&& t)noexcept(noexcept(f(std::declval<expected<T, E>>())) && std::is_nothrow_constructible<expected<std::invoke_result_t<F, expected<T, E>>, E>, std::invoke_result_t<F, expected<T, E>>>::value){
     return f(std::move(t));
   }
   template<typename F>
-  static std::result_of_t<F(E)> error_type(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
+  static std::invoke_result_t<F, E> error_type(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
     return f(std::move(e));
   }
   template<typename F>
-  static expected<T, typename std::result_of_t<F(E)>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
+  static expected<T, typename std::invoke_result_t<F, E>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
     return f(std::move(e));
   }
 };
@@ -619,13 +619,13 @@ struct catch_all<void, E, true>{
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static std::result_of_t<F()> void_type(F&& f)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static std::invoke_result_t<F> void_type(F&& f)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f();
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static expected<std::result_of_t<F()>, E> void_etype(F&& f)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static expected<std::invoke_result_t<F>, E> void_etype(F&& f)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f();
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
@@ -638,28 +638,28 @@ struct catch_all<void, E, true>{
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static std::result_of_t<F(expected<void, E>)> etype_type(F&& f, expected<void, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static std::invoke_result_t<F, expected<void, E>> etype_type(F&& f, expected<void, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(t));
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static expected<std::result_of_t<F(expected<void, E>)>, E> etype_etype(F&& f, expected<void, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static expected<std::invoke_result_t<F, expected<void, E>>, E> etype_etype(F&& f, expected<void, E>&& t)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(t));
   }catch(...){
     return make_unexpected(error_traits<E>::make_error_from_current_exception());
   }
   template<typename F>
-  static std::result_of_t<F(E)> error_type(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static std::invoke_result_t<F, E> error_type(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(e));
   }catch(...){
-    return make_unexpected(error_traits<typename std::result_of_t<F(E)>::error_type>::make_error_from_current_exception());
+    return make_unexpected(error_traits<typename std::invoke_result_t<F, E>::error_type>::make_error_from_current_exception());
   }
   template<typename F>
-  static expected<void, typename std::result_of_t<F(E)>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
+  static expected<void, typename std::invoke_result_t<F, E>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(make_unexpected(error_traits<E>::make_error_from_current_exception())))try{
     return f(std::move(e));
   }catch(...){
-    return make_unexpected(error_traits<typename std::result_of_t<F(E)>::value_type>::make_error_from_current_exception());
+    return make_unexpected(error_traits<typename std::invoke_result_t<F, E>::value_type>::make_error_from_current_exception());
   }
 };
 
@@ -671,11 +671,11 @@ struct catch_all<void, E, false>{
     return {};
   }
   template<typename F>
-  static std::result_of_t<F()> void_type(F&& f)noexcept(noexcept(f())){
+  static std::invoke_result_t<F> void_type(F&& f)noexcept(noexcept(f())){
     return f();
   }
   template<typename F>
-  static expected<std::result_of_t<F()>, E> void_etype(F&& f)noexcept(noexcept(f()) && std::is_nothrow_constructible<expected<std::result_of_t<F()>, E>, std::result_of_t<F()>>::value){
+  static expected<std::invoke_result_t<F>, E> void_etype(F&& f)noexcept(noexcept(f()) && std::is_nothrow_constructible<expected<std::invoke_result_t<F>, E>, std::invoke_result_t<F>>::value){
     return f();
   }
   template<typename F>
@@ -684,19 +684,19 @@ struct catch_all<void, E, false>{
     return {};
   }
   template<typename F>
-  static std::result_of_t<F(expected<void, E>)> etype_type(F&& f, expected<void, E>&& t)noexcept(noexcept(f(std::declval<expected<void, E>>()))){
+  static std::invoke_result_t<F, expected<void, E>> etype_type(F&& f, expected<void, E>&& t)noexcept(noexcept(f(std::declval<expected<void, E>>()))){
     return f(std::move(t));
   }
   template<typename F>
-  static expected<std::result_of_t<F(expected<void, E>)>, E> etype_etype(F&& f, expected<void, E>&& t)noexcept(noexcept(f(std::declval<expected<void, E>>())) && std::is_nothrow_constructible<expected<std::result_of_t<F(expected<void, E>)>, E>, std::result_of_t<F(expected<void, E>)>>::value){
+  static expected<std::invoke_result_t<F, expected<void, E>>, E> etype_etype(F&& f, expected<void, E>&& t)noexcept(noexcept(f(std::declval<expected<void, E>>())) && std::is_nothrow_constructible<expected<std::invoke_result_t<F, expected<void, E>>, E>, std::invoke_result_t<F, expected<void, E>>>::value){
     return f(std::move(t));
   }
   template<typename F>
-  static std::result_of_t<F(E)> error_type(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
+  static std::invoke_result_t<F, E> error_type(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
     return f(std::move(e));
   }
   template<typename F>
-  static expected<void, typename std::result_of_t<F(E)>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
+  static expected<void, typename std::invoke_result_t<F, E>::value_type> error_error(F&& f, E&& e)noexcept(noexcept(f(std::declval<E>()))){
     return f(std::move(e));
   }
 };
@@ -930,68 +930,68 @@ class expected : detail::expected::expected_base<T, E>{
   constexpr detail::expected::unwrap_all_result_type_t<expected> unwrap_all()& noexcept(std::is_nothrow_copy_constructible<expected>::value){
     return detail::expected::unwrap_all(*this);
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(value_type)>, void>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, value_type>, void>::value>* = nullptr>
   rebind<void> map(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_void(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_void(std::forward<F>(f), std::move(**this))
          : rebind<void>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F(value_type)>, void>::value>* = nullptr>
-  rebind<std::result_of_t<F(value_type)>> map(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F, value_type>, void>::value>* = nullptr>
+  rebind<std::invoke_result_t<F, value_type>> map(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::move(**this))
-         : rebind<std::result_of_t<F(value_type)>>(get_unexpected())
+         : rebind<std::invoke_result_t<F, value_type>>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(value_type)>>::value>* = nullptr>
-  std::result_of_t<F(value_type)> bind(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_type(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F, value_type>>::value>* = nullptr>
+  std::invoke_result_t<F, value_type> bind(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_type(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_type(std::forward<F>(f), std::move(**this))
-         : std::result_of_t<F(value_type)>(get_unexpected())
+         : std::invoke_result_t<F, value_type>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(expected)>, void>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, expected>, void>::value>* = nullptr>
   rebind<void> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_void(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_void(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F(expected)>, void>::value && !is_expected<std::result_of_t<F(expected)>>::value>* = nullptr>
-  rebind<std::result_of_t<F(expected)>> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::declval<this_type>()))){
+  template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F, expected>, void>::value && !is_expected<std::invoke_result_t<F, expected>>::value>* = nullptr>
+  rebind<std::invoke_result_t<F, expected>> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(expected)>>::value>* = nullptr>
-  std::result_of_t<F(expected)> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::declval<this_type>()))){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F, expected>>::value>* = nullptr>
+  std::invoke_result_t<F, expected> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<is_unexpected<std::result_of_t<F(error_type)>>::value>* = nullptr>
-  expected<value_type, typename std::result_of_t<F(error_type)>::value_type> emap(F&& f)noexcept(std::is_nothrow_move_constructible<value_type>::value && noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_unexpected<std::invoke_result_t<F, error_type>>::value>* = nullptr>
+  expected<value_type, typename std::invoke_result_t<F, error_type>::value_type> emap(F&& f)noexcept(std::is_nothrow_move_constructible<value_type>::value && noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
-         ? expected<value_type, typename std::result_of_t<F(error_type)>::value_type>{std::move(**this)}
-         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::move(error()))
+         ? expected<value_type, typename std::invoke_result_t<F, error_type>::value_type>{std::move(**this)}
+         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::move(error()))
          ;
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(error_type)>>::value && std::is_same<typename std::result_of_t<F(error_type)>::value_type, T>::value>* = nullptr>
-  std::result_of_t<F(error_type)> emap(F&& f)noexcept(std::is_nothrow_constructible<std::result_of_t<F(error_type)>, value_type&&>::value && noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F, error_type>>::value && std::is_same<typename std::invoke_result_t<F, error_type>::value_type, T>::value>* = nullptr>
+  std::invoke_result_t<F, error_type> emap(F&& f)noexcept(std::is_nothrow_constructible<std::invoke_result_t<F, error_type>, value_type&&>::value && noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
-         ? std::result_of_t<F(error_type)>{std::move(**this)}
-         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::error_type>::can_make_error_from_current_exception>::error_type(std::forward<F>(f), std::move(error()))
+         ? std::invoke_result_t<F, error_type>{std::move(**this)}
+         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::error_type>::can_make_error_from_current_exception>::error_type(std::forward<F>(f), std::move(error()))
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(error_type)>, value_type>::value || std::is_same<std::result_of_t<F(error_type)>, unexpected_type<error_type>>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, error_type>, value_type>::value || std::is_same<std::invoke_result_t<F, error_type>, unexpected_type<error_type>>::value>* = nullptr>
   this_type catch_error(F&& f)noexcept(noexcept(this_type(f(std::declval<E>())))){
     return !valid()
          ? this_type(f(error()))
          : std::move_if_noexcept(*this);
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(error_type)>, this_type>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, error_type>, this_type>::value>* = nullptr>
   this_type catch_error(F&& f)noexcept(noexcept(f(std::declval<E>()))){
     return !valid()
          ? f(error())
          : std::move_if_noexcept(*this);
          ;
   }
-  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, this_type>::value>* = nullptr>
+  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::invoke_result_t<F, Exception&>, this_type>::value>* = nullptr>
   this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>()))){
     try{
       if(!valid())
@@ -1003,7 +1003,7 @@ class expected : detail::expected::expected_base<T, E>{
     catch(...){}
     return std::move_if_noexcept(*this);
   }
-  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, value_type>::value>* = nullptr>
+  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::invoke_result_t<F, Exception&>, value_type>::value>* = nullptr>
   this_type catch_exception(F&& f)noexcept(noexcept(this_type(f(std::declval<Exception&>())))){
     try{
       if(!valid())
@@ -1204,68 +1204,68 @@ class expected<T&, E> : detail::expected::expected_base<T*, E>{
   constexpr detail::expected::unwrap_all_result_type_t<expected> unwrap_all()& noexcept(std::is_nothrow_copy_constructible<expected>::value){
     return detail::expected::unwrap_all(*this);
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(value_type)>, void>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, value_type>, void>::value>* = nullptr>
   rebind<void> map(F&& f)noexcept(noexcept(detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_void(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_void(std::forward<F>(f), **this)
          : rebind<void>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F(value_type)>, void>::value>* = nullptr>
-  rebind<std::result_of_t<F(value_type)>> map(F&& f)noexcept(noexcept(detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F, value_type>, void>::value>* = nullptr>
+  rebind<std::invoke_result_t<F, value_type>> map(F&& f)noexcept(noexcept(detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), **this)
-         : rebind<std::result_of_t<F(value_type)>>(get_unexpected())
+         : rebind<std::invoke_result_t<F, value_type>>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(value_type)>>::value>* = nullptr>
-  std::result_of_t<F(value_type)> bind(F&& f)noexcept(noexcept(detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_type(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F, value_type>>::value>* = nullptr>
+  std::invoke_result_t<F, value_type> bind(F&& f)noexcept(noexcept(detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_type(std::forward<F>(f), std::declval<value_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<T, error_type, error_traits<error_type>::can_make_error_from_current_exception>::type_type(std::forward<F>(f), **this)
-         : std::result_of_t<F(value_type)>(get_unexpected())
+         : std::invoke_result_t<F, value_type>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(expected)>, void>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, expected>, void>::value>* = nullptr>
   rebind<void> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_void(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_void(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F(expected)>, void>::value && !is_expected<std::result_of_t<F(expected)>>::value>* = nullptr>
-  rebind<std::result_of_t<F(expected)>> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::declval<this_type>()))){
+  template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F, expected>, void>::value && !is_expected<std::invoke_result_t<F, expected>>::value>* = nullptr>
+  rebind<std::invoke_result_t<F, expected>> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(expected)>>::value>* = nullptr>
-  std::result_of_t<F(expected)> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::declval<this_type>()))){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F, expected>>::value>* = nullptr>
+  std::invoke_result_t<F, expected> then(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<is_unexpected<std::result_of_t<F(error_type)>>::value>* = nullptr>
-  expected<value_type, typename std::result_of_t<F(error_type)>::value_type> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_unexpected<std::invoke_result_t<F, error_type>>::value>* = nullptr>
+  expected<value_type, typename std::invoke_result_t<F, error_type>::value_type> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
-         ? expected<value_type, typename std::result_of_t<F(error_type)>::value_type>{**this}
-         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::move(error()))
+         ? expected<value_type, typename std::invoke_result_t<F, error_type>::value_type>{**this}
+         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::move(error()))
          ;
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(error_type)>>::value && std::is_same<typename std::result_of_t<F(error_type)>::value_type, T>::value>* = nullptr>
-  std::result_of_t<F(error_type)> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F, error_type>>::value && std::is_same<typename std::invoke_result_t<F, error_type>::value_type, T>::value>* = nullptr>
+  std::invoke_result_t<F, error_type> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
-         ? std::result_of_t<F(error_type)>{**this}
-         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::result_of_t<F(error_type)>::error_type>::can_make_error_from_current_exception>::error_type(std::forward<F>(f), std::move(error()))
+         ? std::invoke_result_t<F, error_type>{**this}
+         : detail::expected::catch_all<value_type, error_type, error_traits<typename std::invoke_result_t<F, error_type>::error_type>::can_make_error_from_current_exception>::error_type(std::forward<F>(f), std::move(error()))
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(error_type)>, value_type>::value || std::is_same<std::result_of_t<F(error_type)>, unexpected_type<error_type>>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, error_type>, value_type>::value || std::is_same<std::invoke_result_t<F, error_type>, unexpected_type<error_type>>::value>* = nullptr>
   this_type catch_error(F&& f)noexcept(noexcept(this_type(f(std::declval<E>())))){
     return !valid()
          ? this_type(f(error()))
          : std::move_if_noexcept(*this);
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(error_type)>, this_type>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, error_type>, this_type>::value>* = nullptr>
   this_type catch_error(F&& f)noexcept(noexcept(f(std::declval<E>()))){
     return !valid()
          ? f(error())
          : std::move_if_noexcept(*this);
          ;
   }
-  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, this_type>::value>* = nullptr>
+  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::invoke_result_t<F, Exception&>, this_type>::value>* = nullptr>
   this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>()))){
     try{
       if(!valid())
@@ -1277,7 +1277,7 @@ class expected<T&, E> : detail::expected::expected_base<T*, E>{
     catch(...){}
     return std::move_if_noexcept(*this);
   }
-  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::result_of_t<F(Exception&)>, value_type>::value>* = nullptr>
+  template<typename Exception, typename F, std::enable_if_t<std::is_same<error_type, std::exception_ptr>::value && std::is_same<std::invoke_result_t<F, Exception&>, value_type>::value>* = nullptr>
   this_type catch_exception(F&& f)noexcept(noexcept(this_type(f(std::declval<Exception&>())))){
     try{
       if(!valid())
@@ -1417,54 +1417,54 @@ class expected<void, E> : detail::expected::expected_base<void, E>{
   constexpr detail::expected::unwrap_result_type_t<expected> unwrap()& noexcept(std::is_nothrow_copy_constructible<expected>::value){
     return detail::expected::unwrap(*this);
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(void)>, void>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F>, void>::value>* = nullptr>
   rebind<void> map(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_void(std::forward<F>(f))) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<value_type, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_void(std::forward<F>(f))
          : rebind<void>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F(void)>, void>::value>* = nullptr>
-  rebind<std::result_of_t<F(void)>> map(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_etype(std::forward<F>(f))) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F>, void>::value>* = nullptr>
+  rebind<std::invoke_result_t<F>> map(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_etype(std::forward<F>(f))) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_etype(std::forward<F>(f))
-         : rebind<std::result_of_t<F(void)>>(get_unexpected())
+         : rebind<std::invoke_result_t<F>>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(void)>>::value>* = nullptr>
-  std::result_of_t<F()> bind(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_type(std::forward<F>(f))) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F>>::value>* = nullptr>
+  std::invoke_result_t<F> bind(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_type(std::forward<F>(f))) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::void_type(std::forward<F>(f))
-         : std::result_of_t<F()>(get_unexpected())
+         : std::invoke_result_t<F>(get_unexpected())
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(expected)>, void>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, expected>, void>::value>* = nullptr>
   rebind<void> then(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_void(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_void(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<!is_expected<std::result_of_t<F(expected)>>::value>* = nullptr>
-  rebind<std::result_of_t<F(expected)>> then(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::declval<this_type>()))){
+  template<typename F, std::enable_if_t<!is_expected<std::invoke_result_t<F, expected>>::value>* = nullptr>
+  rebind<std::invoke_result_t<F, expected>> then(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_etype(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F(expected)>, void>::value && is_expected<std::result_of_t<F(expected)>>::value>* = nullptr>
-  std::result_of_t<F(expected)> then(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::declval<this_type>()))){
+  template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F, expected>, void>::value && is_expected<std::invoke_result_t<F, expected>>::value>* = nullptr>
+  std::invoke_result_t<F, expected> then(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::declval<this_type>()))){
     return detail::expected::catch_all<void, error_type, error_traits<error_type>::can_make_error_from_current_exception>::etype_type(std::forward<F>(f), std::move(*this));
   }
-  template<typename F, std::enable_if_t<is_unexpected<std::result_of_t<F(error_type)>>::value>* = nullptr>
-  expected<void, typename std::result_of_t<F(error_type)>::value_type> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<typename std::result_of_t<F(error_type)>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_unexpected<std::invoke_result_t<F, error_type>>::value>* = nullptr>
+  expected<void, typename std::invoke_result_t<F, error_type>::value_type> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<typename std::invoke_result_t<F, error_type>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? *this
-         : detail::expected::catch_all<void, error_type, error_traits<typename std::result_of_t<F(error_type)>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::move(error()))
+         : detail::expected::catch_all<void, error_type, error_traits<typename std::invoke_result_t<F, error_type>::value_type>::can_make_error_from_current_exception>::error_error(std::forward<F>(f), std::move(error()))
          ;
   }
-  template<typename F, std::enable_if_t<is_expected<std::result_of_t<F(error_type)>>::value && std::is_same<typename std::result_of_t<F(error_type)>::value_type, void>::value>* = nullptr>
-  std::result_of_t<F(error_type)> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<typename std::result_of_t<F(error_type)>::error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
+  template<typename F, std::enable_if_t<is_expected<std::invoke_result_t<F, error_type>>::value && std::is_same<typename std::invoke_result_t<F, error_type>::value_type, void>::value>* = nullptr>
+  std::invoke_result_t<F, error_type> emap(F&& f)noexcept(noexcept(detail::expected::catch_all<void, error_type, error_traits<typename std::invoke_result_t<F, error_type>::error_type>::can_make_error_from_current_exception>::type_etype(std::forward<F>(f), std::declval<error_type>())) && std::is_nothrow_move_constructible<error_type>::value){
     return valid()
          ? *this
-         : detail::expected::catch_all<void, error_type, error_traits<typename std::result_of_t<F(error_type)>::error_type>::can_make_error_from_current_exception>::error_type(std::forward<F>(f), std::move(error()))
+         : detail::expected::catch_all<void, error_type, error_traits<typename std::invoke_result_t<F, error_type>::error_type>::can_make_error_from_current_exception>::error_type(std::forward<F>(f), std::move(error()))
          ;
   }
-  template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F(error_type)>, value_type>::value>* = nullptr>
+  template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, error_type>, value_type>::value>* = nullptr>
   this_type catch_error(F&& f)noexcept(noexcept(f(error())) && std::is_nothrow_copy_constructible<this_type>::value){
     if(!valid()){
       f(error());
@@ -1472,15 +1472,15 @@ class expected<void, E> : detail::expected::expected_base<void, E>{
     }
     return std::move_if_noexcept(*this);
   }
-  template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F(error_type)>, value_type>::value>* = nullptr>
-  this_type catch_error(F&& f)noexcept(noexcept(f(error())) && std::is_nothrow_constructible<this_type, std::result_of_t<F(error_type)>>::value && std::is_nothrow_copy_constructible<this_type>::value){
+  template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F, error_type>, value_type>::value>* = nullptr>
+  this_type catch_error(F&& f)noexcept(noexcept(f(error())) && std::is_nothrow_constructible<this_type, std::invoke_result_t<F, error_type>>::value && std::is_nothrow_copy_constructible<this_type>::value){
     return !valid()
          ? f(error())
          : std::move_if_noexcept(*this)
          ;
   }
-  template<typename Exception, typename F, std::enable_if_t<std::is_same<std::result_of_t<F(Exception&)>, this_type>::value>* = nullptr>
-  this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>())) && std::is_nothrow_constructible<this_type, std::result_of_t<F(Exception&)>>::value && std::is_nothrow_copy_constructible<this_type>::value){
+  template<typename Exception, typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, Exception&>, this_type>::value>* = nullptr>
+  this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>())) && std::is_nothrow_constructible<this_type, std::invoke_result_t<F, Exception&>>::value && std::is_nothrow_copy_constructible<this_type>::value){
     try{
       if(!valid())
         std::rethrow_exception(error());
@@ -1491,7 +1491,7 @@ class expected<void, E> : detail::expected::expected_base<void, E>{
     catch(...){}
     return std::move_if_noexcept(*this);
   }
-  template<typename Exception, typename F, std::enable_if_t<std::is_same<std::result_of_t<F(Exception&)>, value_type>::value>* = nullptr>
+  template<typename Exception, typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F, Exception&>, value_type>::value>* = nullptr>
   this_type catch_exception(F&& f)noexcept(noexcept(f(std::declval<Exception&>())) && std::is_nothrow_copy_constructible<this_type>::value){
     try{
       if(!valid())
@@ -1685,14 +1685,14 @@ template<typename T, typename E, typename U>
 constexpr expected<T, E> make_expected_from_error(U&& u)noexcept(std::is_nothrow_constructible<E, U&&>::value && std::is_nothrow_move_constructible<E>::value){
   return expected<T, E>(make_unexpected(E(std::forward<U>(u))));
 }
-template<typename F, std::enable_if_t<!std::is_same<std::result_of_t<F()>, void>::value>* = nullptr>
-inline expected<std::result_of_t<F()>> make_expected_from_call(F&& f)noexcept try{
+template<typename F, std::enable_if_t<!std::is_same<std::invoke_result_t<F>, void>::value>* = nullptr>
+inline expected<std::invoke_result_t<F>> make_expected_from_call(F&& f)noexcept try{
   return make_expected(f());
 }
 catch(...){
   return make_unexpected_from_current_exception();
 }
-template<typename F, std::enable_if_t<std::is_same<std::result_of_t<F()>, void>::value>* = nullptr>
+template<typename F, std::enable_if_t<std::is_same<std::invoke_result_t<F>, void>::value>* = nullptr>
 inline expected<void> make_expected_from_call(F&& f)noexcept try{
   f();
   return make_expected();

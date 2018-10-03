@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -41,7 +41,7 @@ class xaudio2 : public detail::resource<IXAudio2>{
 		expected<void, hresult_error> enable_effect(UINT32 index, UINT32 opration_set = XAUDIO2_COMMIT_NOW){const auto hr = (*this)->EnableEffect(index, operation_set);if(SUCCEEDED(hr))return {};return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
 		expected<void, hresult_error> disable_effect(UINT32 index, UINT32 opration_set = XAUDIO2_COMMIT_NOW){const auto hr = (*this)->DisableEffect(index, operation_set);if(SUCCEEDED(hr))return {};return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
 		bool is_enabled_effect(UINT32 index)const{BOOL enabled;(*this)->GetEffectState(index, &enabled);return enabled == TRUE;}
-		XAUDIO2_VOICE_DETAILS get_voice_details(){XAUDIO2_VOICE_DETAILS det;(*this)->GetVoiceDetails(&det);return det;}
+		XAUDIO2_VOICE_DETAILS get_voice_details()const{XAUDIO2_VOICE_DETAILS det;(*this)->GetVoiceDetails(&det);return det;}
 		float get_volume()const{float vol;(*this)->GetVolume(&vol);return vol;}
 		expected<void, hresult_error> set_volume(float vol, UINT32 operation_set = XAUDIO2_COMMIT_NOW){const auto hr = (*this)->SetVolume(vol, operation_set);if(SUCCEEDED(hr))return {};return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
 		expected<void, hresult_error> set_effect_chain(const XAUDIO2_EFFECT_CHAIN& ec){const auto hr = (*this)->SetEffectChain(&ec);if(SUCCEEDED(hr))return {};return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}

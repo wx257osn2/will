@@ -3,8 +3,11 @@
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #pragma once
+#pragma warning(push)
+#pragma warning(disable: 5040)
 #include<amp.h>
 #include<amp_graphics.h>
+#pragma warning(pop)
 #include<d3d11.h>
 #include"d3d.hpp"
 #include"amp_math.hpp"
@@ -216,11 +219,11 @@ class vec<T, 2> : public detail::original_short_vector<T, 2>::type{
 	using base_type = typename detail::original_short_vector<T, 2>::type;
 public:
 	using base_type::base_type;
-	vec() = default;
-	vec(const vec&) = default;
-	vec(vec&&) = default;
-	vec& operator=(const vec&) = default;
-	vec& operator=(vec&&) = default;
+	vec()restrict(cpu, amp):base_type{}{}
+	vec(const vec& other)restrict(cpu, amp):base_type{static_cast<const base_type&>(other)}{}
+	vec(vec&& other)restrict(cpu, amp):base_type{static_cast<base_type&&>(other)}{}
+	vec& operator=(const vec& other)restrict(cpu, amp){*static_cast<base_type*>(this) = static_cast<const base_type&>(other);return *this;}
+	vec& operator=(vec&& other)restrict(cpu, amp){*static_cast<base_type*>(this) = static_cast<base_type&&>(other);return *this;}
 	template<typename U, std::enable_if_t<short_vector_traits<U>::size == 1>* = nullptr>
 	vec(U _1)restrict(cpu, amp):vec(static_cast<T>(_1)){}
 	template<typename U, typename... Args>
@@ -299,11 +302,11 @@ class vec<T, 3> : public detail::original_short_vector<T, 3>::type{
 	using base_type = typename detail::original_short_vector<T, 3>::type;
 public:
 	using base_type::base_type;
-	vec() = default;
-	vec(const vec&) = default;
-	vec(vec&&) = default;
-	vec& operator=(const vec&) = default;
-	vec& operator=(vec&&) = default;
+	vec()restrict(cpu, amp):base_type{}{}
+	vec(const vec& other)restrict(cpu, amp):base_type{static_cast<const base_type&>(other)}{}
+	vec(vec&& other)restrict(cpu, amp):base_type{static_cast<base_type&&>(other)}{}
+	vec& operator=(const vec& other)restrict(cpu, amp){*static_cast<base_type*>(this) = static_cast<const base_type&>(other);return *this;}
+	vec& operator=(vec&& other)restrict(cpu, amp){*static_cast<base_type*>(this) = static_cast<base_type&&>(other);return *this;}
 	template<typename U, std::enable_if_t<short_vector_traits<U>::size == 1>* = nullptr>
 	vec(U _1)restrict(cpu, amp):vec{static_cast<T>(_1)}{}
 	template<typename U, typename... Args>
@@ -544,11 +547,11 @@ class vec<T, 4> : public detail::original_short_vector<T, 4>::type{
 	using base_type = typename detail::original_short_vector<T, 4>::type;
 public:
 	using base_type::base_type;
-	vec() = default;
-	vec(const vec&) = default;
-	vec(vec&&) = default;
-	vec& operator=(const vec&) = default;
-	vec& operator=(vec&&) = default;
+	vec()restrict(cpu, amp):base_type{}{}
+	vec(const vec& other)restrict(cpu, amp):base_type{static_cast<const base_type&>(other)}{}
+	vec(vec&& other)restrict(cpu, amp):base_type{static_cast<base_type&&>(other)}{}
+	vec& operator=(const vec& other)restrict(cpu, amp){*static_cast<base_type*>(this) = static_cast<const base_type&>(other);return *this;}
+	vec& operator=(vec&& other)restrict(cpu, amp){*static_cast<base_type*>(this) = static_cast<base_type&&>(other);return *this;}
 	template<typename U, std::enable_if_t<short_vector_traits<U>::size == 1>* = nullptr>
 	vec(U _1)restrict(cpu, amp):vec{static_cast<T>(_1)}{}
 	template<typename U, typename... Args>
@@ -1255,7 +1258,10 @@ inline float normalize(float)restrict(cpu, amp){
 }
 template<typename T, std::enable_if_t<(short_vector_traits<T>::size >= 2)>* = nullptr>
 inline T normalize(const T& vec)restrict(cpu, amp){
-	return vec / length(vec);
+	if(length(vec) < math::detail::numeric_limits<typename short_vector_traits<T>::value_type>::epsilon())
+		return vec / math::detail::numeric_limits<typename short_vector_traits<T>::value_type>::epsilon();
+	else
+		return vec / length(vec);
 }
 
 template<typename T, typename U, std::enable_if_t<short_vector_traits<T>::size == short_vector_traits<U>::size>* = nullptr>
@@ -1441,6 +1447,10 @@ inline detail::shader<std::decay_t<F>> shader(F&& f){return {amp::forward<F>(f)}
 static const auto to_bgra = shader([](auto t, auto&&... unused)restrict(amp){return t.bgra;});
 static const auto straighten = shader([](auto t, auto&&... unused)restrict(amp){using v = vec<typename decltype(t)::value_type, decltype(t)::size>;return t.a == 0 ? v{1, 1, 1, 0} : v{t.rgb/t.a, t.a};});
 static const auto premultiply = shader([](auto t, auto&&... unused)restrict(amp){return vec<typename decltype(t)::value_type, decltype(t)::size>{t.rgb * t.a, t.a};});
+static inline auto gamma_correction(float f = 2.2f){
+	return shader([g = 1.f/f](auto t, auto&&... unused)restrict(amp){return pow(t, vec<float, decltype(t)::size>{g});});
+}
+static const auto to_ldr = shader([](float_4 t, auto&&... unused)restrict(amp){return unorm_4{t};});
 
 template<typename ValueType, int Rank>
 inline detail::shader<detail::reader_from_cv<ValueType, Rank>> source(const concurrency::graphics::texture_view<const ValueType, Rank>& tv){return shader(detail::reader_from_cv<ValueType, Rank>{tv});}

@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -590,7 +590,7 @@ public:
 		};
 		class builtin_effects{
 		template<typename T, const CLSID& ClassId>
-		class impl : effect{protected:using self = T;using effect::set;using effect::operator|=;using effect::operator[];public:using effect::effect;using effect::get_factory;using effect::get;using effect::operator->;using effect::operator bool;using effect::operator=;using effect::swap;static const CLSID& clsid(){return ClassId;}};
+		class impl : effect{friend class context;protected:using self = T;using effect::set;using effect::operator|=;using effect::operator[];public:using effect::effect;using effect::get_factory;using effect::get;using effect::operator->;using effect::operator bool;using effect::operator=;using effect::swap;static const CLSID& clsid(){return ClassId;}};
 		public:
 		builtin_effects() = delete;
 #define PROPERTYDECL(name, prop, type, default_value, precond, set_expression) \
@@ -1361,18 +1361,19 @@ public:
 				});
 			}
 		};
+		explicit device(::ID2D1Device*&& dev):d2d_resource{std::move(dev)}{}
 		explicit device(IDXGIDevice* dev):device{+create(dev)}{}
 		explicit device(IDXGIDevice* dev, const D2D1_CREATION_PROPERTIES& prop):device{+create(dev, prop)}{}
 		template<typename Device>
-		explicit device(Device&& dev):device{std::forward<Device>(dev)}{}
+		explicit device(Device&& dev):device{std::forward<Device>(dev).get()}{}
 		template<typename Device>
-		explicit device(Device&& dev, const D2D1_CREATION_PROPERTIES& prop):device{std::forward<Device>(dev), prop}{}
+		explicit device(Device&& dev, const D2D1_CREATION_PROPERTIES& prop):device{std::forward<Device>(dev).get(), prop}{}
 		static expected<device, hresult_error> create(IDXGIDevice* dev){return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return ::D2D1CreateDevice(dev, nullptr, ptr);}), _T(__FUNCTION__));}
 		static expected<device, hresult_error> create(IDXGIDevice* dev, const D2D1_CREATION_PROPERTIES& prop){return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return ::D2D1CreateDevice(dev, &prop, ptr);}), _T(__FUNCTION__));}
 		template<typename Device>
-		static expected<device, hresult_error> create(Device&& dev){return create(std::forward<Device>(dev));}
+		static expected<device, hresult_error> create(Device&& dev){return create(std::forward<Device>(dev).get());}
 		template<typename Device>
-		static expected<device, hresult_error> create(Device&& dev, const D2D1_CREATION_PROPERTIES& prop){return create(std::forward<Device>(dev), prop);}
+		static expected<device, hresult_error> create(Device&& dev, const D2D1_CREATION_PROPERTIES& prop){return create(std::forward<Device>(dev).get(), prop);}
 		UINT64 get_max_texture_memory()const{return (*this)->GetMaximumTextureMemory();}
 		void set_max_texture_memory(UINT64 bytes){(*this)->SetMaximumTextureMemory(bytes);}
 		__declspec(property(get=_get_max_texture_memory, put=_set_max_texture_memory)) UINT64 max_texture_memory;
@@ -1394,6 +1395,21 @@ public:
 			template<typename Surface>
 			explicit context(Surface&& surf, const D2D1_CREATION_PROPERTIES& prop):context(+create(std::forward<Surface>(surf).get(), prop)){}
 			device get_device()const{ID2D1Device* ptr;(*this)->GetDevice(&ptr);return device{std::move(ptr)};}
+			::D2D1_UNIT_MODE get_unit_mode()const{return (*this)->GetUnitMode();}
+			void set_unit_mode(::D2D1_UNIT_MODE m){(*this)->SetUnitMode(m);}
+			__declspec(property(get=get_unit_mode, put=set_unit_mode)) ::D2D1_UNIT_MODE unit_mode;
+			::D2D1_PRIMITIVE_BLEND get_primitive_blend()const{return (*this)->GetPrimitiveBlend();}
+			void set_primitive_blend(::D2D1_PRIMITIVE_BLEND b){(*this)->SetPrimitiveBlend(b);}
+			__declspec(property(get=get_primitive_blend, put=set_primitive_blend)) ::D2D1_PRIMITIVE_BLEND primitive_blend;
+			::D2D1_RENDERING_CONTROLS get_rendering_controls()const{::D2D1_RENDERING_CONTROLS rc; (*this)->GetRenderingControls(&rc); return rc;}
+			void set_rendering_controls(const ::D2D1_RENDERING_CONTROLS& rc){(*this)->SetRenderingControls(&rc);}
+			__declspec(property(get=get_rendering_controls, put=set_rendering_controls)) ::D2D1_RENDERING_CONTROLS rendering_controls;
+			bool is_buffer_precision_supported(::D2D1_BUFFER_PRECISION bp)const{return (*this)->IsBufferPrecisionSupported(bp) == TRUE;}
+			bool is_dxgi_format_supported(::DXGI_FORMAT format)const{return (*this)->IsDxgiFormatSupported(format) == TRUE;}
+			void set_target(::ID2D1Image* target){(*this)->SetTarget(target);}
+			template<typename D2D1Image, std::enable_if_t<!std::is_base_of<::ID2D1Image, std::remove_pointer_t<std::decay_t<D2D1Image>>>::value, std::nullptr_t> = nullptr>
+			void set_target(D2D1Image&& target){set_target(std::forward<D2D1Image>(target).get());}
+			void unset_target(){(*this)->SetTarget(nullptr);}
 			template<typename D2D1_GRADIENT_STOP_ARRAY>
 			expected<gradient_stop_collection, hresult_error> create_gradient_stop_collection(const D2D1_GRADIENT_STOP_ARRAY& gradient_stops, D2D1_COLOR_SPACE preinterpolation_space = D2D1_COLOR_SPACE_SRGB, D2D1_COLOR_SPACE postinterpolation_space = D2D1_COLOR_SPACE_SCRGB, D2D1_BUFFER_PRECISION buffer_precision = D2D1_BUFFER_PRECISION_8BPC_UNORM_SRGB, D2D1_EXTEND_MODE extend_mode = D2D1_EXTEND_MODE_CLAMP, D2D1_COLOR_INTERPOLATION_MODE color_interpolation_mode = D2D1_COLOR_INTERPOLATION_MODE_STRAIGHT){
 				return detail::convert_to_rich_interface<gradient_stop_collection>(com_create_resource<ID2D1GradientStopCollection1>([&](ID2D1GradientStopCollection1** x){return (*this)->CreateGradientStopCollection(gradient_stops.data(), static_cast<UINT32>(gradient_stops.size()), preinterpolation_space, postinterpolation_space, buffer_precision, extend_mode, color_interpolation_mode, x);}), _T(__FUNCTION__));
@@ -1555,11 +1571,11 @@ public:
 			expected<bitmap, hresult_error> create_bitmap(IDXGISurface2* surf, const D2D1_BITMAP_PROPERTIES1& prop)const{
 				return detail::convert_to_rich_interface<bitmap>(com_create_resource<ID2D1Bitmap1>([&](ID2D1Bitmap1** x){return (*this)->CreateBitmapFromDxgiSurface(surf, prop, x);}), _T(__FUNCTION__));
 			}
-			template<typename Source, std::enable_if_t<!std::is_base_of<IWICBitmapSource, std::remove_pointer_t<std::decay_t<Source>>>::value && !std::is_same_v<D2D1_SIZE_U, std::decay_t<Source>>>* = nullptr>
+			template<typename Source, std::enable_if_t<!std::is_base_of<IWICBitmapSource, std::remove_pointer_t<std::decay_t<Source>>>::value && !std::is_base_of<IDXGISurface2, std::remove_pointer_t<std::decay_t<Source>>>::value && !std::is_same_v<D2D1_SIZE_U, std::decay_t<Source>>>* = nullptr>
 			expected<bitmap, hresult_error> create_bitmap(Source&& src)const{
 				return create_bitmap(std::forward<Source>(src).get());
 			}
-			template<typename Source, std::enable_if_t<!std::is_same_v<std::decay_t<Source>, D2D1_SIZE_U>>* = nullptr>
+			template<typename Source, std::enable_if_t<!std::is_base_of<IWICBitmapSource, std::remove_pointer_t<std::decay_t<Source>>>::value && !std::is_base_of<IDXGISurface2, std::remove_pointer_t<std::decay_t<Source>>>::value && !std::is_same_v<std::decay_t<Source>, D2D1_SIZE_U>>* = nullptr>
 			expected<bitmap, hresult_error> create_bitmap(Source&& src, const D2D1_BITMAP_PROPERTIES1& prop)const{
 				return create_bitmap(std::forward<Source>(src).get(), prop);
 			}

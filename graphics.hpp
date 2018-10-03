@@ -3,6 +3,7 @@
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #pragma once
+#include"amp_math.hpp"
 #include"d3d.hpp"
 #include"dxgi.hpp"
 #include"d2d.hpp"
@@ -304,13 +305,13 @@ public:
 	template<typename F>
 	expected<void, hresult_error> draw(F&& f){
 		using namespace std::literals::chrono_literals;
-		DXGI_PRESENT_PARAMETERS param = {};
+		DXGI_PRESENT_PARAMETERS para = {};
 		if((status & DXGI_STATUS_OCCLUDED)){
-			status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, DXGI_PRESENT_TEST, &param);
+			status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, DXGI_PRESENT_TEST, &para);
 			return make_unexpected<hresult_error>(_T(__FUNCTION__), status);
 		}
 		return d2d::device::context::draw(std::forward<F>(f)).bind([&]()->expected<void, hresult_error>{
-			status = dxgi::swap_chain::get()->Present1(1, 0, &param);
+			status = dxgi::swap_chain::get()->Present1(1, 0, &para);
 			if(SUCCEEDED(status))
 				return {};
 			return make_unexpected<hresult_error>(_T("will::hwnd_render_target::draw"), status);
@@ -335,6 +336,19 @@ public:
 	}
 	template<typename To, typename From, typename... Args>
 	expected<To, hresult_error> reinterpret_convert(From&& from, Args&&... args)const{return interop::reinterpret_convert<To>(std::forward<From>(from), std::forward<Args>(args)..., *this);}
+	auto wm_size_resize_backbuffer(const ::DXGI_SWAP_CHAIN_DESC1& desc = will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM)){
+		return [&, this, buffer_count = desc.BufferCount, format = desc.Format, flags = desc.Flags](auto&&, WPARAM wparam, LPARAM){
+			if(wparam == SIZE_MINIMIZED || wparam == SIZE_MAXSHOW || wparam == SIZE_MAXHIDE)
+				return 0;
+			(*this).unset_target();
+			(*this).resize_buffers(buffer_count, 0, 0, format, flags);
+			(*this).get_buffer().bind([&](will::dxgi::surface&& surf){return 
+			(*this).create_bitmap(surf, will::d2d::bitmap::property{}.format(format).alpha_mode(::D2D1_ALPHA_MODE_IGNORE).option(::D2D1_BITMAP_OPTIONS_TARGET | ::D2D1_BITMAP_OPTIONS_CANNOT_DRAW)).map([&](will::d2d::bitmap&& bmp){
+			(*this).set_target(bmp);});})
+			.value();
+			return 0;
+		};
+	}
 };
 class gdi_compatible_render_target:protected d3d::device, public dxgi::surface, public d2d::device::context, public dwrite{
 	static expected<dxgi::surface, hresult_error> create_surface(unsigned int w, unsigned int h, d3d::device&& dev){

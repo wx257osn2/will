@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -360,7 +360,7 @@ public:
 
 class stack_frames{
 	symbol_handler sym;
-	std::variant<std::vector<void*>, std::reference_wrapper<const std::vector<void*>>> frames;
+	std::vector<void*> frames;
 	class stack_frame{
 		const symbol_handler& sym;
 		void* p;
@@ -685,21 +685,21 @@ class stack_frames{
 		stack_frame operator->()const noexcept{return {sym, *it};}
 	};
 public:
-	stack_frames(symbol_handler&& sym, const std::vector<void*>& frames)noexcept:sym(std::move(sym)), frames(std::cref(frames)){}
+	stack_frames(symbol_handler&& sym, const std::vector<void*>& frames)noexcept:sym(std::move(sym)), frames(frames){}
 	stack_frames(symbol_handler&& sym, std::vector<void*>&& frames)noexcept:sym(std::move(sym)), frames(std::move(frames)){}
 	static auto to_stack_frames(std::vector<void*>&& frames)noexcept{
-		return [fs = std::move(frames)](symbol_handler&& symh){return stack_frames{std::move(symh), std::move(fs)};};
+		return [fs = std::move(frames)](symbol_handler&& symh)mutable{return stack_frames{std::move(symh), std::move(fs)};};
 	}
 	static auto to_stack_frames(const std::vector<void*>& frames)noexcept{
 		return [fs = std::cref(frames)](symbol_handler&& symh){return stack_frames{std::move(symh), fs};};
 	}
 	stack_frames(const stack_frames&) = delete;
 	stack_frames(stack_frames&&) = default;
-	stack_frame_iterator begin()const noexcept{return {sym, std::visit(std::cbegin<std::vector<void*>>, frames)};}
-	stack_frame_iterator end  ()const noexcept{return {sym, std::visit(std::cend  <std::vector<void*>>, frames)};}
-	stack_frame operator[](std::size_t i)const{return {sym, std::visit([&](const std::vector<void*>& f){return f[i];}, frames)};}
-	constexpr std::size_t size()const noexcept{return std::visit(std::size<std::vector<void*>>, frames);}
-	constexpr bool empty()const noexcept{return std::visit(static_cast<bool(*)(const std::vector<void*>&)>(std::empty), frames);}
+	stack_frame_iterator begin()const noexcept{return {sym, std::cbegin<std::vector<void*>>(frames)};}
+	stack_frame_iterator end  ()const noexcept{return {sym, std::cend  <std::vector<void*>>(frames)};}
+	stack_frame operator[](std::size_t i)const{return {sym, frames[i]};}
+	constexpr std::size_t size()const noexcept{return std::size(frames);}
+	constexpr bool empty()const noexcept{return std::empty(frames);}
 	friend std::ostream& operator<<(std::ostream& os, const stack_frames& sf){
 		int i = 0;
 		for(auto&& x : sf)
