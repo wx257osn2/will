@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -353,6 +353,17 @@ struct pdf{
 			friend constexpr bool operator==(const const_iterator& lhs, const const_iterator& rhs)noexcept{return lhs.v == rhs.v;}
 			friend constexpr bool operator!=(const const_iterator& lhs, const const_iterator& rhs)noexcept{return lhs.v != rhs.v;}
 			value_type operator*()const{return self->get_page(v).value();}
+			const_iterator& operator++(){++v;return *this;}
+			const_iterator operator++(int){const auto copy = *this; ++v; return copy;}
+			const_iterator& operator+=(UINT32 x){v += x; return *this;}
+			const_iterator operator+(UINT32 x)const{auto copy = *this; copy += x; return copy;}
+			friend const_iterator operator+(UINT32 x, const const_iterator& rhs){return rhs+x;}
+			const_iterator& operator--(){--v;return *this;}
+			const_iterator operator--(int){const auto copy = *this; --v; return copy;}
+			const_iterator& operator-=(UINT32 x){v -= x; return *this;}
+			const_iterator operator-(UINT32 x)const{auto copy = *this; copy -= x; return copy;}
+			friend const_iterator operator-(UINT32 x, const const_iterator& rhs){return rhs-x;}
+			std::ptrdiff_t operator-(const const_iterator& rhs)const{return static_cast<std::ptrdiff_t>(rhs.v) - static_cast<std::ptrdiff_t>(this->v);}
 		};
 		constexpr const_iterator begin()const noexcept{return {this, 0};}
 		constexpr const_iterator end()const{return {this, get_page_count().value()};}

@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2018 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -380,9 +380,9 @@ public:
 	template<typename D2DDevice, typename D2DBitmap>
 	expected<void, hresult_error> encode_to_file(LPCWSTR filename, D2DDevice&& device, D2DBitmap&& bmp, const GUID& format = GUID_ContainerFormatPng){
 		return create_stream(filename)
-		         .bind([](stream&& stream){return create_bitmap_encoder(stream);})
-		         .bind([](encoder::bitmap&& bitmap_encoder){return bitmap_encoder.create_frame()
-		            .bind([&](encoder::frame&& frame_encoder){return create_encoder(std::forward<D2DDevice>(device))
+		         .bind([&, this](stream&& stream){return this->create_bitmap_encoder(stream);})
+		         .bind([&, this](encoder::bitmap&& bitmap_encoder){return bitmap_encoder.create_frame()
+		            .bind([&, this](encoder::frame&& frame_encoder){return this->create_encoder(std::forward<D2DDevice>(device))
 		               .bind([&](encoder&& encoder){return encoder.write(std::forward<D2DBitmap>(bmp), frame_encoder);})
 		               .bind([&]{return frame_encoder.commit();});
 		            })

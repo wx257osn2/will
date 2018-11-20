@@ -1197,7 +1197,11 @@ namespace detail{
 template<typename T, int Dim, int Rank>
 struct texture<amp::shader::vec<T, Dim>, Rank>{using type = concurrency::graphics::texture<typename amp::shader::detail::original_short_vector<T, Dim>::type, Rank>;};
 template<typename T, int Dim, int Rank>
+struct texture<const amp::shader::vec<T, Dim>, Rank>{using type = concurrency::graphics::texture<const typename amp::shader::detail::original_short_vector<T, Dim>::type, Rank>;};
+template<typename T, int Dim, int Rank>
 struct texture_view<amp::shader::vec<T, Dim>, Rank>{using type = concurrency::graphics::texture_view<typename amp::shader::detail::original_short_vector<T, Dim>::type, Rank>;};
+template<typename T, int Dim, int Rank>
+struct texture_view<const amp::shader::vec<T, Dim>, Rank>{using type = concurrency::graphics::texture_view<const typename amp::shader::detail::original_short_vector<T, Dim>::type, Rank>;};
 
 }
 

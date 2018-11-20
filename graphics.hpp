@@ -397,6 +397,7 @@ public:
 	using d2d::device::context::operator->;
 	using d2d::device::context::operator bool;
 	using d2d::device::context::draw;
+	using d2d::device::context::get_device;
 	template<typename F>
 	expected<d2d::bitmap, hresult_error> prerender(const D2D1_SIZE_F& desired_size, F&& f){
 		return create_compatible_render_target(desired_size, D2D1::PixelFormat(), D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE).bind([&](d2d::device::bitmap_render_target&& rt){
@@ -421,6 +422,8 @@ public:
 			});
 		});
 	}
+	dxgi::surface& get_dxgi_surface(){return *this;}
+	const dxgi::surface& get_dxgi_surface()const{return *this;}
 	d3d::device& get_d3d_device(){return *this;}
 	const d3d::device& get_d3d_device()const{return *this;}
 	dwrite& get_dwrite_factory(){return *this;}
