@@ -406,6 +406,7 @@ public:
 			class lazy_manipulator{
 				D2D1::Matrix4x4F mat;
 				const bitmap& bm;
+				template<typename>friend struct render_target;
 			public:
 				friend bitmap;
 				friend class renderer;
@@ -1224,6 +1225,7 @@ public:
 				template<typename F>
 				renderer& axis_aligned_clip(const D2D1_RECT_F& clip_rect, F&& f){return axis_aligned_clip(clip_rect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE, std::forward<F>(f));}
 				renderer& clear(const D2D_COLOR_F& col = D2D1::ColorF{D2D1::ColorF::Black, 0.F}){(*this)->Clear(col); return *this;}
+				renderer& clear(const D2D1::ColorF::Enum& col){return clear(D2D1::ColorF{col});}
 				renderer& image(ID2D1Image* image, D2D1_INTERPOLATION_MODE interpolation_mode = D2D1_INTERPOLATION_MODE_LINEAR, D2D1_COMPOSITE_MODE composite_mode = D2D1_COMPOSITE_MODE_SOURCE_OVER){(*this)->DrawImage(image, interpolation_mode, composite_mode);return *this;}
 				renderer& image(ID2D1Effect* effect, D2D1_INTERPOLATION_MODE interpolation_mode = D2D1_INTERPOLATION_MODE_LINEAR, D2D1_COMPOSITE_MODE composite_mode = D2D1_COMPOSITE_MODE_SOURCE_OVER){(*this)->DrawImage(effect, interpolation_mode, composite_mode);return *this;}
 				template<typename Image, std::enable_if_t<!std::is_base_of<ID2D1Image, std::remove_pointer_t<std::decay_t<Image>>>::value>* = nullptr>
