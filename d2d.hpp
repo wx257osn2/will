@@ -1662,7 +1662,7 @@ public:
 	expected<drawing_state_block, hresult_error> create_drawing_state_block(DWriteRenderingParams&& p)const{return create_drawing_state_block(std::forward<DWriteRenderingParams>(p).get());}
 	expected<drawing_state_block, hresult_error> create_drawing_state_block(const D2D1_DRAWING_STATE_DESCRIPTION& d)const{return detail::convert_to_rich_interface<drawing_state_block>(com_create_resource<ID2D1DrawingStateBlock>([&](ID2D1DrawingStateBlock** ptr){return (*this)->CreateDrawingStateBlock(d, ptr);}), _T(__FUNCTION__));}
 	expected<drawing_state_block, hresult_error> create_drawing_state_block()const{return detail::convert_to_rich_interface<drawing_state_block>(com_create_resource<ID2D1DrawingStateBlock>([&](ID2D1DrawingStateBlock** ptr){return (*this)->CreateDrawingStateBlock(ptr);}), _T(__FUNCTION__));}
-	expected<device, hresult_error> create_device(IDXGIDevice* dxgi_device)const{return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return (*this)->CreateDevice(dxgi_device, ptr);}), _T(__FUNCTION__));}
+	expected<device, hresult_error> create_device(IDXGIDevice2* dxgi_device)const{return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return (*this)->CreateDevice(dxgi_device, ptr);}), _T(__FUNCTION__));}
 	template<typename DXGIDevice>
 	expected<device, hresult_error> create_device(DXGIDevice&& dev)const{return create_device(std::forward<DXGIDevice>(dev).get());}
 	static expected<d2d, hresult_error> create_factory(D2D1_FACTORY_TYPE t = D2D1_FACTORY_TYPE_MULTI_THREADED, D2D1_DEBUG_LEVEL dlv =

@@ -141,7 +141,8 @@ struct d3d{
 			D3D11_TEXTURE2D_DESC get_desc()const noexcept{D3D11_TEXTURE2D_DESC desc;(*this)->GetDesc(&desc);return desc;}
 			texture2d(texture2d&&)noexcept = default;
 			texture2d(IDXGISurface2* surf):child{std::move(+query_interface<ID3D11Texture2D>(surf))}{}
-			template<typename DXGISurface, std::enable_if_t<!std::is_base_of<IDXGISurface2, std::remove_pointer_t<std::decay_t<DXGISurface>>>::value, std::nullptr_t> = nullptr>
+			texture2d(IDXGIResource1* surf):child{std::move(+query_interface<ID3D11Texture2D>(surf))}{}
+			template<typename DXGISurface, std::enable_if_t<!std::is_base_of<IDXGISurface2, std::remove_pointer_t<std::decay_t<DXGISurface>>>::value && !std::is_base_of<IDXGIResource1, std::remove_pointer_t<std::decay_t<DXGISurface>>>::value, std::nullptr_t> = nullptr>
 			texture2d(DXGISurface&& surf):texture2d{std::forward<DXGISurface>(surf).get()}{}
 			texture2d(const copy_impl& c):texture2d{std::move(+c.tex.get_device().create_texture2d(c.tex.get_desc()) = c)}{}
 			texture2d(const copy_with_immediate_impl& c):texture2d{std::move(+c.tex.get_device().create_texture2d(c.tex.get_desc()) = c)}{}
