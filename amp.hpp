@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -12,6 +12,7 @@
 #include<amp.h>
 #pragma warning(pop)
 #include"_expected.hpp"
+#include"_2dim.hpp"
 
 namespace will{
 
@@ -320,6 +321,19 @@ template<typename T, typename U>
 struct pair{
 	alignas(4) T first;
 	alignas(4) U second;
+};
+
+}
+
+namespace two_dim{
+
+template<>
+struct attribute_traits<amp::extent<2>>{
+	using tag_type = tag::size;
+	using element_type = int;
+	static element_type w(const amp::extent<2>& wh)noexcept{return wh[1];}
+	static element_type h(const amp::extent<2>& wh)noexcept{return wh[0];}
+	static amp::extent<2> create(element_type w, element_type h)noexcept{return {h, w};}
 };
 
 }

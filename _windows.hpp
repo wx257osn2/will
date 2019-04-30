@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2017, 2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -217,8 +217,8 @@ class module_handle{
 	::HMODULE hmodule;
 public:
 	explicit module_handle(::HMODULE&& hmod):hmodule{hmod}{}
-	module_handle(module_handle&& other):hmodule{std::move(other.hmodule)}{other.hmodule = nullptr;}
-	module_handle& operator=(module_handle&& rhs){hmodule = std::move(rhs.hmodule);rhs.hmodule = nullptr;return *this;}
+	module_handle(module_handle&& other)noexcept:hmodule{std::move(other.hmodule)}{other.hmodule = nullptr;}
+	module_handle& operator=(module_handle&& rhs)noexcept{hmodule = std::move(rhs.hmodule);rhs.hmodule = nullptr;return *this;}
 	expected<void, winapi_last_error> free(){
 		if(hmodule){
 			if(::FreeLibrary(hmodule) == FALSE)
@@ -250,7 +250,7 @@ public:
 	}
 	template<typename T>
 	expected<typename detail::get_proc_addr_impl<T>::result_type, winapi_last_error> get_proc_address(const std::string& proc_name)const{return get_proc_address<T>(proc_name.c_str());}
-	~module_handle(){free();}
+	~module_handle(){auto _ [[maybe_unused]] = free();}
 };
 
 inline expected<module_handle, winapi_last_error> load_library(LPCTSTR file_name, DWORD flags = 0){

@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -119,7 +119,7 @@ class com_apartment{
 	bool scope;
 	com_apartment(bool t = false):scope(t){}
 public:
-	com_apartment(com_apartment&& other):scope(other.scope){other.scope = false;}
+	com_apartment(com_apartment&& other)noexcept:scope(other.scope){other.scope = false;}
 	enum class thread{
 		single = COINIT_APARTMENTTHREADED, 
 		multi  = COINIT_MULTITHREADED
@@ -431,7 +431,7 @@ public:
 	explicit variant()noexcept:var([]()->VARIANT{VARIANT v;VariantInit(&v);return v;}()){}
 	variant(const variant& other):var(+copy(const_cast<VARIANT&>(other.var))){}
 	variant(variant&& other)noexcept:var(std::move(other.release())){}
-	~variant()noexcept{reset();}
+	~variant()noexcept{auto _ = reset();}
 	variant(const VARIANT& v):var(+copy(const_cast<VARIANT&>(v))){}
 	variant(VARIANT&& v)noexcept:var(v){v.vt = VT_EMPTY;}
 	template<typename U, std::enable_if_t<!std::is_same<std::decay_t<U>, variant>::value && !std::is_same<std::decay_t<U>, VARIANT>::value && !std::is_same<std::decay_t<U>, bool_>::value && !std::is_same<std::decay_t<U>, scode>::value && !std::is_same<std::decay_t<U>, date>::value && !std::is_same<std::decay_t<U>, bool_*>::value && !std::is_same<std::decay_t<U>, scode*>::value && !std::is_same<std::decay_t<U>, date*>::value && !std::is_same<std::decay_t<U>, bstr>::value && !std::is_same<std::decay_t<U>, bool>::value>* = nullptr>
@@ -447,7 +447,7 @@ public:
 	explicit variant(scode* t):variant(){var.vt = VT_BYREF|VT_ERROR; var.pscode = &(t->s);}
 	explicit variant(date* t):variant(){var.vt = VT_BYREF|VT_DATE; var.pdate = &(t->d);}
 	variant& operator=(const variant& v){+reset();var = +copy(const_cast<VARIANT&>(v.var)); return *this;}
-	variant& operator=(variant&& v){+reset();var = std::move(v.release()); return *this;}
+	variant& operator=(variant&& v)noexcept(false){+reset();var = std::move(v.release()); return *this;}
 	variant& operator=(const VARIANT& v){+reset();var = +copy(const_cast<VARIANT&>(v)); return *this;}
 	variant& operator=(VARIANT&& v){+reset();var = v; v.vt = VT_EMPTY; return *this;}
 	template<typename T, std::enable_if_t<std::is_constructible<variant, T&&>::value>* = nullptr>
@@ -696,7 +696,7 @@ public:
 template<typename T>
 class com_base : public T{
 protected:
-	ULONG ref_count;
+	ULONG ref_count = 0;
 public:
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** ppvObject)override{
 		if (iid == IID_IUnknown || iid == __uuidof(T)){

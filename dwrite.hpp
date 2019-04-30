@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2017, 2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -16,7 +16,7 @@ public:
 	static expected<dwrite, hresult_error> create_factory(DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED){
 		return detail::convert_to_rich_interface<dwrite>(com_create_resource<IDWriteFactory1>([&](IDWriteFactory1** x){return DWriteCreateFactory(type, __uuidof(IDWriteFactory1), reinterpret_cast<IUnknown**>(x));}), _T(__FUNCTION__));
 	}
-	explicit dwrite(DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED):dwrite{+create_factory()}{}
+	explicit dwrite(DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED):dwrite{+create_factory(type)}{}
 	struct format : detail::resource<IDWriteTextFormat>{
 		using resource::resource;
 		class property{
@@ -82,7 +82,7 @@ public:
 						}
 						return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 					}
-					~registrar(){if(loader_)unregister();}
+					~registrar()noexcept{if(loader_)auto _ = unregister();}
 				};
 			};
 			expected<loader, hresult_error> get_loader(){return detail::convert_to_rich_interface<loader>(com_create_resource<IDWriteFontFileLoader>([&](IDWriteFontFileLoader** ptr){return (*this)->GetLoader(ptr);}), _T(__FUNCTION__));}
@@ -91,8 +91,11 @@ public:
 		struct face : detail::resource<IDWriteFontFace1>{
 			using resource::resource;
 			expected<std::vector<file>, hresult_error> get_files(){
+#pragma warning(push)
+#pragma warning(disable:6001)
 				UINT32 num;
 				auto hr = (*this)->GetFiles(&num, nullptr);
+#pragma warning(pop)
 				if(FAILED(hr))
 					return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 				std::vector<IDWriteFontFile*> ff(num, nullptr);
@@ -102,8 +105,11 @@ public:
 				return std::move(*reinterpret_cast<std::vector<file>*>(&ff));
 			}
 			expected<file, hresult_error> get_file(){
+#pragma warning(push)
+#pragma warning(disable:6001)
 				UINT32 num;
 				const auto hr = (*this)->GetFiles(&num, nullptr);
+#pragma warning(pop)
 				if(FAILED(hr))
 					return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 				if(num != 1)
@@ -131,7 +137,7 @@ public:
 						}
 						return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 					}
-					~registrar(){if(loader_)unregister();}
+					~registrar(){if(loader_)auto _ = unregister();}
 				};
 			};
 			struct find_result{
@@ -248,8 +254,7 @@ struct font_registrar{
 		LPCTSTR filename;
 		bool private_ = true;
 		bool enumable = false;
-		DESIGNVECTOR* pdv = nullptr;
-		DWORD generate_flag()const{return (private_ ? FR_PRIVATE : 0) | (enumable ? 0 : FR_NOT_ENUM);}
+		DWORD generate_flag()const noexcept{return (private_ ? FR_PRIVATE : 0) | (enumable ? 0 : FR_NOT_ENUM);}
 	public:
 		property(LPCTSTR file_name) : filename(file_name){}
 		property(const property&) = default;
@@ -260,12 +265,11 @@ struct font_registrar{
 #define PROPERTYDECL(name, type, membername) property& name(type t){membername = t;return *this;}
 		PROPERTYDECL(to_private, bool, private_)
 		PROPERTYDECL(to_enumable, bool, enumable)
-		PROPERTYDECL(design_vector, DESIGNVECTOR*, pdv)
 #undef  PROPERTYDECL
 		friend font_registrar;
 	};
-	explicit font_registrar(const property& prop) : prop(prop), fonts(AddFontResourceEx(prop.filename, prop.generate_flag(), prop.pdv)){}
-	~font_registrar(){if(fonts)RemoveFontResourceEx(prop.filename, prop.generate_flag(), prop.pdv);}
+	explicit font_registrar(const property& prop) : prop(prop), fonts(AddFontResourceEx(prop.filename, prop.generate_flag(), nullptr)){}
+	~font_registrar(){if(fonts)RemoveFontResourceEx(prop.filename, prop.generate_flag(), nullptr);}
 	explicit operator bool()const noexcept{return fonts != 0;}
 private:
 	property prop;
@@ -453,9 +457,9 @@ public:
 		return dw.get_gdi_interop().map([&](dwrite::gdi_interop&& gdii){
 		LOGFONTW l = logical_fontw{face_name}.char_set(charset);
 		font_files files;
-		using lparam = std::tuple<dwrite::gdi_interop*, std::vector<dwrite::font::file>*, HDC>;
-		const lparam params = {&gdii, &files.data, hdc};
-		const auto old = ::SelectObject(hdc, nullptr);
+		using lparam = std::tuple<dwrite::gdi_interop*, std::vector<dwrite::font::file>*, HDC, HFONT*>;
+		HFONT old = nullptr;
+		const lparam params = {&gdii, &files.data, hdc, &old};
 		::EnumFontFamiliesExW(hdc, &l, [](const LOGFONTW* logfont, const TEXTMETRICW*, DWORD, LPARAM _)->BOOL{
 			auto&& params = *reinterpret_cast<const lparam*>(_);
 			auto&& lf = *logfont;
@@ -466,6 +470,8 @@ public:
 				return 1;
 			auto hfont = font_handle{lf};
 			hfont.reset(reinterpret_cast<HFONT>(::SelectObject(std::get<2>(params), hfont.release())));
+			if(*std::get<3>(params) == nullptr)
+				*std::get<3>(params) = hfont.release();
 			if(auto ff = gdii.create_font_face(std::get<2>(params)))
 				if(auto files = ff->get_files())
 					for(auto&& x : *files)

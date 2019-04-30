@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -435,8 +435,8 @@ public:
 				scoped_readonly_mapped_rect(::D2D1_MAPPED_RECT&& mr, const bitmap& bitm)noexcept: ::D2D1_MAPPED_RECT{std::move(mr)}, bm{bitm}{}
 			public:
 				scoped_readonly_mapped_rect(const bitmap& bitm): ::D2D1_MAPPED_RECT(+bitm.map_read()), bm{bitm}{}
-				scoped_readonly_mapped_rect(scoped_readonly_mapped_rect&& t): ::D2D1_MAPPED_RECT{std::move(static_cast<::D2D1_MAPPED_RECT&>(t))}, bm{t.bm}{t.bits = nullptr;}
-				~scoped_readonly_mapped_rect()noexcept{if(bits)bm.unmap();}
+				scoped_readonly_mapped_rect(scoped_readonly_mapped_rect&& t)noexcept: ::D2D1_MAPPED_RECT{std::move(static_cast<::D2D1_MAPPED_RECT&>(t))}, bm{t.bm}{t.bits = nullptr;}
+				~scoped_readonly_mapped_rect()noexcept{if(bits)auto _ = bm.unmap();}
 				operator const memory_data&()const{return *reinterpret_cast<const memory_data*>(this);}
 				friend bitmap;
 			};
@@ -445,8 +445,8 @@ public:
 				scoped_mapped_rect(::D2D1_MAPPED_RECT&& s, bitmap& bitm)noexcept: ::D2D1_MAPPED_RECT{std::move(s)}, bm{bitm}{}
 			public:
 				scoped_mapped_rect(bitmap& bitm, std::underlying_type_t<::D2D1_MAP_OPTIONS> option): ::D2D1_MAPPED_RECT(+bitm.map(option)), bm{bitm}{}
-				scoped_mapped_rect(scoped_mapped_rect&& t): ::D2D1_MAPPED_RECT{std::move(static_cast<::D2D1_MAPPED_RECT&>(t))}, bm{t.bm}{t.bits = nullptr;}
-				~scoped_mapped_rect()noexcept{if(bits)bm.unmap();}
+				scoped_mapped_rect(scoped_mapped_rect&& t)noexcept: ::D2D1_MAPPED_RECT{std::move(static_cast<::D2D1_MAPPED_RECT&>(t))}, bm{t.bm}{t.bits = nullptr;}
+				~scoped_mapped_rect()noexcept{if(bits)auto _ = bm.unmap();}
 				operator const memory_data&()const{return *reinterpret_cast<const memory_data*>(this);}
 				friend bitmap;
 			};
@@ -1363,7 +1363,10 @@ public:
 				});
 			}
 		};
+#pragma warning(push)
+#pragma warning(disable: 26495)
 		explicit device(::ID2D1Device*&& dev):d2d_resource{std::move(dev)}{}
+#pragma warning(pop)
 		explicit device(IDXGIDevice* dev):device{+create(dev)}{}
 		explicit device(IDXGIDevice* dev, const D2D1_CREATION_PROPERTIES& prop):device{+create(dev, prop)}{}
 		template<typename Device>
@@ -1643,7 +1646,7 @@ public:
 	using bitmap_render_target =  device::bitmap_render_target;
 	expected<d2d&, hresult_error> reload_system_metrics()& {const auto hr = (*this)->ReloadSystemMetrics();if(SUCCEEDED(hr))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
 	expected<d2d , hresult_error> reload_system_metrics()&&{const auto hr = (*this)->ReloadSystemMetrics();if(SUCCEEDED(hr))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
-	expected<two_dim::xy<float>, hresult_error> get_desktop_dpi(){return reload_system_metrics().map([&](auto&& t){two_dim::xy<float> ddpi;(*this)->GetDesktopDpi(&ddpi.x, &ddpi.y);return ddpi;});}
+	expected<two_dim::xy<float>, hresult_error> get_desktop_dpi(){return reload_system_metrics().map([](auto&& t){two_dim::xy<float> ddpi;t->GetDesktopDpi(&ddpi.x, &ddpi.y);return ddpi;});}
 	template<typename RandomAccessableContainer>
 	expected<stroke_style, hresult_error> create_stroke_style(const D2D1_STROKE_STYLE_PROPERTIES1& prop, RandomAccessableContainer&& dashes)const{
 		return detail::convert_to_rich_interface<stroke_style>(com_create_resource<ID2D1StrokeStyle1>([&](ID2D1StrokeStyle1** ptr){return (*this)->CreateStrokeStyle(prop, dashes.data(), static_cast<UINT32>(dashes.size()), ptr);}), _T(__FUNCTION__));
@@ -1676,46 +1679,63 @@ public:
 	}
 };
 namespace two_dim{
-namespace detail{
-template<>struct attribute<::D2D1_RECT_F, xyxy<FLOAT>>{static ::D2D1_RECT_F impl(const xyxy<FLOAT>& p){return {p._1.x, p._1.y, p._2.x, p._2.y};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, FLOAT>::value, ::D2D1_RECT_F>, xyxy<T>>{static ::D2D1_RECT_F impl(const xyxy<T>& p){return p.cast<FLOAT>().attribute<::D2D1_RECT_F>();}};
-template<typename T>struct attribute<::D2D1_RECT_F, xywh<T>>{static ::D2D1_RECT_F impl(const xywh<T>& p){return static_cast<xyxy<T>>(p).cast<FLOAT>().attribute<::D2D1_RECT_F>();}};
-template<>struct attribute<::D2D1_RECT_L, xyxy<LONG>>{static ::D2D1_RECT_L impl(const xyxy<LONG>& p){return {p._1.x, p._1.y, p._2.x, p._2.y};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, LONG>::value, ::D2D1_RECT_L>, xyxy<T>>{static ::D2D1_RECT_L impl(const xyxy<T>& p){return p.cast<LONG>().attribute<::D2D1_RECT_L>();}};
-template<typename T>struct attribute<::D2D1_RECT_L, xywh<T>> { static ::D2D1_RECT_L impl(const xywh<T>& p) { return static_cast<xyxy<T>>(p).cast<LONG>().attribute<::D2D1_RECT_L>(); } };
-template<>struct attribute<::D2D1_RECT_U, xyxy<UINT32>>{static ::D2D1_RECT_U impl(const xyxy<UINT32>& p){return {p._1.x, p._1.y, p._2.x, p._2.y};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, UINT32>::value, ::D2D1_RECT_U>, xyxy<T>>{static ::D2D1_RECT_U impl(const xyxy<T>& p){return p.cast<UINT32>().attribute<::D2D1_RECT_U>();}};
-template<typename T>struct attribute<::D2D1_RECT_U, xywh<T>>{static ::D2D1_RECT_U impl(const xywh<T>& p){return static_cast<xyxy<T>>(p).cast<UINT32>().attribute<::D2D1_RECT_U>();}};
-template<>struct attribute<::D2D1_POINT_2F, xy<FLOAT>>{static ::D2D1_POINT_2F impl(const xy<FLOAT>& p){return {p.x, p.y};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, FLOAT>::value, ::D2D1_POINT_2F>, xy<T>>{static ::D2D1_POINT_2F impl(const xy<T>& p){return p.cast<FLOAT>().attribute<::D2D1_POINT_2F>();}};
-template<>struct attribute<::D2D1_POINT_2L, xy<LONG>>{static ::D2D1_POINT_2L impl(const xy<LONG>& p){return {p.x, p.y};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, LONG>::value, ::D2D1_POINT_2L>, xy<T>>{static ::D2D1_POINT_2L impl(const xy<T>& p){return p.cast<LONG>().attribute<::D2D1_POINT_2L>();}};
-template<>struct attribute<::D2D1_POINT_2U, xy<UINT32>>{static ::D2D1_POINT_2U impl(const xy<UINT32>& p){return {p.x, p.y};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, UINT32>::value, ::D2D1_POINT_2U>, xy<T>>{static ::D2D1_POINT_2U impl(const xy<T>& p){return p.cast<UINT32>().attribute<::D2D1_POINT_2U>();}};
-template<>struct attribute<::D2D1_SIZE_F, wh<FLOAT>>{static ::D2D1_SIZE_F impl(const wh<FLOAT>& p){return {p.w, p.h};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, FLOAT>::value, ::D2D1_SIZE_F>, wh<T>>{static ::D2D1_SIZE_F impl(const wh<T>& p){return p.cast<FLOAT>().attribute<::D2D1_SIZE_F>();}};
-template<>struct attribute<::D2D1_SIZE_U, wh<UINT32>>{static ::D2D1_SIZE_U impl(const wh<UINT32>& p){return {p.w, p.h};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, UINT32>::value, ::D2D1_SIZE_U>, wh<T>>{static ::D2D1_SIZE_U impl(const wh<T>& p){return p.cast<UINT32>().attribute<::D2D1_SIZE_U>();}};
+template<>
+struct attribute_traits<::D2D1_POINT_2F>{
+	using tag_type = tag::point;
+	using element_type = ::FLOAT;
+	static constexpr element_type x(const ::D2D1_POINT_2F& po)noexcept{return po.x;}
+	static constexpr element_type y(const ::D2D1_POINT_2F& po)noexcept{return po.y;}
+	static constexpr ::D2D1_POINT_2F create(element_type x, element_type y)noexcept{return {x, y};}
+};
+template<>
+struct attribute_traits<::D2D1_POINT_2U>{
+	using tag_type = tag::point;
+	using element_type = ::UINT32;
+	static constexpr element_type x(const ::D2D1_POINT_2U& po)noexcept{return po.x;}
+	static constexpr element_type y(const ::D2D1_POINT_2U& po)noexcept{return po.y;}
+	static constexpr ::D2D1_POINT_2U create(element_type x, element_type y)noexcept{return {x, y};}
+};
+template<>
+struct attribute_traits<::D2D1_SIZE_F>{
+	using tag_type = tag::size;
+	using element_type = ::FLOAT;
+	static constexpr element_type w(const ::D2D1_SIZE_F& t)noexcept{return t.width;}
+	static constexpr element_type h(const ::D2D1_SIZE_F& t)noexcept{return t.height;}
+	static constexpr ::D2D1_SIZE_F create(element_type x, element_type y)noexcept{return {x, y};}
+};
+template<>
+struct attribute_traits<::D2D1_SIZE_U>{
+	using tag_type = tag::size;
+	using element_type = ::UINT32;
+	static constexpr element_type w(const ::D2D1_SIZE_U& t)noexcept{return t.width;}
+	static constexpr element_type h(const ::D2D1_SIZE_U& t)noexcept{return t.height;}
+	static constexpr ::D2D1_SIZE_U create(element_type x, element_type y)noexcept{return {x, y};}
+};
+template<>
+struct attribute_traits<::D2D1_RECT_F>{
+	using tag_type = tag::point_pair;
+	using element_type = ::FLOAT;
+	static constexpr xy<element_type> _1(const ::D2D1_RECT_F& t)noexcept{return {t.left, t.top};}
+	static constexpr xy<element_type> _2(const ::D2D1_RECT_F& t)noexcept{return {t.right, t.bottom};}
+	static constexpr element_type x1(const ::D2D1_RECT_F& t)noexcept{return t.left;}
+	static constexpr element_type y1(const ::D2D1_RECT_F& t)noexcept{return t.top;}
+	static constexpr element_type x2(const ::D2D1_RECT_F& t)noexcept{return t.right;}
+	static constexpr element_type y2(const ::D2D1_RECT_F& t)noexcept{return t.bottom;}
+	static constexpr ::D2D1_RECT_F create(element_type x1, element_type y1, element_type x2, element_type y2)noexcept{return {x1, y1, x2, y2};}
+};
+template<>
+struct attribute_traits<::D2D1_RECT_U>{
+	using tag_type = tag::point_pair;
+	using element_type = ::UINT32;
+	static constexpr xy<element_type> _1(const ::D2D1_RECT_U& t)noexcept{return {t.left, t.top};}
+	static constexpr xy<element_type> _2(const ::D2D1_RECT_U& t)noexcept{return {t.right, t.bottom};}
+	static constexpr element_type x1(const ::D2D1_RECT_U& t)noexcept{return t.left;}
+	static constexpr element_type y1(const ::D2D1_RECT_U& t)noexcept{return t.top;}
+	static constexpr element_type x2(const ::D2D1_RECT_U& t)noexcept{return t.right;}
+	static constexpr element_type y2(const ::D2D1_RECT_U& t)noexcept{return t.bottom;}
+	static constexpr ::D2D1_RECT_U create(element_type x1, element_type y1, element_type x2, element_type y2)noexcept{return {x1, y1, x2, y2};}
+};
+}
+}
 
-template<>struct attribute<xyxy<FLOAT>, ::D2D1_RECT_F>{static xyxy<FLOAT> impl(const ::D2D1_RECT_F& p){return {{p.left, p.top}, {p.right, p.bottom}};}};
-template<typename T>struct attribute<xyxy<T>, std::enable_if_t<!std::is_same<T, FLOAT>::value, ::D2D1_RECT_F>>{static xyxy<T> impl(const ::D2D1_RECT_F& p){return two_dim::attribute<xyxy<FLOAT>>(p).cast<T>();}};
-template<typename T>struct attribute<xywh<T>, ::D2D1_RECT_F>{static xywh<T> impl(const ::D2D1_RECT_F& p){return static_cast<xywh<T>>(two_dim::attribute<xyxy<FLOAT>>(p).cast<T>());}};
-//template<>struct attribute<xyxy<LONG>, ::D2D1_RECT_L>{static xyxy<LONG> impl(const ::D2D1_RECT_L& p){return {{p.left, p.top}, {p.right, p.bottom}};}};
-template<typename T>struct attribute<xyxy<T>, std::enable_if_t<!std::is_same<T, LONG>::value, ::D2D1_RECT_L>>{static xyxy<T> impl(const ::D2D1_RECT_L& p){return two_dim::attribute<xyxy<LONG>>(p).cast<T>();}};
-template<typename T>struct attribute<xywh<T>, ::D2D1_RECT_L>{static xywh<T> impl(const ::D2D1_RECT_L& p){return static_cast<xywh<T>>(two_dim::attribute<xyxy<LONG>>(p).cast<T>());}};
-template<>struct attribute<xyxy<UINT32>, ::D2D1_RECT_U>{static xyxy<UINT32> impl(const ::D2D1_RECT_U& p){return {{p.left, p.top}, {p.right, p.bottom}};}};
-template<typename T>struct attribute<xyxy<T>, std::enable_if_t<!std::is_same<T, UINT32>::value, ::D2D1_RECT_U>>{static xyxy<T> impl(const ::D2D1_RECT_U& p){return two_dim::attribute<xyxy<UINT32>>(p).cast<T>();}};
-template<typename T>struct attribute<xywh<T>, ::D2D1_RECT_U>{static xywh<T> impl(const ::D2D1_RECT_U& p){return static_cast<xywh<T>>(two_dim::attribute<xyxy<UINT32>>(p).cast<T>());}};
-template<>struct attribute<xy<FLOAT>, ::D2D1_POINT_2F>{static xy<FLOAT> impl(const ::D2D1_POINT_2F& p){return {p.x, p.y};}};
-template<typename T>struct attribute<xy<T>, std::enable_if_t<!std::is_same<T, FLOAT>::value, ::D2D1_POINT_2F>>{static xy<T> impl(const ::D2D1_POINT_2F& p){return two_dim::attribute<xy<FLOAT>>(p).cast<T>();}};
-template<>struct attribute<xy<LONG>, ::D2D1_POINT_2L>{static xy<LONG> impl(const ::D2D1_POINT_2L& p){return {p.x, p.y};}};
-template<typename T>struct attribute<xy<T>, std::enable_if_t<!std::is_same<T, LONG>::value, ::D2D1_POINT_2L>>{static xy<LONG> impl(const ::D2D1_POINT_2L& p){return two_dim::attribute<xy<LONG>>(p).cast<T>();}};
-template<>struct attribute<xy<UINT32>, ::D2D1_POINT_2U>{static xy<UINT32> impl(const ::D2D1_POINT_2U& p){return {p.x, p.y};}};
-template<typename T>struct attribute<xy<T>, std::enable_if_t<!std::is_same<T, UINT32>::value, ::D2D1_POINT_2U>>{static xy<T> impl(const ::D2D1_POINT_2U& p){return two_dim::attribute<xy<UINT32>>(p).cast<T>();}};
-template<>struct attribute<wh<FLOAT>, ::D2D1_SIZE_F>{static wh<FLOAT> impl(const ::D2D1_SIZE_F& p){return {p.width, p.height};}};
-template<typename T>struct attribute<wh<T>, std::enable_if_t<!std::is_same<T, FLOAT>::value, ::D2D1_SIZE_F>>{static wh<T> impl(const ::D2D1_SIZE_F& p){return two_dim::attribute<wh<FLOAT>>(p).cast<T>();}};
-template<>struct attribute<wh<UINT32>, ::D2D1_SIZE_U>{static wh<UINT32> impl(const ::D2D1_SIZE_U& p){return {p.width, p.height};}};
-template<typename T>struct attribute<wh<T>, std::enable_if_t<!std::is_same<T, UINT32>::value, ::D2D1_SIZE_U>>{static wh<T> impl(const ::D2D1_SIZE_U& p){return two_dim::attribute<wh<UINT32>>(p).cast<T>();}};
-}
-}
-}
+#include "_2dim_point_rect.hpp"

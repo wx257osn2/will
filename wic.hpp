@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -13,14 +13,24 @@
 #include<vector>
 #pragma comment(lib, "WIndowsCodecs.lib")
 namespace will{
+namespace two_dim{
 
-namespace two_dim{namespace detail{
+template<>
+struct attribute_traits<::WICRect>{
+	using tag_type = tag::point_and_size;
+	using point_element_type = ::INT;
+	using size_element_type = ::INT;
+	static constexpr two_dim::xy<point_element_type> xy(const ::WICRect& t)noexcept{return {t.X, t.Y};}
+	static constexpr two_dim::wh<size_element_type> wh(const ::WICRect& t)noexcept{return {t.Width, t.Height};}
+	static constexpr point_element_type x(const ::WICRect& t)noexcept{return t.X;}
+	static constexpr point_element_type y(const ::WICRect& t)noexcept{return t.Y;}
+	static constexpr size_element_type w(const ::WICRect& t)noexcept{return t.Width;}
+	static constexpr size_element_type h(const ::WICRect& t)noexcept{return t.Height;}
+	static constexpr ::WICRect create(point_element_type x, point_element_type y, size_element_type w, size_element_type h)noexcept{return {x, y, w, h};}
+	static constexpr ::WICRect create(const two_dim::xy<point_element_type>& xy, const two_dim::wh<size_element_type>& wh)noexcept{return {xy.x, xy.y, wh.w, wh.h};}
+};
 
-template<>struct attribute<::WICRect, xywh<INT>>{static const ::WICRect& impl(const xywh<INT>& p)noexcept{return reinterpret_cast<const ::WICRect&>(p);}static ::WICRect impl(xywh<INT>&& p)noexcept{return {p.xy.x, p.xy.y, p.wh.w, p.wh.h};}};
-template<typename T>struct attribute<std::enable_if_t<!std::is_same<T, INT>::value, ::WICRect>, xywh<T>>{static ::WICRect impl(const xywh<T>& p){return p.cast<INT>().attribute<::WICRect>();}};
-template<typename T>struct attribute<::WICRect, xyxy<T>>{static ::WICRect impl(const xyxy<T>& p){return static_cast<xywh<T>>(p).cast<INT>().attribute<::WICRect>();}};
-
-}}
+}
 
 using property_bag = detail::resource<IPropertyBag2>;
 
@@ -238,7 +248,7 @@ public:
 				return {};
 			return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 		}
-		~stream(){if(get())commit();}
+		~stream(){if(get())auto _ [[maybe_unused]] = commit();}
 		friend wic;
 	};
 	class image_parameters : public detail::property<WICImageParameters>{
@@ -295,7 +305,7 @@ public:
 				}
 				return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 			}
-			~frame(){if(*this)commit();}
+			~frame(){if(*this)auto _ [[maybe_unused]] = commit();}
 		};
 		struct bitmap : detail::resource<IWICBitmapEncoder>{
 			using resource::resource;
@@ -337,7 +347,7 @@ public:
 				}
 				return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 			}
-			~bitmap(){if(*this)commit();}
+			~bitmap(){if(*this)auto _ [[maybe_unused]] = commit();}
 		};
 	public:
 		using resource::resource;
@@ -380,7 +390,7 @@ public:
 	template<typename D2DDevice, typename D2DBitmap>
 	expected<void, hresult_error> encode_to_file(LPCWSTR filename, D2DDevice&& device, D2DBitmap&& bmp, const GUID& format = GUID_ContainerFormatPng){
 		return create_stream(filename)
-		         .bind([&, this](stream&& stream){return this->create_bitmap_encoder(stream);})
+		         .bind([&, this](stream&& stream){return this->create_bitmap_encoder(stream, format);})
 		         .bind([&, this](encoder::bitmap&& bitmap_encoder){return bitmap_encoder.create_frame()
 		            .bind([&, this](encoder::frame&& frame_encoder){return this->create_encoder(std::forward<D2DDevice>(device))
 		               .bind([&](encoder&& encoder){return encoder.write(std::forward<D2DBitmap>(bmp), frame_encoder);})

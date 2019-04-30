@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -19,6 +19,238 @@ class dxgi : public detail::resource<IDXGIFactory2>{
 		expected<T, hresult_error> get_parent(const TCHAR* func_name)const{return detail::convert_to_rich_interface<T>(com_create_resource<detail::get_interface<T>>([&](detail::get_interface<T>** ptr){return (*this)->GetParent(__uuidof(detail::get_interface<T>), reinterpret_cast<void**>(ptr));}), func_name);}
 	};
 public:
+	struct format{
+		format() = delete;
+		static constexpr bool is_typeless(::DXGI_FORMAT t)noexcept{
+			switch(t){
+			case ::DXGI_FORMAT_R32G32B32A32_TYPELESS:
+			case ::DXGI_FORMAT_R32G32B32_TYPELESS:
+			case ::DXGI_FORMAT_R16G16B16A16_TYPELESS:
+			case ::DXGI_FORMAT_R32G32_TYPELESS:
+			case ::DXGI_FORMAT_R32G8X24_TYPELESS:
+			case ::DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+			case ::DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+			case ::DXGI_FORMAT_R10G10B10A2_TYPELESS:
+			case ::DXGI_FORMAT_R8G8B8A8_TYPELESS:
+			case ::DXGI_FORMAT_R16G16_TYPELESS:
+			case ::DXGI_FORMAT_R32_TYPELESS:
+			case ::DXGI_FORMAT_R24G8_TYPELESS:
+			case ::DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+			case ::DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+			case ::DXGI_FORMAT_R8G8_TYPELESS:
+			case ::DXGI_FORMAT_R16_TYPELESS:
+			case ::DXGI_FORMAT_R8_TYPELESS:
+			case ::DXGI_FORMAT_BC1_TYPELESS:
+			case ::DXGI_FORMAT_BC2_TYPELESS:
+			case ::DXGI_FORMAT_BC3_TYPELESS:
+			case ::DXGI_FORMAT_BC4_TYPELESS:
+			case ::DXGI_FORMAT_BC5_TYPELESS:
+			case ::DXGI_FORMAT_B8G8R8A8_TYPELESS:
+			case ::DXGI_FORMAT_B8G8R8X8_TYPELESS:
+			case ::DXGI_FORMAT_BC6H_TYPELESS:
+			case ::DXGI_FORMAT_BC7_TYPELESS:
+				return true;
+			default:
+				return false;
+			}
+		}
+		static constexpr ::DXGI_FORMAT to_unorm(::DXGI_FORMAT t)noexcept{
+			switch(t){
+			case ::DXGI_FORMAT_R16G16B16A16_TYPELESS:
+			case ::DXGI_FORMAT_R16G16B16A16_FLOAT:
+			case ::DXGI_FORMAT_R16G16B16A16_UNORM:
+			case ::DXGI_FORMAT_R16G16B16A16_UINT:
+			case ::DXGI_FORMAT_R16G16B16A16_SNORM:
+			case ::DXGI_FORMAT_R16G16B16A16_SINT:
+				return ::DXGI_FORMAT_R16G16B16A16_UNORM;
+			case ::DXGI_FORMAT_R10G10B10A2_TYPELESS:
+			case ::DXGI_FORMAT_R10G10B10A2_UNORM:
+			case ::DXGI_FORMAT_R10G10B10A2_UINT:
+				return ::DXGI_FORMAT_R10G10B10A2_UNORM;
+			case ::DXGI_FORMAT_R8G8B8A8_TYPELESS:
+			case ::DXGI_FORMAT_R8G8B8A8_UNORM:
+			case ::DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+			case ::DXGI_FORMAT_R8G8B8A8_UINT:
+			case ::DXGI_FORMAT_R8G8B8A8_SNORM:
+			case ::DXGI_FORMAT_R8G8B8A8_SINT:
+				return ::DXGI_FORMAT_R8G8B8A8_UNORM;
+			case ::DXGI_FORMAT_R16G16_TYPELESS:
+			case ::DXGI_FORMAT_R16G16_FLOAT:
+			case ::DXGI_FORMAT_R16G16_UNORM:
+			case ::DXGI_FORMAT_R16G16_UINT:
+			case ::DXGI_FORMAT_R16G16_SNORM:
+			case ::DXGI_FORMAT_R16G16_SINT:
+				return ::DXGI_FORMAT_R16G16_UNORM;
+			case ::DXGI_FORMAT_R8G8_TYPELESS:
+			case ::DXGI_FORMAT_R8G8_UNORM:
+			case ::DXGI_FORMAT_R8G8_UINT:
+			case ::DXGI_FORMAT_R8G8_SNORM:
+			case ::DXGI_FORMAT_R8G8_SINT:
+				return ::DXGI_FORMAT_R8G8_UNORM;
+			case ::DXGI_FORMAT_R16_TYPELESS:
+			case ::DXGI_FORMAT_R16_FLOAT:
+			case ::DXGI_FORMAT_D16_UNORM:
+			case ::DXGI_FORMAT_R16_UNORM:
+			case ::DXGI_FORMAT_R16_UINT:
+			case ::DXGI_FORMAT_R16_SNORM:
+			case ::DXGI_FORMAT_R16_SINT:
+				return ::DXGI_FORMAT_R16_UNORM;
+			case ::DXGI_FORMAT_R8_TYPELESS:
+			case ::DXGI_FORMAT_R8_UNORM:
+			case ::DXGI_FORMAT_R8_UINT:
+			case ::DXGI_FORMAT_R8_SNORM:
+			case ::DXGI_FORMAT_R8_SINT:
+				return ::DXGI_FORMAT_R8_UNORM;
+			case ::DXGI_FORMAT_BC1_TYPELESS:
+			case ::DXGI_FORMAT_BC1_UNORM:
+				return ::DXGI_FORMAT_BC1_UNORM;
+			case ::DXGI_FORMAT_BC2_TYPELESS:
+			case ::DXGI_FORMAT_BC2_UNORM:
+				return ::DXGI_FORMAT_BC2_UNORM;
+			case ::DXGI_FORMAT_BC3_TYPELESS:
+			case ::DXGI_FORMAT_BC3_UNORM:
+				return ::DXGI_FORMAT_BC3_UNORM;
+			case ::DXGI_FORMAT_BC4_TYPELESS:
+			case ::DXGI_FORMAT_BC4_UNORM:
+			case ::DXGI_FORMAT_BC4_SNORM:
+				return ::DXGI_FORMAT_BC4_UNORM;
+			case ::DXGI_FORMAT_BC5_TYPELESS:
+			case ::DXGI_FORMAT_BC5_UNORM:
+			case ::DXGI_FORMAT_BC5_SNORM:
+				return ::DXGI_FORMAT_BC5_UNORM;
+			case ::DXGI_FORMAT_B8G8R8A8_TYPELESS:
+				return ::DXGI_FORMAT_B8G8R8A8_UNORM;
+			case ::DXGI_FORMAT_B8G8R8X8_TYPELESS:
+				return ::DXGI_FORMAT_B8G8R8X8_UNORM;
+			case ::DXGI_FORMAT_BC7_TYPELESS:
+			case ::DXGI_FORMAT_BC7_UNORM:
+				return ::DXGI_FORMAT_BC7_UNORM;
+			default:
+				return t;
+			}
+		}
+		static constexpr bool same_family(::DXGI_FORMAT a, ::DXGI_FORMAT b)noexcept{
+			switch(a){
+			case ::DXGI_FORMAT_R32G32B32A32_TYPELESS:
+			case ::DXGI_FORMAT_R32G32B32A32_FLOAT:
+			case ::DXGI_FORMAT_R32G32B32A32_UINT:
+			case ::DXGI_FORMAT_R32G32B32A32_SINT:
+				return ::DXGI_FORMAT_R32G32B32A32_TYPELESS <= b && b <= ::DXGI_FORMAT_R32G32B32A32_SINT;
+			case ::DXGI_FORMAT_R32G32B32_TYPELESS:
+			case ::DXGI_FORMAT_R32G32B32_FLOAT:
+			case ::DXGI_FORMAT_R32G32B32_UINT:
+			case ::DXGI_FORMAT_R32G32B32_SINT:
+				return ::DXGI_FORMAT_R32G32B32A32_TYPELESS <= b && b <= ::DXGI_FORMAT_R32G32B32A32_SINT;
+			case ::DXGI_FORMAT_R16G16B16A16_TYPELESS:
+			case ::DXGI_FORMAT_R16G16B16A16_FLOAT:
+			case ::DXGI_FORMAT_R16G16B16A16_UNORM:
+			case ::DXGI_FORMAT_R16G16B16A16_UINT:
+			case ::DXGI_FORMAT_R16G16B16A16_SNORM:
+			case ::DXGI_FORMAT_R16G16B16A16_SINT:
+				return ::DXGI_FORMAT_R16G16B16A16_TYPELESS <= b && b <= ::DXGI_FORMAT_R16G16B16A16_SINT;
+			case ::DXGI_FORMAT_R32G32_TYPELESS:
+			case ::DXGI_FORMAT_R32G32_FLOAT:
+			case ::DXGI_FORMAT_R32G32_UINT:
+			case ::DXGI_FORMAT_R32G32_SINT:
+				return ::DXGI_FORMAT_R32G32_TYPELESS <= b && b <= ::DXGI_FORMAT_R32G32_SINT;
+			case ::DXGI_FORMAT_R32G8X24_TYPELESS:
+			case ::DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+			case ::DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+			case ::DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+				return ::DXGI_FORMAT_R32G8X24_TYPELESS <= b && b <= ::DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
+			case ::DXGI_FORMAT_R10G10B10A2_TYPELESS:
+			case ::DXGI_FORMAT_R10G10B10A2_UNORM:
+			case ::DXGI_FORMAT_R10G10B10A2_UINT:
+				return ::DXGI_FORMAT_R10G10B10A2_TYPELESS <= b && b <= ::DXGI_FORMAT_R10G10B10A2_UINT;
+			case ::DXGI_FORMAT_R8G8B8A8_TYPELESS:
+			case ::DXGI_FORMAT_R8G8B8A8_UNORM:
+			case ::DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+			case ::DXGI_FORMAT_R8G8B8A8_UINT:
+			case ::DXGI_FORMAT_R8G8B8A8_SNORM:
+			case ::DXGI_FORMAT_R8G8B8A8_SINT:
+				return ::DXGI_FORMAT_R8G8B8A8_TYPELESS <= b && b <= ::DXGI_FORMAT_R8G8B8A8_SINT;
+			case ::DXGI_FORMAT_R16G16_TYPELESS:
+			case ::DXGI_FORMAT_R16G16_FLOAT:
+			case ::DXGI_FORMAT_R16G16_UNORM:
+			case ::DXGI_FORMAT_R16G16_UINT:
+			case ::DXGI_FORMAT_R16G16_SNORM:
+			case ::DXGI_FORMAT_R16G16_SINT:
+				return ::DXGI_FORMAT_R16G16_TYPELESS <= b && b <= ::DXGI_FORMAT_R16G16_SINT;
+			case ::DXGI_FORMAT_R32_TYPELESS:
+			case ::DXGI_FORMAT_D32_FLOAT:
+			case ::DXGI_FORMAT_R32_FLOAT:
+			case ::DXGI_FORMAT_R32_UINT:
+			case ::DXGI_FORMAT_R32_SINT:
+				return ::DXGI_FORMAT_R32_TYPELESS <= b && b <= ::DXGI_FORMAT_R32_SINT;
+			case ::DXGI_FORMAT_R24G8_TYPELESS:
+			case ::DXGI_FORMAT_D24_UNORM_S8_UINT:
+			case ::DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+			case ::DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+				return ::DXGI_FORMAT_R24G8_TYPELESS <= b && b <= ::DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+			case ::DXGI_FORMAT_R8G8_TYPELESS:
+			case ::DXGI_FORMAT_R8G8_UNORM:
+			case ::DXGI_FORMAT_R8G8_UINT:
+			case ::DXGI_FORMAT_R8G8_SNORM:
+			case ::DXGI_FORMAT_R8G8_SINT:
+				return ::DXGI_FORMAT_R8G8_TYPELESS <= b && b <= ::DXGI_FORMAT_R8G8_SINT;
+			case ::DXGI_FORMAT_R16_TYPELESS:
+			case ::DXGI_FORMAT_R16_FLOAT:
+			case ::DXGI_FORMAT_D16_UNORM:
+			case ::DXGI_FORMAT_R16_UNORM:
+			case ::DXGI_FORMAT_R16_UINT:
+			case ::DXGI_FORMAT_R16_SNORM:
+			case ::DXGI_FORMAT_R16_SINT:
+				return ::DXGI_FORMAT_R16_TYPELESS <= b && b <= ::DXGI_FORMAT_R16_SINT;
+			case ::DXGI_FORMAT_R8_TYPELESS:
+			case ::DXGI_FORMAT_R8_UNORM:
+			case ::DXGI_FORMAT_R8_UINT:
+			case ::DXGI_FORMAT_R8_SNORM:
+			case ::DXGI_FORMAT_R8_SINT:
+			case ::DXGI_FORMAT_A8_UNORM:
+				return ::DXGI_FORMAT_R8_TYPELESS <= b && b <= ::DXGI_FORMAT_A8_UNORM;
+			case ::DXGI_FORMAT_R8G8_B8G8_UNORM:
+			case ::DXGI_FORMAT_G8R8_G8B8_UNORM:
+				return b == ::DXGI_FORMAT_R8G8_B8G8_UNORM || b == ::DXGI_FORMAT_G8R8_G8B8_UNORM;
+			case ::DXGI_FORMAT_BC1_TYPELESS:
+			case ::DXGI_FORMAT_BC1_UNORM:
+			case ::DXGI_FORMAT_BC1_UNORM_SRGB:
+				return ::DXGI_FORMAT_BC1_TYPELESS <= b && b <= ::DXGI_FORMAT_BC1_UNORM_SRGB;
+			case ::DXGI_FORMAT_BC2_TYPELESS:
+			case ::DXGI_FORMAT_BC2_UNORM:
+			case ::DXGI_FORMAT_BC2_UNORM_SRGB:
+				return ::DXGI_FORMAT_BC2_TYPELESS <= b && b <= ::DXGI_FORMAT_BC2_UNORM_SRGB;
+			case ::DXGI_FORMAT_BC3_TYPELESS:
+			case ::DXGI_FORMAT_BC3_UNORM:
+			case ::DXGI_FORMAT_BC3_UNORM_SRGB:
+				return ::DXGI_FORMAT_BC3_TYPELESS <= b && b <= ::DXGI_FORMAT_BC3_UNORM_SRGB;
+			case ::DXGI_FORMAT_BC4_TYPELESS:
+			case ::DXGI_FORMAT_BC4_UNORM:
+			case ::DXGI_FORMAT_BC4_SNORM:
+				return ::DXGI_FORMAT_BC4_TYPELESS <= b && b <= ::DXGI_FORMAT_BC4_SNORM;
+			case ::DXGI_FORMAT_BC5_TYPELESS:
+			case ::DXGI_FORMAT_BC5_UNORM:
+			case ::DXGI_FORMAT_BC5_SNORM:
+				return ::DXGI_FORMAT_BC5_TYPELESS <= b && b <= ::DXGI_FORMAT_BC5_SNORM;
+			case ::DXGI_FORMAT_B8G8R8A8_UNORM:
+			case ::DXGI_FORMAT_B8G8R8X8_UNORM:
+			case ::DXGI_FORMAT_B8G8R8A8_TYPELESS:
+			case ::DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+			case ::DXGI_FORMAT_B8G8R8X8_TYPELESS:
+			case ::DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+				return b == ::DXGI_FORMAT_B8G8R8A8_UNORM || b == ::DXGI_FORMAT_B8G8R8X8_UNORM || (::DXGI_FORMAT_B8G8R8A8_TYPELESS <= b && b <= ::DXGI_FORMAT_B8G8R8X8_UNORM_SRGB);
+			case ::DXGI_FORMAT_BC6H_TYPELESS:
+			case ::DXGI_FORMAT_BC6H_UF16:
+			case ::DXGI_FORMAT_BC6H_SF16:
+				return ::DXGI_FORMAT_BC6H_TYPELESS <= b && b <= ::DXGI_FORMAT_BC6H_SF16;
+			case ::DXGI_FORMAT_BC7_TYPELESS:
+			case ::DXGI_FORMAT_BC7_UNORM:
+			case ::DXGI_FORMAT_BC7_UNORM_SRGB:
+				return ::DXGI_FORMAT_BC7_TYPELESS <= b && b <= ::DXGI_FORMAT_BC7_UNORM_SRGB;
+			default:
+				return a == b;
+			}
+		}
+	};
 	class enum_adapters_range;
 	struct output;
 	class adapter : public dxgi_object<IDXGIAdapter2>{
@@ -59,7 +291,7 @@ public:
 					device_context_handle& operator=(device_context_handle&& rhs)noexcept{srf = rhs.srf; dc = rhs.dc;rhs.dc = nullptr;}
 					expected<void, hresult_error> release(RECT& r)noexcept{return release(&r);}
 					expected<void, hresult_error> release()noexcept{return release(nullptr);}
-					~device_context_handle()noexcept{release();}
+					~device_context_handle()noexcept{auto _ [[maybe_unused]] = release();}
 					operator HDC()const noexcept{return dc;}
 					friend surface;
 				};
@@ -80,8 +312,8 @@ public:
 					scoped_readonly_mapped_rect(::DXGI_MAPPED_RECT&& mr, const surface& surf)noexcept: ::DXGI_MAPPED_RECT{std::move(mr)}, sf{surf}{}
 				public:
 					scoped_readonly_mapped_rect(const surface& surf): ::DXGI_MAPPED_RECT(+surf.map_read()), sf{surf}{}
-					scoped_readonly_mapped_rect(scoped_readonly_mapped_rect&& t): ::DXGI_MAPPED_RECT{std::move(static_cast<::DXGI_MAPPED_RECT&>(t))}, sf{t.sf}{t.pBits = nullptr;}
-					~scoped_readonly_mapped_rect()noexcept{if(pBits)sf.unmap();}
+					scoped_readonly_mapped_rect(scoped_readonly_mapped_rect&& t)noexcept: ::DXGI_MAPPED_RECT{std::move(static_cast<::DXGI_MAPPED_RECT&>(t))}, sf{t.sf}{t.pBits = nullptr;}
+					~scoped_readonly_mapped_rect()noexcept{if(pBits)auto _ [[maybe_unused]] = sf.unmap();}
 					friend surface;
 				};
 				class scoped_mapped_rect : public ::DXGI_MAPPED_RECT{
@@ -89,8 +321,8 @@ public:
 					scoped_mapped_rect(::DXGI_MAPPED_RECT&& s, surface& surf)noexcept: ::DXGI_MAPPED_RECT{std::move(s)}, sf{surf}{}
 				public:
 					scoped_mapped_rect(surface& surf, UINT option): ::DXGI_MAPPED_RECT(+surf.map(option)), sf{surf}{}
-					scoped_mapped_rect(scoped_mapped_rect&& t): ::DXGI_MAPPED_RECT{std::move(static_cast<::DXGI_MAPPED_RECT&>(t))}, sf{t.sf}{t.pBits = nullptr;}
-					~scoped_mapped_rect()noexcept{if(pBits)sf.unmap();}
+					scoped_mapped_rect(scoped_mapped_rect&& t)noexcept: ::DXGI_MAPPED_RECT{std::move(static_cast<::DXGI_MAPPED_RECT&>(t))}, sf{t.sf}{t.pBits = nullptr;}
+					~scoped_mapped_rect()noexcept{if(pBits)auto _ [[maybe_unused]] = sf.unmap();}
 					friend surface;
 				};
 				using dxgi_device_sub_object::dxgi_device_sub_object;
@@ -260,7 +492,10 @@ public:
 		};
 		expected<std::vector<display_mode>, hresult_error> get_display_mode_list(::DXGI_FORMAT format, ::UINT flags)const{
 			UINT size;
+#pragma warning(push)
+#pragma warning(disable:6001)
 			HRESULT hr = (*this)->GetDisplayModeList1(format, flags, &size, nullptr);
+#pragma warning(pop)
 			std::vector<display_mode> ret(size);
 			for(auto&& x : ret){
 				hr = (*this)->GetDisplayModeList1(format, flags, &x.mode, &x.desc);
@@ -341,7 +576,7 @@ public:
 						return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 				}
 				std::vector<::RECT> ret(size);
-				hr = (*this)->GetFrameDirtyRects(size, ret.data(), nullptr);
+				hr = (*this)->GetFrameDirtyRects(size, ret.data(), &size);
 				if(FAILED(hr))
 					return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 				return ret;
@@ -356,7 +591,7 @@ public:
 						return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 				}
 				std::vector<::DXGI_OUTDUPL_MOVE_RECT> ret(size);
-				hr = (*this)->GetFrameMoveRects(size, ret.data(), nullptr);
+				hr = (*this)->GetFrameMoveRects(size, ret.data(), &size);
 				if(FAILED(hr))
 					return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 				return ret;
@@ -399,14 +634,14 @@ public:
 			public:
 				scoped_frame(duplication& d, frame&& f):d{d}, f{std::move(f)}{}
 				scoped_frame(const scoped_frame&) = delete;
-				scoped_frame(scoped_frame&& other):d{other.d}, f{std::move(other.f)}{}
+				scoped_frame(scoped_frame&& other)noexcept:d{other.d}, f{std::move(other.f)}{}
 				::DXGI_OUTDUPL_FRAME_INFO& info(){return f.info;}
 				will::dxgi::resource& desktop_resource(){return f.desktop_resource;}
 				expected<std::vector<::RECT>, hresult_error> get_frame_dirty_rects()const{return d.get_frame_dirty_rects();}
 				expected<std::vector<::DXGI_OUTDUPL_MOVE_RECT>, hresult_error> get_frame_move_rects()const{return d.get_frame_move_rects();}
 				template<typename F>
 				expected<std::invoke_result_t<F, ::DXGI_MAPPED_RECT>, hresult_error> apply_desktop_surface(F&& f){return d.apply_desktop_surface(std::forward<F>(f));}
-				~scoped_frame(){if(f.desktop_resource)d.release_frame();}
+				~scoped_frame(){if(f.desktop_resource)auto _ [[maybe_unused]] = d.release_frame();}
 			};
 			expected<scoped_frame, hresult_error> acquire_frame(std::chrono::milliseconds timeout){
 				return acquire_next_frame(timeout).map([&](frame&& f){return scoped_frame{*this, std::move(f)};});

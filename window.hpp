@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2017, 2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -9,25 +9,10 @@
 #include<unordered_map>
 #include<functional>
 #include<chrono>
+
+#include"_2dim_point_rect.hpp"
+
 namespace will{
-
-namespace two_dim {namespace detail{
-
-template<>
-struct attribute<xyxy<long>, ::RECT>{
-	static xyxy<long> impl(const RECT& r)noexcept{
-		return reinterpret_cast<const xyxy<long>&>(r);
-	}
-};
-
-template<>
-struct attribute<xywh<long>, ::RECT> {
-	static xywh<long> impl(const RECT& r)noexcept{
-		return xywh<long>{ { r.left, r.top }, { r.right - r.left, r.bottom - r.top } };
-	}
-};
-
-}}
 
 class window{
 	HWND hwnd;
@@ -52,15 +37,11 @@ class window{
 		public:
 			explicit _xy(window& wi):w{wi}{}
 			operator will::two_dim::xy<int>()const{const auto _ =* _getwrect(w.get()); return {_.left, _.top};}
-			template<typename T>
-			T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::xy<int>>(*this));}
-			template<typename T>
-			will::two_dim::xy<T> cast()const{const auto xy = static_cast<will::two_dim::xy<int>>(*this);return xy.cast<T>();}
 			int get_x()const{return _getwrect(w.get())->left;}
-			void set_x(int t){_setrect(w.get(), t, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+			void set_x(int t){auto _ [[maybe_unused]] = _setrect(w.get(), t, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 			__declspec(property(get=get_x, put=set_x)) int x;
 			int get_y()const{return _getwrect(w.get())->top;}
-			void set_y(int t){_setrect(w.get(), x, t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+			void set_y(int t){auto _ [[maybe_unused]] = _setrect(w.get(), x, t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 			__declspec(property(get=get_y, put=set_y)) int y;
 			friend _wxywh;
 			friend window;
@@ -70,30 +51,24 @@ class window{
 		public:
 			explicit _wh(window& wi):w_{wi}{}
 			operator will::two_dim::wh<int>()const{const auto _ =* _getwrect(w_.get()); return {_.right - _.left, _.bottom - _.top};}
-			template<typename T>
-			T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::wh<int>>(*this));}
-			template<typename T>
-			will::two_dim::wh<T> cast()const{const auto wh = static_cast<will::two_dim::wh<int>>(*this);return wh.cast<T>();}
 			int get_w()const{const auto r =* _getwrect(w_.get()); return r.right - r.left;}
-			void set_w(int t){_setrect(w_.get(), 0, 0, t, h, SWP_NOZORDER | SWP_NOMOVE);}
+			void set_w(int t){auto _ [[maybe_unused]] = _setrect(w_.get(), 0, 0, t, h, SWP_NOZORDER | SWP_NOMOVE);}
 			__declspec(property(get=get_w, put=set_w)) int w;
 			int get_h()const{const auto r =* _getwrect(w_.get()); return r.bottom - r.top;}
-			void set_h(int t){_setrect(w_.get(), 0, 0, w, t, SWP_NOZORDER | SWP_NOMOVE);}
+			void set_h(int t){auto _ [[maybe_unused]] = _setrect(w_.get(), 0, 0, w, t, SWP_NOZORDER | SWP_NOMOVE);}
 			__declspec(property(get=get_h, put=set_h)) int h;
 			friend _wxywh;
 			friend window;
 		};
-		template<typename T, typename U>friend struct will::two_dim::detail::attribute;
+		template<typename>friend struct will::two_dim::attribute_traits;
 	public:
 		explicit _wxywh(window& w):w(w){}
-		operator will::two_dim::xywh<long>()const{return will::two_dim::attribute<will::two_dim::xywh<long>>(*_getwrect(w.get()));}
-		template<typename T>
-		T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::xywh<long>>(*this));}
+		operator will::two_dim::xywh<long>()const{return will::two_dim::attribute(*_getwrect(w.get()));}
 		_xy get_xy()const{return _xy{w};}
-		void set_xy(const will::two_dim::xy<int>& t){_setrect(w.get(), t.x, t.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+		void set_xy(const will::two_dim::xy<int>& t){auto _ [[maybe_unused]] = _setrect(w.get(), t.x, t.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 		__declspec(property(get=get_xy, put=set_xy)) _xy xy;
 		_wh get_wh()const{return _wh{w};}
-		void set_wh(const will::two_dim::wh<int>& t){_setrect(w.get(), 0, 0, t.w, t.h, SWP_NOZORDER | SWP_NOMOVE);}
+		void set_wh(const will::two_dim::wh<int>& t){auto _ [[maybe_unused]] = _setrect(w.get(), 0, 0, t.w, t.h, SWP_NOZORDER | SWP_NOMOVE);}
 		__declspec(property(get=get_wh, put=set_wh)) _wh wh;
 		friend window;
 	};
@@ -104,15 +79,11 @@ class window{
 		public:
 			explicit _1t(window& wi):w{wi}{}
 			operator will::two_dim::xy<int>()const{const auto _ =* _getwrect(w.get()); return {_.left, _.top};}
-			template<typename T>
-			T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::xy<int>>(*this));}
-			template<typename T>
-			will::two_dim::xy<T> cast()const{const auto xy = static_cast<will::two_dim::xy<int>>(*this);return xy.cast<T>();}
 			int get_x()const{return _getwrect(w.get())->left;}
-			void set_x(int t){_setrect(w.get(), t, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+			void set_x(int t){auto _ [[maybe_unused]] = _setrect(w.get(), t, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 			__declspec(property(get=get_x, put=set_x)) int x;
 			int get_y()const{return _getwrect(w.get())->top;}
-			void set_y(int t){_setrect(w.get(), x, t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+			void set_y(int t){auto _ [[maybe_unused]] = _setrect(w.get(), x, t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 			__declspec(property(get=get_y, put=set_y)) int y;
 			friend _wxyxy;
 			friend window;
@@ -122,30 +93,24 @@ class window{
 		public:
 			explicit _2t(window& wi):w{wi}{}
 			operator will::two_dim::xy<int>()const{const auto _ =* _getwrect(w.get()); return {_.right, _.bottom};}
-			template<typename T>
-			T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::xy<int>>(*this));}
-			template<typename T>
-			will::two_dim::xy<T> cast()const{const auto xy = static_cast<will::two_dim::xy<int>>(*this);return xy.cast<T>();}
 			int get_x()const{return _getwrect(w.get())->right;}
-			void set_x(int t){const auto _ = static_cast<will::two_dim::xywh<long>>(w.xywh); _setrect(w.get(), 0, 0, t - _.xy.x, _.wh.h, SWP_NOZORDER | SWP_NOMOVE);}
+			void set_x(int t){const auto v =* _getwrect(w.get()); auto _ [[maybe_unused]] = _setrect(w.get(), 0, 0, t - v.left, v.bottom, SWP_NOZORDER | SWP_NOMOVE);}
 			__declspec(property(get=get_x, put=set_x)) int x;
 			int get_y()const{return _getwrect(w.get())->bottom;}
-			void set_y(int t){const auto _ = static_cast<will::two_dim::xywh<long>>(w.xywh); _setrect(w.get(), 0, 0, _.wh.w, t - _.xy.y, SWP_NOZORDER | SWP_NOMOVE);}
+			void set_y(int t){const auto v =* _getwrect(w.get()); auto _ [[maybe_unused]] = _setrect(w.get(), 0, 0, v.right, t - v.top, SWP_NOZORDER | SWP_NOMOVE);}
 			__declspec(property(get=get_y, put=set_y)) int y;
 			friend _wxyxy;
 			friend window;
 		};
-		template<typename T, typename U>friend struct will::two_dim::detail::attribute;
+		template<typename>friend struct will::two_dim::attribute_traits;
 	public:
 		explicit _wxyxy(window& w):w(w){}
 		operator will::two_dim::xyxy<long>()const{return will::two_dim::attribute<will::two_dim::xyxy<long>>(*_getwrect(w.get()));}
-		template<typename T>
-		T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::xyxy<long>>(*this));}
 		_1t get_1()const{return _1t{w};}
-		void set_1(const will::two_dim::xy<int>& t){_setrect(w.get(), t.x, t.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+		void set_1(const will::two_dim::xy<int>& t){auto _ [[maybe_unused]] = _setrect(w.get(), t.x, t.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 		__declspec(property(get=get_1, put=set_1)) _1t _1;
 		_2t get_2()const{return _2t{w};}
-		void set_2(const will::two_dim::xy<int>& t){const auto _ = static_cast<will::two_dim::xy<int>>(_1); _setrect(w.get(), 0, 0, t.x - _.x, t.y - _.y, SWP_NOZORDER | SWP_NOSIZE);}
+		void set_2(const will::two_dim::xy<int>& t){const auto v =* _getwrect(w.get()); auto _ [[maybe_unused]] = _setrect(w.get(), 0, 0, t.x - v.left, t.y - v.top, SWP_NOZORDER | SWP_NOSIZE);}
 		__declspec(property(get=get_2, put=set_2)) _2t _2;
 	};
 	class _cxywh{
@@ -155,15 +120,11 @@ class window{
 		public:
 			explicit _xy(window& wi):w{wi}{}
 			operator will::two_dim::xy<int>()const{const auto _ =* _getcrect(w.get()); return {_.left, _.top};}
-			template<typename T>
-			T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::xy<int>>(*this));}
-			template<typename T>
-			will::two_dim::xy<T> cast()const{const auto xy = static_cast<will::two_dim::xy<int>>(*this);return xy.cast<T>();}
 			int get_x()const{return _getcrect(w.get())->left;}
-			void set_x(int t){const will::two_dim::xy<int> _w = w.xy; _setrect(w.get(), _w.x - get_x() + t, _w.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+			void set_x(int t){const will::two_dim::xy<int> _w = w.xy; auto _ [[maybe_unused]] = _setrect(w.get(), _w.x - get_x() + t, _w.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 			__declspec(property(get=get_x, put=set_x)) int x;
 			int get_y()const{return _getcrect(w.get())->top;}
-			void set_y(int t){const will::two_dim::xy<int> _w = w.xy; _setrect(w.get(), _w.x, _w.y - get_y() + t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+			void set_y(int t){const will::two_dim::xy<int> _w = w.xy; auto _ [[maybe_unused]] = _setrect(w.get(), _w.x, _w.y - get_y() + t, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 			__declspec(property(get=get_y, put=set_y)) int y;
 			friend _cxywh;
 			friend window;
@@ -173,34 +134,28 @@ class window{
 		public:
 			explicit _wh(window& wi):w_{wi}{}
 			operator will::two_dim::wh<int>()const{const auto _ =* _getcrect(w_.get()); return {_.right, _.bottom};}
-			template<typename T>
-			T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::wh<int>>(*this));}
-			template<typename T>
-			will::two_dim::wh<T> cast()const{const auto wh = static_cast<will::two_dim::wh<int>>(*this);return wh.cast<T>();}
 			int get_w()const{const auto r =* _getcrect(w_.get()); return r.right - r.left;}
-			void set_w(int t){const will::two_dim::wh<int> _w = w_.wh; _setrect(w_.get(), 0, 0, w_.w - get_w() + t, _w.h, SWP_NOZORDER | SWP_NOMOVE);}
+			void set_w(int t){const will::two_dim::wh<int> _w = w_.wh; auto _ [[maybe_unused]] = _setrect(w_.get(), 0, 0, w_.w - get_w() + t, _w.h, SWP_NOZORDER | SWP_NOMOVE);}
 			__declspec(property(get=get_w, put=set_w)) int w;
 			int get_h()const{const auto r =* _getcrect(w_.get()); return r.bottom - r.top;}
-			void set_h(int t){const will::two_dim::wh<int> _w = w_.wh; _setrect(w_.get(), 0, 0, w_.w, w_.h - get_h() + t, SWP_NOZORDER | SWP_NOMOVE);}
+			void set_h(int t){const will::two_dim::wh<int> _w = w_.wh; auto _ [[maybe_unused]] = _setrect(w_.get(), 0, 0, w_.w, w_.h - get_h() + t, SWP_NOZORDER | SWP_NOMOVE);}
 			__declspec(property(get=get_h, put=set_h)) int h;
 			friend _cxywh;
 			friend window;
 		};
-		template<typename T, typename U>friend struct will::two_dim::detail::attribute;
+		template<typename>friend struct will::two_dim::attribute_traits;
 	public:
 		explicit _cxywh(window& w):w(w){}
-		operator will::two_dim::xywh<long>()const{return will::two_dim::attribute<will::two_dim::xywh<long>>(*_getcrect(w.get()));}
-		template<typename T>
-		T attribute()const{return will::two_dim::attribute<T>(static_cast<will::two_dim::xywh<long>>(*this));}
+		operator will::two_dim::xywh<long>()const{return will::two_dim::attribute(*_getcrect(w.get()));}
 		_xy get_xy()const{return _xy{w};}
-		void set_xy(const will::two_dim::xy<int>& t){const will::two_dim::xy<int> _ = get_xy(), _w = w.xy;_setrect(w.get(), _w.x - _.x + t.x, _w.y - _.y + t.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
+		void set_xy(const will::two_dim::xy<int>& t){const will::two_dim::xy<int> v = get_xy(), _w = w.xy;auto _ [[maybe_unused]] = _setrect(w.get(), _w.x - v.x + t.x, _w.y - v.y + t.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);}
 		__declspec(property(get=get_xy, put=set_xy)) _xy xy;
 		_wh get_wh()const{return _wh{w};}
-		void set_wh(const will::two_dim::wh<int>& t){const will::two_dim::wh<int> _ = get_wh(), _w = w.wh;_setrect(w.get(), 0, 0, _w.w - _.w + t.w, _w.h - _.h + t.h, SWP_NOZORDER | SWP_NOMOVE);}
+		void set_wh(const will::two_dim::wh<int>& t){const will::two_dim::wh<int> v = get_wh(), _w = w.wh;auto _ [[maybe_unused]] = _setrect(w.get(), 0, 0, _w.w - v.w + t.w, _w.h - v.h + t.h, SWP_NOZORDER | SWP_NOMOVE);}
 		__declspec(property(get=get_wh, put=set_wh)) _wh wh;
 		friend window;
 	};
-	template<typename T, typename U>friend struct will::two_dim::detail::attribute;
+	template<typename T>friend struct will::two_dim::attribute_traits;
 	expected<LONG_PTR, winapi_last_error> set_long_ptr(int index, LONG_PTR value)noexcept{
 		::SetLastError(0);
 		const auto prev = ::SetWindowLongPtr(get(), index, value);
@@ -209,7 +164,7 @@ class window{
 			if(le != 0)
 				return make_unexpected(winapi_last_error{_T(__FUNCTION__), le});
 		}
-		return _setrect(get(), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED).map([&]{return prev;});
+		return _setrect(get(), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED).map([&](void){return prev;});
 	}
 	template<typename T>
 	expected<T, winapi_last_error> set_long_ptr(int index, T t)noexcept{return set_long_ptr(index, static_cast<LONG_PTR>(t)).map([](LONG_PTR ret){return static_cast<T>(ret);});}
@@ -236,12 +191,12 @@ public:
 		return 56;
 	}
 	window(const window&) = delete;
-	window(window&& other):hwnd{other.hwnd}{+set_long_ptr(GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this)); messenger = std::move(other.messenger); other.hwnd = nullptr;}
+	window(window&& other)noexcept(false):hwnd{other.hwnd}{+set_long_ptr(GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this)); messenger = std::move(other.messenger); other.hwnd = nullptr;}
 	struct property{
 		DWORD _exstyle = 0;
-		LPCTSTR _window_name;
+		LPCTSTR _window_name = nullptr;
 		DWORD _style = WS_OVERLAPPEDWINDOW;
-		int _x, _y, _w, _h;
+		int _x = 0, _y = 0, _w = 1, _h = 1;
 		HWND _parent = nullptr;
 		HMENU _menu = nullptr;
 		LPVOID _param = nullptr;
@@ -299,7 +254,7 @@ public:
 		class_(class_&& other)noexcept:name{other.name}, hinst{other.hinst}{other.hinst = nullptr;}
 		class_& operator=(const class_&) = delete;
 		class_& operator=(class_&& other)noexcept{name = other.name; hinst = other.hinst; other.hinst = nullptr; return *this;}
-		~class_(){if(hinst != nullptr)unregister();}
+		~class_(){if(hinst != nullptr)auto _ [[maybe_unused]] = unregister();}
 		HINSTANCE get_hinst()const{return hinst;}
 		LPCTSTR get_name()const{return name;}
 		expected<window, winapi_last_error> create_window(const window::property& property)const{
@@ -326,7 +281,7 @@ public:
 	};
 	std::unordered_map<UINT, std::function<LRESULT(window&, WPARAM, LPARAM)>> messenger;
 	_wxywh get_wxywh(){return _wxywh{*this};}
-	void set_wxywh(const will::two_dim::xywh<int>& t){_setrect(get(), t.xy.x, t.xy.y, t.wh.w, t.wh.h);}
+	void set_wxywh(const will::two_dim::xywh<int>& t){auto _ [[maybe_unused]] = _setrect(get(), t.xy.x, t.xy.y, t.wh.w, t.wh.h);}
 	__declspec(property(get=get_wxywh, put=set_wxywh)) _wxywh xywh;
 	_wxywh::_xy get_wxy(){return _wxywh::_xy{*this};}
 	void set_wxy(const will::two_dim::xy<int>& t){xywh.xy = t;}
@@ -347,10 +302,10 @@ public:
 	void set_wh(int t){xywh.wh.h = t;}
 	__declspec(property(get=get_wh, put=set_wh)) int h;
 	_wxyxy get_wxyxy(){return _wxyxy{*this};}
-	void set_wxyxy(const will::two_dim::xyxy<int>& t){_setrect(get(), t._1.x, t._1.y, t._2.x - t._1.x, t._2.y - t._1.y);}
+	void set_wxyxy(const will::two_dim::xyxy<int>& t){auto _ [[maybe_unused]] = _setrect(get(), t._1.x, t._1.y, t._2.x - t._1.x, t._2.y - t._1.y);}
 	__declspec(property(get=get_wxyxy, put=set_wxyxy)) _wxyxy xyxy;
 	_cxywh get_cxywh(){return _cxywh{*this};}
-	void set_cxywh(const will::two_dim::xywh<int>& t){_setrect(get(), t.xy.x, t.xy.y, t.wh.w, t.wh.h);}
+	void set_cxywh(const will::two_dim::xywh<int>& t){auto _ [[maybe_unused]] = _setrect(get(), t.xy.x, t.xy.y, t.wh.w, t.wh.h);}
 	__declspec(property(get=get_cxywh, put=set_cxywh)) _cxywh client_xywh;
 	_cxywh::_xy get_cxy(){return _cxywh::_xy{*this};}
 	void set_cxy(const will::two_dim::xy<int>& t){client_xywh.xy = t;}
@@ -473,7 +428,7 @@ public:
 	message_process_result message_loop(const std::chrono::steady_clock::time_point& start, int frame_per_second){
 		return sleep_wait(
 			rest_of_time(
-				std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock().now() - start),
+				std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock().now() - start),
 				std::chrono::milliseconds{1000} / frame_per_second
 			), 0);
 	}
@@ -497,71 +452,94 @@ two_dim::xy<int> get_dpi(){
 	return dpi;
 }
 
-namespace two_dim {namespace detail{
+namespace two_dim {
 
-template<typename U>
-struct attribute<will::two_dim::xy<U>, will::window::_wxywh::_xy>{
-	static will::two_dim::xy<U> impl(const will::window::_wxywh::_xy& xy) {
-		return static_cast<will::two_dim::xy<U>>(static_cast<will::two_dim::xy<int>>(xy));
-	}
+template<>
+struct attribute_traits<window::_wxywh::_xy>{
+	using tag_type = tag::point;
+	using element_type = int;
+	static element_type x(const window::_wxywh::_xy& xy)noexcept{return xy.x;}
+	static element_type y(const window::_wxywh::_xy& xy)noexcept{return xy.y;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::wh<U>, will::window::_wxywh::_wh>{
-	static will::two_dim::wh<U> impl(const will::window::_wxywh::_wh& wh) {
-		return static_cast<will::two_dim::wh<U>>(static_cast<will::two_dim::wh<int>>(wh));
-	}
+template<>
+struct attribute_traits<window::_wxywh::_wh>{
+	using tag_type = tag::size;
+	using element_type = int;
+	static element_type w(const window::_wxywh::_wh& wh)noexcept{return wh.w;}
+	static element_type h(const window::_wxywh::_wh& wh)noexcept{return wh.h;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::xy<U>, will::window::_cxywh::_xy>{
-	static will::two_dim::xy<U> impl(const will::window::_cxywh::_xy& xy) {
-		return static_cast<will::two_dim::xy<U>>(static_cast<will::two_dim::xy<int>>(xy));
-	}
+template<>
+struct attribute_traits<window::_cxywh::_xy>{
+	using tag_type = tag::point;
+	using element_type = int;
+	static element_type x(const window::_cxywh::_xy& xy)noexcept{return xy.x;}
+	static element_type y(const window::_cxywh::_xy& xy)noexcept{return xy.y;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::wh<U>, will::window::_cxywh::_wh>{
-	static will::two_dim::wh<U> impl(const will::window::_cxywh::_wh& wh) {
-		return static_cast<will::two_dim::wh<U>>(static_cast<will::two_dim::wh<int>>(wh));
-	}
+template<>
+struct attribute_traits<window::_cxywh::_wh>{
+	using tag_type = tag::size;
+	using element_type = int;
+	static element_type w(const window::_cxywh::_wh& wh)noexcept{return wh.w;}
+	static element_type h(const window::_cxywh::_wh& wh)noexcept{return wh.h;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::xy<U>, will::window::_wxyxy::_1t>{
-	static will::two_dim::xy<U> impl(const will::window::_wxyxy::_1t& xy) {
-		return static_cast<will::two_dim::xy<U>>(static_cast<will::two_dim::xy<int>>(xy));
-	}
+template<>
+struct attribute_traits<window::_wxyxy::_1t>{
+	using tag_type = tag::point;
+	using element_type = int;
+	static element_type x(const window::_wxyxy::_1t& xy)noexcept{return xy.x;}
+	static element_type y(const window::_wxyxy::_1t& xy)noexcept{return xy.y;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::xy<U>, will::window::_wxyxy::_2t>{
-	static will::two_dim::xy<U> impl(const will::window::_wxyxy::_2t& xy) {
-		return static_cast<will::two_dim::xy<U>>(static_cast<will::two_dim::xy<int>>(xy));
-	}
+template<>
+struct attribute_traits<window::_wxyxy::_2t>{
+	using tag_type = tag::point;
+	using element_type = int;
+	static element_type x(const window::_wxyxy::_2t& xy)noexcept{return xy.x;}
+	static element_type y(const window::_wxyxy::_2t& xy)noexcept{return xy.y;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::xyxy<U>, will::window::_wxyxy>{
-	static will::two_dim::xyxy<U> impl(const will::window::_wxyxy& xyxy) {
-		return static_cast<will::two_dim::xyxy<U>>(static_cast<will::two_dim::xyxy<int>>(xyxy));
-	}
+template<>
+struct attribute_traits<window::_wxyxy>{
+	using tag_type = tag::point_pair;
+	using element_type = int;
+	static xy<int> _1(const window::_wxyxy& xyxy)noexcept{return xyxy._1;}
+	static xy<int> _2(const window::_wxyxy& xyxy)noexcept{return xyxy._2;}
+	static int x1(const window::_wxyxy& xyxy)noexcept{return xyxy._1.x;}
+	static int y1(const window::_wxyxy& xyxy)noexcept{return xyxy._1.y;}
+	static int x2(const window::_wxyxy& xyxy)noexcept{return xyxy._2.x;}
+	static int y2(const window::_wxyxy& xyxy)noexcept{return xyxy._2.y;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::xywh<U>, will::window::_wxywh>{
-	static will::two_dim::xywh<U> impl(const will::window::_wxywh& xywh) {
-		return static_cast<will::two_dim::xywh<U>>(static_cast<will::two_dim::xywh<int>>(xywh));
-	}
+template<>
+struct attribute_traits<window::_wxywh>{
+	using tag_type = tag::point_and_size;
+	using point_element_type = int;
+	using size_element_type = int;
+	static xy<int> xy(const window::_wxywh& xywh)noexcept{return xywh.xy;}
+	static wh<int> wh(const window::_wxywh& xywh)noexcept{return xywh.wh;}
+	static int x(const window::_wxywh& xywh)noexcept{return xywh.xy.x;}
+	static int y(const window::_wxywh& xywh)noexcept{return xywh.xy.y;}
+	static int w(const window::_wxywh& xywh)noexcept{return xywh.wh.w;}
+	static int h(const window::_wxywh& xywh)noexcept{return xywh.wh.h;}
 };
 
-template<typename U>
-struct attribute<will::two_dim::xywh<U>, will::window::_cxywh>{
-	static will::two_dim::xywh<U> impl(const will::window::_cxywh& xywh) {
-		return static_cast<will::two_dim::xywh<U>>(static_cast<will::two_dim::xywh<int>>(xywh));
-	}
+template<>
+struct attribute_traits<window::_cxywh>{
+	using tag_type = tag::point_and_size;
+	using point_element_type = int;
+	using size_element_type = int;
+	static xy<int> xy(const window::_cxywh& xywh)noexcept{return xywh.xy;}
+	static wh<int> wh(const window::_cxywh& xywh)noexcept{return xywh.wh;}
+	static int x(const window::_cxywh& xywh)noexcept{return xywh.xy.x;}
+	static int y(const window::_cxywh& xywh)noexcept{return xywh.xy.y;}
+	static int w(const window::_cxywh& xywh)noexcept{return xywh.wh.w;}
+	static int h(const window::_cxywh& xywh)noexcept{return xywh.wh.h;}
 };
 
-}}
+}
 
 }

@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -187,7 +187,7 @@ public:
 		return std::make_pair(std::move(*sym), std::move(lock));
 	}
 	symbol_handler(const symbol_handler&) = delete;
-	symbol_handler(symbol_handler&& other):
+	symbol_handler(symbol_handler&& other)noexcept:
 #ifdef WILL_DBGHELP_USE_DLL
 		dbghelp{std::move(static_cast<dbghelp&>(other))},
 		vcruntime140{std::move(static_cast<vcruntime140&>(other))},
@@ -250,7 +250,7 @@ public:
 	}
 	expected<std::vector<ULONG>, winapi_last_error> type_children(void* addr, ULONG type_idx)const{
 		return get_type_info<DWORD>(addr, type_idx, ::TI_GET_CHILDRENCOUNT, _T("will::symbol_handler::type_children::count")).bind([&](DWORD count)->expected<std::vector<ULONG>, winapi_last_error>{
-			std::vector<ULONG> buf(count+2);
+			std::vector<ULONG> buf(static_cast<std::size_t>(count)+2);
 			buf[0] = count;
 			buf[1] = 0;
 			if(SymGetTypeInfo(proc, reinterpret_cast<DWORD64>(addr), type_idx, ::TI_FINDCHILDREN, buf.data()) == FALSE)
@@ -351,7 +351,7 @@ public:
 		return buf;
 	}
 #endif
-	~symbol_handler(){if(is_first)cleanup(
+	~symbol_handler(){if(is_first)auto _ [[maybe_unused]] = cleanup(
 #ifdef WILL_DBGHELP_USE_DLL
 		*this,
 #endif

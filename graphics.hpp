@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -119,7 +119,7 @@ struct reinterpret_conversion_impl<will::d2d::bitmap, will::d3d::texture2d>{
 		auto desc = tex.get_desc();
 		if(desc.Format == prop.get().pixelFormat.format)
 			return devcont.create_bitmap({desc.Width, desc.Height}, prop).map([&](will::d2d::bitmap&& bmp){
-				bmp.get_surface().map([&](will::dxgi::surface&& surf){
+				auto _ [[maybe_unused]] = bmp.get_surface().map([&](will::dxgi::surface&& surf){
 					dev.get_immediate_context().copy(will::d3d::texture2d{std::move(surf)}, tex);
 				});
 				return std::move(bmp);
@@ -183,7 +183,7 @@ struct reinterpret_conversion_impl<will::d3d::texture2d, will::d2d::bitmap>{
 		}
 		if(desc.get().Format == bmp.get_pixel_format().format)
 			return dev.create_texture2d(desc).map([&](will::d3d::texture2d&& tex){
-				bmp.get_surface().map([&](will::dxgi::surface&& surf){
+				auto _ [[maybe_unused]] = bmp.get_surface().map([&](will::dxgi::surface&& surf){
 					dev.get_immediate_context().copy(tex, will::d3d::texture2d{std::move(surf)});
 				});
 				return std::move(tex);
@@ -306,7 +306,7 @@ public:
 	expected<void, hresult_error> draw(F&& f){
 		using namespace std::literals::chrono_literals;
 		DXGI_PRESENT_PARAMETERS para = {};
-		if((status & DXGI_STATUS_OCCLUDED)){
+		if((status & DXGI_STATUS_OCCLUDED) != 0){
 			status = (*static_cast<dxgi::swap_chain*>(this))->Present1(1, DXGI_PRESENT_TEST, &para);
 			return make_unexpected<hresult_error>(_T(__FUNCTION__), status);
 		}
@@ -326,7 +326,7 @@ public:
 	expected<hwnd_render_target, hresult_error> recreate_render_target(){
 		static_cast<d2d::device::context&>(*this).~context();
 		static_cast<dxgi::swap_chain&>(*this).~swap_chain();
-		return create_swap_chain(hwnd, std::move(*this)).bind([&](dxgi::swap_chain&& sc){
+		return create_swap_chain(hwnd, this->get_d3d_device()).bind([&](dxgi::swap_chain&& sc){
 			return get_buffer().map([&](dxgi::surface&& sf){
 				new (static_cast<dxgi::swap_chain*>(this)) dxgi::swap_chain(std::move(sc));
 				new (static_cast<d2d::device::context*>(this)) d2d::device::context(std::move(sf));
@@ -361,7 +361,7 @@ class gdi_compatible_render_target:protected d3d::device, public dxgi::surface, 
 				return d2d::device::context::create(surf, prop).bind([&](d2d::device::context&& devcon){
 					return dwrite::create_factory(type).bind([&](dwrite&& dw){
 						return amp::direct3d::create_accelerator_view(d3d_dev, qm)
-							.emap([](std::exception_ptr&& ptr){try{std::rethrow_exception(ptr);}catch(concurrency::runtime_exception& e){return make_unexpected<hresult_error>(_T("will::gdi_compatible_render_target::create"), e.get_error_code());}}).map([&](amp::accelerator_view& av){
+							.emap([](std::exception_ptr&& ptr){try{std::rethrow_exception(ptr);}catch(concurrency::runtime_exception& e){return make_unexpected<hresult_error>(_T("will::gdi_compatible_render_target::create"), e.get_error_code());}}).map([&](amp::accelerator_view&& av){
 							return gdi_compatible_render_target{std::move(d3d_dev), std::move(surf), std::move(devcon), std::move(dw), std::move(av)};
 						});
 					});
