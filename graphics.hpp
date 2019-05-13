@@ -13,8 +13,141 @@
 #include"amp_graphics.hpp"
 #include<memory>
 #include<vector>
+#include<array>
+#include<tuple>
 
 namespace will{
+
+class pixel_format_converter{
+	will::d3d::buffer vb;
+	will::d3d::input_layout il;
+	will::d3d::vertex_shader vs;
+	will::d3d::pixel_shader ps;
+	will::d3d::sampler_state ss;
+	will::d3d::device::context dc;
+	explicit pixel_format_converter(will::d3d::buffer&& vertex_buffer, will::d3d::input_layout&& input_layout, will::d3d::vertex_shader&& vertex_shader, will::d3d::pixel_shader&& pixel_shader, will::d3d::sampler_state&& sampler_state, will::d3d::device::context&& deffered_context) : vb{std::move(vertex_buffer)}, il{std::move(input_layout)}, vs{std::move(vertex_shader)}, ps{std::move(pixel_shader)}, ss{std::move(sampler_state)}, dc{std::move(deffered_context)}{}
+public:
+	static will::expected<pixel_format_converter, hresult_error> create(will::d3d::device& dev){
+		static constexpr BYTE vertex_shader[] = {
+			 68,  88,  66,  67, 204, 140,  66, 148, 129,  67,  51, 171, 232, 192, 138, 125, 194, 219,  25,  26,   1,   0,   0,   0,
+			104,   2,   0,   0,   5,   0,   0,   0,  52,   0,   0,   0, 172,   0,   0,   0,   0,   1,   0,   0,  88,   1,   0,   0,
+			204,   1,   0,   0,  82,  68,  69,  70, 112,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			 60,   0,   0,   0,   0,   5, 254, 255,   0,   1,   0,   0,  60,   0,   0,   0,  82,  68,  49,  49,  60,   0,   0,   0,
+			 24,   0,   0,   0,  32,   0,   0,   0,  40,   0,   0,   0,  36,   0,   0,   0,  12,   0,   0,   0,   0,   0,   0,   0,
+			 77, 105,  99, 114, 111, 115, 111, 102, 116,  32,  40,  82,  41,  32,  72,  76,  83,  76,  32,  83, 104,  97, 100, 101,
+			114,  32,  67, 111, 109, 112, 105, 108, 101, 114,  32,  54,  46,  51,  46,  57,  54,  48,  48,  46,  49,  54,  51,  56,
+			 52,   0, 171, 171,  73,  83,  71,  78,  76,   0,   0,   0,   2,   0,   0,   0,   8,   0,   0,   0,  56,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   3,   0,   0,   0,   0,   0,   0,   0,  15,  15,   0,   0,  65,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   3,   0,   0,   0,   1,   0,   0,   0,   3,   3,   0,   0,  80,  79,  83,  73,
+			 84,  73,  79,  78,   0,  84,  69,  88,  67,  79,  79,  82,  68,   0, 171, 171,  79,  83,  71,  78,  80,   0,   0,   0,
+			  2,   0,   0,   0,   8,   0,   0,   0,  56,   0,   0,   0,   0,   0,   0,   0,   1,   0,   0,   0,   3,   0,   0,   0,
+			  0,   0,   0,   0,  15,   0,   0,   0,  68,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   3,   0,   0,   0,
+			  1,   0,   0,   0,   3,  12,   0,   0,  83,  86,  95,  80,  79,  83,  73,  84,  73,  79,  78,   0,  84,  69,  88,  67,
+			 79,  79,  82,  68,   0, 171, 171, 171,  83,  72,  69,  88, 108,   0,   0,   0,  80,   0,   1,   0,  27,   0,   0,   0,
+			106,   8,   0,   1,  95,   0,   0,   3, 242,  16,  16,   0,   0,   0,   0,   0,  95,   0,   0,   3,  50,  16,  16,   0,
+			  1,   0,   0,   0, 103,   0,   0,   4, 242,  32,  16,   0,   0,   0,   0,   0,   1,   0,   0,   0, 101,   0,   0,   3,
+			 50,  32,  16,   0,   1,   0,   0,   0,  54,   0,   0,   5, 242,  32,  16,   0,   0,   0,   0,   0,  70,  30,  16,   0,
+			  0,   0,   0,   0,  54,   0,   0,   5,  50,  32,  16,   0,   1,   0,   0,   0,  70,  16,  16,   0,   1,   0,   0,   0,
+			 62,   0,   0,   1,  83,  84,  65,  84, 148,   0,   0,   0,   3,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  4,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   2,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+		};
+		static constexpr BYTE pixel_shader[] = {
+			 68,  88,  66,  67,   3,  10,  79, 110,  55, 128, 140,  49,  84, 243,  55, 101, 125,  13,   8, 175,   1,   0,   0,   0,
+			148,   2,   0,   0,   5,   0,   0,   0,  52,   0,   0,   0, 244,   0,   0,   0,  76,   1,   0,   0, 128,   1,   0,   0,
+			248,   1,   0,   0,  82,  68,  69,  70, 184,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   2,   0,   0,   0,
+			 60,   0,   0,   0,   0,   5, 255, 255,   0,   1,   0,   0, 132,   0,   0,   0,  82,  68,  49,  49,  60,   0,   0,   0,
+			 24,   0,   0,   0,  32,   0,   0,   0,  40,   0,   0,   0,  36,   0,   0,   0,  12,   0,   0,   0,   0,   0,   0,   0,
+			124,   0,   0,   0,   3,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  1,   0,   0,   0,   1,   0,   0,   0, 128,   0,   0,   0,   2,   0,   0,   0,   5,   0,   0,   0,   4,   0,   0,   0,
+			255, 255, 255, 255,   0,   0,   0,   0,   1,   0,   0,   0,  13,   0,   0,   0, 115,  97, 109,   0, 116, 101, 120,   0,
+			 77, 105,  99, 114, 111, 115, 111, 102, 116,  32,  40,  82,  41,  32,  72,  76,  83,  76,  32,  83, 104,  97, 100, 101,
+			114,  32,  67, 111, 109, 112, 105, 108, 101, 114,  32,  54,	 46,  51,  46,  57,  54,  48,  48,  46,  49,  54,  51,  56,
+			 52,   0, 171, 171,  73,  83,  71,  78,  80,   0,   0,   0,   2,   0,   0,   0,   8,   0,   0,   0,  56,   0,   0,   0,
+			  0,   0,   0,   0,   1,   0,   0,   0,   3,   0,   0,   0,   0,   0,   0,   0,  15,   0,   0,   0,  68,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   3,   0,   0,   0,   1,   0,   0,   0,   3,   3,   0,   0,  83,  86,  95,  80,
+			 79,  83,  73,  84,  73,  79,  78,   0,  84,  69,  88,  67,  79,  79,  82,  68,   0, 171, 171, 171,  79,  83,  71,  78,
+			 44,   0,   0,   0,   1,   0,   0,   0,   8,   0,   0,   0,  32,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  3,   0,   0,   0,   0,   0,   0,   0,  15,   0,   0,   0,  83,  86,  95,  84,  97, 114, 103, 101, 116,   0, 171, 171,
+			 83,  72,  69,  88, 112,   0,   0,   0,  80,   0,   0,   0,  28,   0,   0,   0, 106,   8,   0,   1,  90,   0,   0,   3,
+			  0,  96,  16,   0,   0,   0,   0,   0,  88,  24,   0,   4,   0, 112,  16,   0,   0,   0,   0,   0,  85,  85,   0,   0,
+			 98,  16,   0,   3,  50,  16,  16,   0,   1,   0,   0,   0, 101,   0,   0,   3, 242,  32,  16,   0,   0,   0,   0,   0,
+			 69,   0,   0, 139, 194,   0,   0, 128,  67,  85,  21,   0, 242,  32,  16,   0,   0,   0,   0,   0,  70,  16,  16,   0,
+			  1,   0,   0,   0,  70, 126,  16,   0,   0,   0,   0,   0,   0,  96,  16,   0,   0,   0,   0,   0,  62,   0,   0,   1,
+			 83,  84,  65,  84, 148,   0,   0,   0,   2,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   2,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+			};
+			struct vertex{
+				float pos[3];
+				float uv[2];
+			};
+			static constexpr std::array<vertex, 4> vertexes{{
+				{{-1.f, -1.f, .5f}, {0.f, 1.f}},
+				{{-1.f,  1.f, .5f}, {0.f, 0.f}},
+				{{ 1.f, -1.f, .5f}, {1.f, 1.f}},
+				{{ 1.f,  1.f, .5f}, {1.f, 0.f}}
+			}};
+			static constexpr std::array<D3D11_INPUT_ELEMENT_DESC, 2> input_layout{{
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			}};
+		return
+			dev.create_buffer(will::d3d::buffer::description{}.byte_width(static_cast<::UINT>(sizeof(vertexes))).bind_flags(D3D11_BIND_VERTEX_BUFFER), will::d3d::subresource::data{}.memory(vertexes.data())).bind([&](will::d3d::buffer&& vb){return
+			dev.create_input_layout(input_layout, vertex_shader).bind([&](will::d3d::input_layout&& il){return
+			dev.create_vertex_shader(vertex_shader).bind([&](will::d3d::vertex_shader&& vs){return
+			dev.create_pixel_shader(pixel_shader).bind([&](will::d3d::pixel_shader&& ps){return
+			dev.create_sampler_state().bind([&](will::d3d::sampler_state&& ss){return
+			dev.create_deferred_context().map([&](will::d3d::device::context&& dc){
+			dc.ia_set_input_layout(il);
+			dc.ia_set_vertex_buffer(0, vb, sizeof(vertexes[0]), 0);
+			dc.ia_set_primitive_topology(::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			dc.vs_set_shader(vs);
+			dc.ps_set_sampler(0, ss);
+			dc.ps_set_shader(ps);
+			return pixel_format_converter(std::move(vb), std::move(il), std::move(vs), std::move(ps), std::move(ss), std::move(dc));
+			});});});});});});
+	}
+	will::expected<will::d3d::texture2d, hresult_error> convert(const will::d3d::texture2d& tex, will::d3d::texture2d::description desc, will::d3d::device& dev){
+		auto d = tex.get_desc();
+		if(desc.get().Width == 0)
+			desc.width(d.Width);
+		if(desc.get().Height == 0)
+			desc.height(d.Height);
+		if(will::dxgi::format::same_family(desc.get().Format, d.Format))
+			return dev.create_texture2d(desc).map([&](will::d3d::texture2d&& t){
+				dev.get_immediate_context().copy(t, tex);
+				return std::move(t);
+			});
+		if((d.BindFlags & ::D3D11_BIND_SHADER_RESOURCE) != 0){
+			desc.get().BindFlags |= ::D3D11_BIND_RENDER_TARGET;
+			auto dst = dev.create_texture2d(desc);
+			return dst.bind([&](will::d3d::texture2d& dst){return
+			dev.create_render_target_view(dst).bind([&](will::d3d::render_target_view&& rtv){return
+			dev.create_shader_resource_view(tex, will::d3d::shader_resource_view::description{}.format(will::dxgi::format::is_typeless(tex.get_desc().Format) ? will::dxgi::format::to_unorm(tex.get_desc().Format) : tex.get_desc().Format).texture2d({0, tex.get_desc().MipLevels})).bind([&](will::d3d::shader_resource_view&& srv){return dc.finish_command_list([&](will::d3d::device::context& dc){
+			dc.rs_set_viewport(std::array<::D3D11_VIEWPORT, 1>{{{0, 0, static_cast<float>(d.Width), static_cast<float>(d.Height), 0.f, 1.f}}});
+			dc.ps_set_shader_resource(0, srv);
+			dc.om_set_render_targets(rtv, nullptr);
+			dc.clear_render_target_view(rtv, {0.f, 0.f, 0.f, 0.f});
+			dc.draw(4u);}).map([&](will::d3d::command_list&& cl){
+			dev.get_immediate_context().execute_command_list(cl);
+			});});}).map([&]{return std::move(dst);});});
+		}
+		d.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
+		return dev.create_texture2d(d).bind([&](will::d3d::texture2d&& t){
+			dev.get_immediate_context().copy(t, tex);
+			return convert(t, desc, dev);
+		});
+	}
+};
 
 namespace interop{
 
@@ -99,7 +232,7 @@ template<typename, typename>struct reinterpret_conversion_impl;
 template<>
 struct reinterpret_conversion_impl<will::d2d::bitmap, will::d2d::bitmap>{
 	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::d2d::bitmap& bmp, const will::d2d::bitmap::property& prop, const will::d2d::device::context& devcont){
-		if(bmp.get_pixel_format().format == prop.get().pixelFormat.format)
+		if(will::dxgi::format::same_family(bmp.get_pixel_format().format, prop.get().pixelFormat.format))
 			return bmp.clone(devcont);
 		if((bmp.get_bitmap_options() & D2D1_BITMAP_OPTIONS_CPU_READ) != 0){
 			return bmp.scoped_map().bind([&](will::d2d::bitmap::scoped_readonly_mapped_rect&& rect){
@@ -117,7 +250,7 @@ template<>
 struct reinterpret_conversion_impl<will::d2d::bitmap, will::d3d::texture2d>{
 	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::d3d::texture2d& tex, const will::d2d::bitmap::property& prop, const will::d3d::device& dev, const will::d2d::device::context& devcont){
 		auto desc = tex.get_desc();
-		if(desc.Format == prop.get().pixelFormat.format)
+		if(will::dxgi::format::same_family(desc.Format, prop.get().pixelFormat.format))
 			return devcont.create_bitmap({desc.Width, desc.Height}, prop).map([&](will::d2d::bitmap&& bmp){
 				auto _ [[maybe_unused]] = bmp.get_surface().map([&](will::dxgi::surface&& surf){
 					dev.get_immediate_context().copy(will::d3d::texture2d{std::move(surf)}, tex);
@@ -149,7 +282,7 @@ struct reinterpret_conversion_impl<will::d3d::texture2d, will::d3d::texture2d>{
 			desc.width(d.Width);
 		if(desc.get().Height == 0)
 			desc.height(d.Height);
-		if(desc.get().Format == tex.get_desc().Format)
+		if(will::dxgi::format::same_family(desc.get().Format, tex.get_desc().Format))
 			return dev.create_texture2d(desc).map([&](will::d3d::texture2d&& t){
 				dev.get_immediate_context().copy(t, tex);
 				return std::move(t);
@@ -181,7 +314,7 @@ struct reinterpret_conversion_impl<will::d3d::texture2d, will::d2d::bitmap>{
 			if(desc.get().Height == 0)
 				desc.height(p.height);
 		}
-		if(desc.get().Format == bmp.get_pixel_format().format)
+		if(will::dxgi::format::same_family(desc.get().Format, bmp.get_pixel_format().format))
 			return dev.create_texture2d(desc).map([&](will::d3d::texture2d&& tex){
 				auto _ [[maybe_unused]] = bmp.get_surface().map([&](will::dxgi::surface&& surf){
 					dev.get_immediate_context().copy(tex, will::d3d::texture2d{std::move(surf)});
@@ -225,6 +358,123 @@ struct reinterpret_conversion_impl<concurrency::graphics::texture<ValueType, Ran
 
 template<typename To, typename From, typename... Args>
 inline expected<To, hresult_error> reinterpret_convert(From&& from, Args&&... args){return detail::reinterpret_conversion_impl<To, std::decay_t<From>>::conv(std::forward<From>(from), std::forward<Args>(args)...);}
+
+namespace detail{
+
+template<typename, typename>struct pixel_format_conversion_impl;
+template<>
+struct pixel_format_conversion_impl<will::d3d::texture2d, will::d3d::texture2d>{
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d3d::texture2d& tex, will::d3d::texture2d::description desc, pixel_format_converter& pfc, will::d3d::device& dev){
+		return pfc.convert(tex, desc, dev);
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d3d::texture2d& tex, will::d3d::texture2d::description desc, pixel_format_converter& pfc, RenderTarget&& rt){return conv(tex, desc, pfc, rt.get_d3d_device());}
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d3d::texture2d& tex, will::d3d::texture2d::description desc, will::d3d::device& dev){
+		return pixel_format_converter::create(dev).bind([&](pixel_format_converter&& pfc){return pfc.convert(tex, desc, dev);});
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d3d::texture2d& tex, will::d3d::texture2d::description desc, RenderTarget&& rt){return conv(tex, desc, rt.get_d3d_device());}
+};
+template<>
+struct pixel_format_conversion_impl<will::d2d::bitmap, will::d3d::texture2d>{
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::d3d::texture2d& tex, const will::d2d::bitmap::property& prop, pixel_format_converter& pfc, will::d3d::device& dev, const will::d2d::device::context& devcont){
+		auto desc = tex.get_desc();
+		if(will::dxgi::format::same_family(desc.Format, prop.get().pixelFormat.format))
+			return conv(tex, prop, dev, devcont);
+		return pixel_format_conversion_impl<will::d3d::texture2d, will::d3d::texture2d>::conv(tex, will::d3d::texture2d::description{}.format(prop.get().pixelFormat.format), pfc, dev)
+		          .bind([&](will::d3d::texture2d c){return conv(c, prop, dev, devcont);});
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::d3d::texture2d& tex, const will::d2d::bitmap::property& prop, pixel_format_converter& pfc, RenderTarget&& rt){return conv(tex, prop, pfc, rt.get_d3d_device(), rt);}
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::d3d::texture2d& tex, const will::d2d::bitmap::property& prop, will::d3d::device& dev, const will::d2d::device::context& devcont){
+		auto desc = tex.get_desc();
+		if(will::dxgi::format::same_family(desc.Format, prop.get().pixelFormat.format))
+			return devcont.create_bitmap({desc.Width, desc.Height}, prop).bind([&](will::d2d::bitmap&& bmp){
+				return bmp.get_surface().map([&](will::dxgi::surface&& surf){
+					dev.get_immediate_context().copy(will::d3d::texture2d{std::move(surf)}, tex);
+					return std::move(bmp);
+				});
+			});
+		return pixel_format_converter::create(dev).bind([&](pixel_format_converter pfc){return
+			pixel_format_conversion_impl<will::d3d::texture2d, will::d3d::texture2d>::conv(tex, will::d3d::texture2d::description{}.format(prop.get().pixelFormat.format), pfc, dev)
+		          .bind([&](will::d3d::texture2d c){return conv(c, prop, dev, devcont);});});
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::d3d::texture2d& tex, const will::d2d::bitmap::property& prop, RenderTarget&& rt){return conv(tex, prop, rt.get_d3d_device(), rt);}
+};
+template<>
+struct pixel_format_conversion_impl<will::d3d::texture2d, will::d2d::bitmap>{
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d2d::bitmap& bmp, will::d3d::texture2d::description desc, pixel_format_converter& pfc, will::d3d::device& dev, const will::d2d::device::context& devcont){
+		{
+			const auto p = bmp.get_pixel_size();
+			if(desc.get().Width == 0)
+				desc.width(p.width);
+			if(desc.get().Height == 0)
+				desc.height(p.height);
+		}
+		if(will::dxgi::format::same_family(desc.get().Format, bmp.get_pixel_format().format))
+			return conv(bmp, desc, dev, devcont);
+		return bmp.get_surface().bind([&](will::dxgi::surface&& surf){
+			will::d3d::texture2d tex{surf};
+			return pixel_format_conversion_impl<will::d3d::texture2d, will::d3d::texture2d>::conv(tex, desc, pfc, dev);});
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d2d::bitmap& bmp, const will::d3d::texture2d::description& desc, pixel_format_converter& pfc, RenderTarget&& rt){return conv(bmp, desc, pfc, rt.get_d3d_device(), rt);}
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d2d::bitmap& bmp, will::d3d::texture2d::description desc, will::d3d::device& dev, const will::d2d::device::context& devcont){
+		{
+			const auto p = bmp.get_pixel_size();
+			if(desc.get().Width == 0)
+				desc.width(p.width);
+			if(desc.get().Height == 0)
+				desc.height(p.height);
+		}
+		if(will::dxgi::format::same_family(desc.get().Format, bmp.get_pixel_format().format))
+			return dev.create_texture2d(desc).map([&](will::d3d::texture2d&& tex){
+				auto _ [[maybe_unused]] = bmp.get_surface().map([&](will::dxgi::surface&& surf){
+					dev.get_immediate_context().copy(tex, will::d3d::texture2d{std::move(surf)});
+				});
+				return std::move(tex);
+			});
+		return pixel_format_converter::create(dev).bind([&](pixel_format_converter pfc){return
+			conv(bmp, desc, pfc, dev, devcont);});
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d3d::texture2d, hresult_error> conv(const will::d2d::bitmap& bmp, const will::d3d::texture2d::description& desc, RenderTarget&& rt){return conv(bmp, desc, rt.get_d3d_device(), rt);}
+};
+template<typename ValueType, int Rank>
+struct pixel_format_conversion_impl<will::d2d::bitmap, concurrency::graphics::texture_view<ValueType, Rank>>{
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::amp::graphics::texture_view<ValueType, Rank>& texv, const will::d2d::bitmap::property& prop, pixel_format_converter& pfc, will::d3d::device& dev, const will::d2d::device::context& devcont){
+		return pixel_format_conversion_impl<will::d2d::bitmap, will::d3d::texture2d>::conv(will::amp::graphics::direct3d::get_texture(texv), prop, pfc, dev, devcont);
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::amp::graphics::texture_view<ValueType, Rank>& texv, const will::d2d::bitmap::property& prop, pixel_format_converter& pfc, RenderTarget&& rt){return conv(texv, prop, pfc, rt.get_d3d_device(), rt);}
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::amp::graphics::texture_view<ValueType, Rank>& texv, const will::d2d::bitmap::property& prop, will::d3d::device& dev, const will::d2d::device::context& devcont){
+		return pixel_format_conversion_impl<will::d2d::bitmap, will::d3d::texture2d>::conv(will::amp::graphics::direct3d::get_texture(texv), prop, dev, devcont);
+	}
+	template<typename RenderTarget>
+	static will::expected<will::d2d::bitmap, hresult_error> conv(const will::amp::graphics::texture_view<ValueType, Rank>& texv, const will::d2d::bitmap::property& prop, RenderTarget&& rt){return conv(texv, prop, rt.get_d3d_device(), rt);}
+};
+template<typename ValueType, int Rank>
+struct pixel_format_conversion_impl<concurrency::graphics::texture<ValueType, Rank>, will::d2d::bitmap>{
+	static will::expected<will::amp::graphics::texture<ValueType, Rank>, hresult_error> conv(const will::d2d::bitmap& bmp, pixel_format_converter& pfc, will::d3d::device& dev, const will::d2d::device::context& devcont, const will::amp::accelerator_view& accv){
+		constexpr auto fn = _T(__FUNCTION__);
+		return pixel_format_conversion_impl<will::d3d::texture2d, will::d2d::bitmap>::conv(bmp, will::d3d::texture2d::description{}.format(DXGI_FORMAT_R8G8B8A8_UNORM).bind_flags(D3D11_BIND_UNORDERED_ACCESS|D3D11_BIND_SHADER_RESOURCE), pfc, dev, devcont).bind([&](will::d3d::texture2d&& tex){
+			return will::amp::graphics::direct3d::make_texture<will::amp::graphics::unorm_4, 2>(accv, tex)
+			.emap([&](std::exception_ptr&& ptr){try{std::rethrow_exception(ptr);}catch(concurrency::runtime_exception& e){return make_unexpected<hresult_error>(fn, e.get_error_code());}});});
+	}
+	template<typename RenderTarget>
+	static will::expected<will::amp::graphics::texture<ValueType, Rank>, hresult_error> conv(const will::d2d::bitmap& bmp, pixel_format_converter& pfc, RenderTarget&& rt){return conv(bmp, rt.get_d3d_device(), rt, pfc, rt.get_accelerator_view());}
+	static will::expected<will::amp::graphics::texture<ValueType, Rank>, hresult_error> conv(const will::d2d::bitmap& bmp, will::d3d::device& dev, const will::d2d::device::context& devcont, const will::amp::accelerator_view& accv){
+		constexpr auto fn = _T(__FUNCTION__);
+		return reinterpret_conversion_impl<will::d3d::texture2d, will::d2d::bitmap>::conv(bmp, will::d3d::texture2d::description{}.format(DXGI_FORMAT_R8G8B8A8_UNORM).bind_flags(D3D11_BIND_UNORDERED_ACCESS|D3D11_BIND_SHADER_RESOURCE), dev, devcont).bind([&](will::d3d::texture2d&& tex){
+			return will::amp::graphics::direct3d::make_texture<will::amp::graphics::unorm_4, 2>(accv, tex)
+			.emap([&](std::exception_ptr&& ptr){try{std::rethrow_exception(ptr);}catch(concurrency::runtime_exception& e){return make_unexpected<hresult_error>(fn, e.get_error_code());}});});
+	}
+	template<typename RenderTarget>
+	static will::expected<will::amp::graphics::texture<ValueType, Rank>, hresult_error> conv(const will::d2d::bitmap& bmp, RenderTarget&& rt){return conv(bmp, rt.get_d3d_device(), rt, rt.get_accelerator_view());}
+};
+
+}
 
 }
 
@@ -336,15 +586,17 @@ public:
 	}
 	template<typename To, typename From, typename... Args>
 	expected<To, hresult_error> reinterpret_convert(From&& from, Args&&... args)const{return interop::reinterpret_convert<To>(std::forward<From>(from), std::forward<Args>(args)..., *this);}
+	template<typename To, typename From, typename... Args>
+	expected<To, hresult_error> pixel_format_convert(From&& from, Args&&... args){return interop::detail::pixel_format_conversion_impl<To, std::decay_t<From>>::conv(std::forward<From>(from), std::forward<Args>(args)..., *this);}
 	auto wm_size_resize_backbuffer(const ::DXGI_SWAP_CHAIN_DESC1& desc = will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM)){
 		return [&, this, buffer_count = desc.BufferCount, format = desc.Format, flags = desc.Flags](auto&&, WPARAM wparam, LPARAM){
 			if(wparam == SIZE_MINIMIZED || wparam == SIZE_MAXSHOW || wparam == SIZE_MAXHIDE)
 				return 0;
 			(*this).unset_target();
-			(*this).resize_buffers(buffer_count, 0, 0, format, flags);
-			(*this).get_buffer().bind([&](will::dxgi::surface&& surf){return 
+			(*this).resize_buffers(buffer_count, 0, 0, format, flags).bind([&](){return
+			(*this).get_buffer().bind([&](will::dxgi::surface&& surf){return
 			(*this).create_bitmap(surf, will::d2d::bitmap::property{}.format(format).alpha_mode(::D2D1_ALPHA_MODE_IGNORE).option(::D2D1_BITMAP_OPTIONS_TARGET | ::D2D1_BITMAP_OPTIONS_CANNOT_DRAW)).map([&](will::d2d::bitmap&& bmp){
-			(*this).set_target(bmp);});})
+			(*this).set_target(bmp);});});})
 			.value();
 			return 0;
 		};
@@ -432,5 +684,7 @@ public:
 	const amp::accelerator_view& get_accelerator_view()const{return av;}
 	template<typename To, typename From, typename... Args>
 	expected<To, hresult_error> reinterpret_convert(From&& from, Args&&... args)const{return interop::reinterpret_convert<To>(std::forward<From>(from), std::forward<Args>(args)..., *this);}
+	template<typename To, typename From, typename... Args>
+	expected<To, hresult_error> pixel_format_convert(From&& from, Args&&... args){return interop::detail::pixel_format_conversion_impl<To, std::decay_t<From>>::conv(std::forward<From>(from), std::forward<Args>(args)...);}
 };
 }

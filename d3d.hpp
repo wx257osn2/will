@@ -519,7 +519,7 @@ struct d3d{
 		}
 		static expected<device, hresult_error> create(std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #ifdef _DEBUG
-			| D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS | D3D11_CREATE_DEVICE_DEBUGGABLE
+			| D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS
 #endif
 		)noexcept{
 #ifdef _DEBUG
@@ -530,7 +530,7 @@ struct d3d{
 			detail::convert_to_rich_interface<device>(com_create_resource<ID3D11Device>([&](ID3D11Device** ptr){return ::D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, nullptr, 0u, D3D11_SDK_VERSION, ptr, nullptr, nullptr);}).bind([](ID3D11Device* ptr){auto ret = query_interface<ID3D11Device1>(ptr);if(ret)ptr->Release();return std::move(ret);}), _T(__FUNCTION__));
 #ifdef _DEBUG
 			if(dev){
-				expected<ID3D11InfoQueue*, HRESULT> ptr = query_interface<ID3D11InfoQueue>(dev->get());
+				expected<com_ptr<ID3D11InfoQueue>, HRESULT> ptr = query_interface<ID3D11InfoQueue>(dev->get()).map([](ID3D11InfoQueue* ptr){return com_ptr<ID3D11InfoQueue>{std::move(ptr)};});
 				if(ptr){
 					(*ptr)->SetBreakOnSeverity(::D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 					(*ptr)->SetBreakOnSeverity(::D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
