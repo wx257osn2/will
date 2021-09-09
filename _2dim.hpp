@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017, 2019 I
+//Copyright (C) 2014-2017, 2019, 2021 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -22,6 +22,8 @@ template<typename T>
 struct xy{
 	T x, y;
 	using element_type = T;
+	constexpr bool operator==(const xy<T>& other)noexcept{return x == other.x && y == other.y;}
+	constexpr bool operator!=(const xy<T>& other)noexcept{return !(*this == other);}
 #if 0
 	template<typename U, std::enable_if_t<std::is_same<tag::point, typename attribute_traits<std::decay_t<U>>::tag_type>::value, std::nullptr_t> = nullptr>
 	constexpr U convert()const noexcept{using et = typename attribute_traits<std::decay_t<U>>::element_type;return attribute_traits<U>::create(static_cast<et>(x), static_cast<et>(y));}
@@ -43,6 +45,8 @@ template<typename T>
 struct wh{
 	T w, h;
 	using element_type = T;
+	constexpr bool operator==(const wh<T>& other)noexcept{return w == other.w && h == other.h;}
+	constexpr bool operator!=(const wh<T>& other)noexcept{return !(*this == other);}
 #if 0
 	template<typename U, std::enable_if_t<std::is_same<tag::size, typename attribute_traits<std::decay_t<U>>::tag_type>::value, std::nullptr_t> = nullptr>
 	constexpr U convert()const noexcept{using et = typename attribute_traits<std::decay_t<U>>::element_type;return attribute_traits<U>::create(static_cast<et>(w), static_cast<et>(h));}
@@ -94,6 +98,8 @@ struct xywh{
 	wh<U> wh;
 	using point_element_type = T;
 	using size_element_type = U;
+	constexpr bool operator==(const xywh<T, U>& other)noexcept{return xy == other.xy && wh == other.wh;}
+	constexpr bool operator!=(const xywh<T, U>& other)noexcept{return !(*this == other);}
 #if 0
 	template<typename V, std::enable_if_t<std::is_same<tag::point_and_size, typename attribute_traits<std::decay_t<V>>::tag_type>::value, std::nullptr_t> = nullptr>
 	constexpr V convert()const noexcept{using pet = typename attribute_traits<std::decay_t<V>>::point_element_type;using set = typename attribute_traits<std::decay_t<V>>::size_element_type;return attribute_traits<V>::create(static_cast<pet>(xy.x), static_cast<pet>(xy.y), static_cast<set>(wh.w), static_cast<set>(wh.h));}
@@ -235,8 +241,8 @@ template<typename T>
 struct attribute_traits<detail::size_attribute_proxy<T>>{
 	using tag_type = tag::size;
 	using element_type = typename attribute_traits<T>::element_type;
-	static constexpr element_type w(const detail::point_attribute_proxy<T>& wh)noexcept{return wh.w();}
-	static constexpr element_type h(const detail::point_attribute_proxy<T>& wh)noexcept{return wh.h();}
+	static constexpr element_type w(const detail::size_attribute_proxy<T>& wh)noexcept{return wh.w();}
+	static constexpr element_type h(const detail::size_attribute_proxy<T>& wh)noexcept{return wh.h();}
 	static constexpr detail::size_attribute_proxy<T> create(element_type w, element_type h)noexcept{return attribute_proxy<T>{attribute_traits<T>::create(w, h)};}
 };
 
@@ -283,6 +289,15 @@ constexpr will::two_dim::attribute_proxy<will::two_dim::wh<std::make_signed_t<st
 	using RHSET = typename RHS::element_type;
 	using common_t = std::make_signed_t<std::common_type_t<LHSET, RHSET>>;
 	return will::two_dim::wh<common_t>{static_cast<common_t>(LHS::x(lhs) - RHS::x(rhs)), static_cast<common_t>(LHS::y(lhs) - RHS::y(rhs))};
+}
+template<typename T, typename U, std::enable_if_t<std::is_same<will::two_dim::tag::size, typename will::two_dim::attribute_traits<std::decay_t<T>>::tag_type>::value && std::is_same<will::two_dim::tag::size, typename will::two_dim::attribute_traits<std::decay_t<U>>::tag_type>::value, std::nullptr_t> = nullptr>
+constexpr will::two_dim::attribute_proxy<will::two_dim::wh<std::make_signed_t<std::common_type_t<typename will::two_dim::attribute_traits<std::decay_t<T>>::element_type, typename will::two_dim::attribute_traits<std::decay_t<T>>::element_type>>>> operator-(const T& lhs, const U& rhs)noexcept{
+	using LHS = will::two_dim::attribute_traits<std::decay_t<T>>;
+	using LHSET = typename LHS::element_type;
+	using RHS = will::two_dim::attribute_traits<std::decay_t<U>>;
+	using RHSET = typename RHS::element_type;
+	using common_t = std::make_signed_t<std::common_type_t<LHSET, RHSET>>;
+	return will::two_dim::wh<common_t>{static_cast<common_t>(LHS::w(lhs) - RHS::w(rhs)), static_cast<common_t>(LHS::h(lhs) - RHS::h(rhs))};
 }
 template<typename T, typename U, std::enable_if_t<std::is_same<will::two_dim::tag::point, typename will::two_dim::attribute_traits<std::decay_t<T>>::tag_type>::value && std::is_same<will::two_dim::tag::size, typename will::two_dim::attribute_traits<std::decay_t<U>>::tag_type>::value, std::nullptr_t> = nullptr>
 constexpr will::two_dim::attribute_proxy<will::two_dim::xy<std::common_type_t<typename will::two_dim::attribute_traits<std::decay_t<T>>::element_type, typename will::two_dim::attribute_traits<std::decay_t<T>>::element_type>>> operator+(const T& lhs, const U& rhs)noexcept{

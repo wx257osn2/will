@@ -662,12 +662,12 @@ class com_enum_iterator{
 	HRESULT hr;
 	com_enum_iterator(com_ptr<IEnumVARIANT>&& ptr, variant v, HRESULT h):enu(std::move(ptr)), var{v}, hr{h}{}
 	static expected<com_ptr<IEnumVARIANT>, hresult_error> copy_enu(const com_ptr<IEnumVARIANT>& p){
-		return com_create_resource<IEnumVARIANT>([&](IEnumVARIANT** ptr){return p->Clone(ptr);}).emap([](HRESULT e){return make_unexpected<hresult_error>(_T("IEnumVARIANT::Clone"), e);})
+		return com_create_resource<IEnumVARIANT>([&](IEnumVARIANT** ptr){return p->Clone(ptr);}).emap([](HRESULT e){return make_unexpected<hresult_error>(_T("IEnumVARIANT::Clone"), e);});
 	}
 public:
 	template<typename Collection>
 	static expected<com_enum_iterator, hresult_error> create(const Collection& collection)noexcept{
-		return detail::get_enum<T>::get<IEnumVARIANT>(collection).map([&](com_ptr<IEnumVARIANT>&& enu){
+		return detail::get_enum<T>::template get<IEnumVARIANT>(collection).map([&](com_ptr<IEnumVARIANT>&& enu){
 			variant var;
 			auto hr = enu->Next(1, &var.get(), nullptr);
 			return com_enum_iterator{std::move(enu), std::move(var), hr};

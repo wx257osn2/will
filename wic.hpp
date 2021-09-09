@@ -142,7 +142,7 @@ struct wic : detail::resource<IWICImagingFactory2>{
 private:
 	template<typename I>
 	struct bitmap_source : detail::resource<I>{
-		using resource::resource;
+		using detail::resource<I>::resource;
 		expected<WICPixelFormatGUID, hresult_error> get_pixel_format()const{
 			WICPixelFormatGUID p;
 			const auto hr = (*this)->GetPixelFormat(&p);
@@ -165,23 +165,32 @@ private:
 			return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 		}
 		expected<void, hresult_error> copy_pixels(const WICRect& rect, UINT buf_size, BYTE* buf)const{
-			const auto hr = (*this)->CopyPixels(&rect, rect.Width * bits_per_pixel(get_pixel_format()) / 8, buf_size, buf);
+			const auto pixel_format = get_pixel_format();
+			if(!pixel_format)
+				return will::make_unexpected(pixel_format.error());
+			const auto hr = (*this)->CopyPixels(&rect, rect.Width * bits_per_pixel(*pixel_format) / 8, buf_size, buf);
 			if(SUCCEEDED(hr))
 				return {};
 			return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 		}
 		expected<void, hresult_error> copy_pixels(UINT buf_size, BYTE* buf)const{
-			const auto hr = (*this)->CopyPixels(nullptr, get_size().w * bits_per_pixel(get_pixel_format()) / 8, buf_size, buf);
+			const auto pixel_format = get_pixel_format();
+			if(!pixel_format)
+				return will::make_unexpected(pixel_format.error());
+			const auto hr = (*this)->CopyPixels(nullptr, get_size().w * bits_per_pixel(*pixel_format) / 8, buf_size, buf);
 			if(SUCCEEDED(hr))
 				return {};
 			return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 		}
 		expected<std::vector<BYTE>, hresult_error> copy_pixels(const will::two_dim::xywh<INT>& rect)const{
-			std::vector<BYTE> vec(rect.wh.w * rect.wh.h * bits_per_pixel(get_pixel_format()) / 8);
-			return copy_pixels(rect.attribute<WICRect>(), static_cast<UINT>(vec.size()), vec.data()).map([&]{return std:move(vec);});
+			const auto pixel_format = get_pixel_format();
+			if(!pixel_format)
+				return will::make_unexpected(pixel_format.error());
+			std::vector<BYTE> vec(rect.wh.w * rect.wh.h * bits_per_pixel(*pixel_format) / 8);
+			return copy_pixels(will::two_dim::attribute<WICRect>(rect), static_cast<UINT>(vec.size()), vec.data()).map([&]{return std::move(vec);});
 		}
 		expected<std::vector<BYTE>, hresult_error> copy_pixels()const{
-			return copy_pixels({{0, 0}, get_size().cast<INT>()});
+			return get_size().bind([this](const will::two_dim::wh<UINT> wh){return copy_pixels({{0, 0}, will::two_dim::attribute<will::two_dim::wh<INT>>(wh)});});
 		}
 	};
 public:

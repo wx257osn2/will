@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2019 I
+//Copyright (C) 2014-2020 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -321,7 +321,172 @@ template<typename T, typename U>
 struct pair{
 	alignas(4) T first;
 	alignas(4) U second;
+	pair& operator=(const pair<T, U>& other)restrict(cpu, amp){
+		first = other.first;
+		second = other.second;
+		return *this;
+	}
+	pair& operator=(pair<T, U>&& other)restrict(cpu, amp){
+		first = amp::move(other.first);
+		second = amp::move(other.second);
+		return *this;
+	}
+	void swap(pair<T, U>& other)restrict(cpu, amp){
+		pair<T, U> tmp = amp::move(*this);
+		*this = amp::move(other);
+		other = amp::move(tmp);
+	}
+	bool operator==(const pair<T, U>& rhs)restrict(amp, cpu){
+		return first == rhs.first && second == rhs.second;
+	}
+	bool operator!=(const pair<T, U>& rhs)restrict(amp, cpu){
+		return !(*this == rhs);
+	}
+	bool operator<(const pair<T, U>& rhs)restrict(amp, cpu){
+		return first < rhs.first || (!(first > rhs.first) && second < rhs.second);
+	}
+	bool operator>(const pair<T, U>& rhs)restrict(amp, cpu){
+		return rhs < *this;
+	}
+	bool operator<=(const pair<T, U>& rhs)restrict(amp, cpu){
+		return !(rhs < *this);
+	}
+	bool operator>=(const pair<T, U>& rhs)restrict(amp, cpu){
+		return !(*this < rhs);
+	}
 };
+
+namespace detail{
+
+template<typename>struct is_reference_wrapper : std::false_type{};
+template<typename T>struct is_reference_wrapper<std::reference_wrapper<T>> : std::true_type{};
+
+struct invoker{
+	template<typename MemberFunctionPointer, typename Arg, typename... Args, std::enable_if_t<std::is_member_function_pointer<MemberFunctionPointer>::value && !is_reference_wrapper<std::decay_t<Arg>>::value && !std::is_pointer<std::decay_t<Arg>>::value, std::nullptr_t> = nullptr>
+	static inline auto invoke(MemberFunctionPointer member_function_pointer, Arg&& object, Args&&... args)restrict(cpu, amp)->decltype((will::amp::forward<Arg>(object).*member_function_pointer)(will::amp::forward<Args>(args)...)){
+		return (will::amp::forward<Arg>(object).*member_function_pointer)(will::amp::forward<Args>(args)...);
+	}
+	template<typename MemberFunctionPointer, typename Arg, typename... Args, std::enable_if_t<std::is_member_function_pointer<MemberFunctionPointer>::value && is_reference_wrapper<std::decay_t<Arg>>::value, std::nullptr_t> = nullptr>
+	static inline auto invoke(MemberFunctionPointer member_function_pointer, Arg&& reference_wrapper, Args&&... args)restrict(cpu, amp)->decltype((will::amp::forward<Arg>(reference_wrapper).get().*member_function_pointer)(will::amp::forward<Args>(args)...)){
+		return (will::amp::forward<Arg>(reference_wrapper).get().*member_function_pointer)(will::amp::forward<Args>(args)...);
+	}
+	template<typename MemberFunctionPointer, typename Arg, typename... Args, std::enable_if_t<std::is_member_function_pointer<MemberFunctionPointer>::value && std::is_pointer<std::decay_t<Arg>>::value, std::nullptr_t> = nullptr>
+	static inline auto invoke(MemberFunctionPointer member_function_pointer, Arg&& pointer, Args&&... args)restrict(cpu, amp)-> decltype(((*will::amp::forward<Arg>(pointer)).*member_function_pointer)(will::amp::forward<Args>(args)...)){
+		return ((*will::amp::forward<Arg>(pointer)).*member_function_pointer)(will::amp::forward<Args>(args)...);
+	}
+	template<typename MemberObjectPointer, typename Arg, std::enable_if_t<std::is_member_object_pointer<MemberObjectPointer>::value && !is_reference_wrapper<std::decay_t<Arg>>::value && !std::is_pointer<std::decay_t<Arg>>::value, std::nullptr_t> = nullptr>
+	static inline auto invoke(MemberObjectPointer member_object_pointer, Arg&& object)restrict(cpu, amp)->decltype(will::amp::forward<Arg>(object).*member_object_pointer){
+		return will::amp::forward<Arg>(object).*member_object_pointer;
+	}
+	template<typename MemberObjectPointer, typename Arg, std::enable_if_t<std::is_member_object_pointer<MemberObjectPointer>::value && is_reference_wrapper<std::decay_t<Arg>>::value, std::nullptr_t> = nullptr>
+	static inline auto invoke(MemberObjectPointer member_object_pointer, Arg&& arg)restrict(cpu, amp)->decltype(will::amp::forward<Arg>(arg).get().*member_object_pointer){
+		return will::amp::forward<Arg>(arg).get().*member_object_pointer;
+	}
+	template<typename MemberObjectPointer, typename Arg, std::enable_if_t<std::is_member_object_pointer<MemberObjectPointer>::value && std::is_pointer<std::decay_t<Arg>>::value, std::nullptr_t> = nullptr>
+	static inline auto invoke(MemberObjectPointer member_object_pointer, Arg&& arg)restrict(cpu, amp)->decltype((*will::amp::forward<Arg>(arg)).*member_object_pointer){
+		return (*will::amp::forward<Arg>(arg)).*member_object_pointer;
+	}
+	template<typename Callable, typename... Args, std::enable_if_t<!std::is_member_function_pointer<std::decay_t<Callable>>::value && !std::is_member_object_pointer<std::decay_t<Callable>>::value, std::nullptr_t> = nullptr>
+	static inline auto invoke(Callable&& callable, Args&&... args)restrict(cpu, amp)->decltype(will::amp::forward<Callable>(callable)(will::amp::forward<Args>(args)...)){
+		return will::amp::forward<Callable>(callable)(will::amp::forward<Args>(args)...);
+	}
+};
+
+template<typename, typename...>struct invocable_impl : std::false_type{};
+template<typename... Ts>struct invocable_impl<std::void_t<decltype(invoker::invoke(std::declval<Ts>()...))>, Ts...> : std::true_type{};
+
+}
+
+template<typename Callable, typename... Args>
+inline auto invoke(Callable&& callable, Args&& ... args)restrict(cpu, amp)->decltype(detail::invoker::invoke(will::amp::forward<Callable>(callable), will::amp::forward<Args>(args)...)){
+	return detail::invoker::invoke(will::amp::forward<Callable>(callable), will::amp::forward<Args>(args)...);
+}
+
+template<typename... Ts>
+struct invocable : detail::invocable_impl<void, Ts...>{};
+template<typename... Ts>
+static constexpr bool invocable_v = invocable<Ts...>::value;
+template<typename... Ts>
+struct invoke_result{
+	using type = decltype(will::amp::invoke(std::declval<Ts>()...));
+};
+template<typename... Ts>
+using invoke_result_t = typename invoke_result<Ts...>::type;
+
+template<typename M, typename T, int Rank = 1>
+struct mapped_array_view : array_view<T, Rank>{
+	alignas(4) M m;
+	using value_type = invoke_result_t<M, T>;
+	mapped_array_view(array_view<T, Rank> av) : array_view{av}{}
+	mapped_array_view(array_view<T, Rank> av, const M& m) : array_view{av}, m{m}{}
+	auto operator[](int i)const restrict(cpu, amp){
+		if constexpr(Rank == 1)
+			return m(array_view<T, Rank>::operator[](i));
+		else
+			return mapped_array_view<M, T, Rank-1>{array_view<T, Rank>::operator[](i), m};
+	}
+	auto operator[](const index<Rank>& ind)const restrict(cpu, amp)->decltype(std::declval<M>()(array_view<T, Rank>::operator[](ind))){
+		return m(array_view<T, Rank>::operator[](ind));
+	}
+	auto operator()(int i)const restrict(cpu, amp){
+		return (*this)[i];
+	}
+	auto operator()(const index<Rank>& ind)const restrict(cpu, amp)->decltype(operator[](ind)){
+		return (*this)[ind];
+	}
+	auto operator()(int i0, int i1)const restrict(cpu, amp)->decltype(std::declval<M>()(array_view<T, Rank>::operator()(i0, i1))){
+		return m(array_view<T, Rank>::operator()(i0, i1));
+	}
+	auto operator()(int i0, int i1, int i2)const restrict(cpu, amp)->decltype(std::declval<M>()(array_view<T, Rank>::operator()(i0, i1, i2))){
+		return m(array_view<T, Rank>::operator()(i0, i1, i2));
+	}
+	mapped_array_view section(const index<Rank>& org, const extent<Rank>& ext)const restrict(cpu, amp){
+		return mapped_array_view{array_view<T, Rank>::section(org, ext), m};
+	}
+	mapped_array_view section(const index<Rank>& org)const restrict(cpu, amp){
+		return mapped_array_view{array_view<T, Rank>::section(org), m};
+	}
+	mapped_array_view section(const extent<Rank>& ext)const restrict(cpu, amp){
+		return mapped_array_view{array_view<T, Rank>::section(ext), m};
+	}
+	mapped_array_view section(int org, int ext)const restrict(cpu, amp){
+		return mapped_array_view{array_view<T, Rank>::section(org, ext), m};
+	}
+	mapped_array_view section(int o0, int o1, int e0, int e1)const restrict(cpu, amp){
+		return mapped_array_view{array_view<T, Rank>::section(o0, o1, e0, e1), m};
+	}
+	mapped_array_view section(int o0, int o1, int o2, int e0, int e1, int e2)const restrict(cpu, amp){
+		return mapped_array_view{array_view<T, Rank>::section(o0, o1, o2, e0, e1, e2), m};
+	}
+	template<typename U>
+	mapped_array_view<M, U, Rank> reinterpret_as()const restrict(cpu, amp){
+		return mapped_array_view<M, U, Rank>{array_view<T, Rank>::template reinterpret_as<U>(), m};
+	}
+	template<int NewRank>
+	mapped_array_view<M, T, NewRank> view_as(const extent<NewRank>& ext)const restrict(cpu, amp){
+		return mapped_array_view<M, T, NewRank>{array_view<T, Rank>::view_as(ext), m};
+	}
+};
+
+template<typename M, typename T, int Rank>
+static inline mapped_array_view<M, T, Rank> map(const array_view<T, Rank>& av){
+	return {av};
+}
+template<typename M, typename T, int Rank>
+static inline mapped_array_view<M, T, Rank> map(const array_view<T, Rank>& av, const M& m){
+	return {av, m};
+}
+
+namespace detail{
+
+template<typename>
+struct is_array_view{using type = std::false_type;};
+template<typename T, int Rank>
+struct is_array_view<array_view<T, Rank>>{using type = std::true_type;};
+template<typename M, typename T, int Rank>
+struct is_array_view<mapped_array_view<M, T, Rank>>{using type = std::true_type;};
+
+}
 
 }
 

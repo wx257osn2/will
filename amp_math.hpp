@@ -597,24 +597,63 @@ public:
 
 namespace detail{
 template<typename T>
-struct numeric_limits;
+struct numeric_limits_impl;
 template<>
-struct numeric_limits<float>{
+struct numeric_limits_impl<float>{
 	static constexpr int digits()restrict(cpu, amp){return FLT_MANT_DIG;}
 	static constexpr float max()restrict(cpu, amp){return FLT_MAX;}
+	static constexpr float min()restrict(cpu, amp){return FLT_MIN;}
+	static constexpr float lowest()restrict(cpu, amp){return -FLT_MAX;}
 	static constexpr float epsilon()restrict(cpu, amp){return FLT_EPSILON;}
 };
 template<>
-struct numeric_limits<double>{
+struct numeric_limits_impl<double>{
 	static constexpr int digits()restrict(cpu, amp){return DBL_MANT_DIG;}
 	static constexpr double max()restrict(cpu, amp){return DBL_MAX;}
+	static constexpr double min()restrict(cpu, amp){return DBL_MIN;}
+	static constexpr double lowest()restrict(cpu, amp){return -DBL_MAX;}
 	static constexpr double epsilon()restrict(cpu, amp){return DBL_EPSILON;}
 };
+template<typename T>
+struct numeric_limits_integral{
+	static constexpr int digits()restrict(cpu, amp){return sizeof(T)*8-std::is_signed<T>::value;}
+	static constexpr T max()restrict(cpu, amp){
+		if constexpr(std::is_same<T, int>::value)
+			return INT_MAX;
+	}
+	static constexpr T min()restrict(cpu, amp){
+		if constexpr(std::is_same<T, int>::value)
+			return INT_MIN;
+	}
+	static constexpr T lowest()restrict(cpu, amp){return min();}
+};
+
+template<bool, template<typename...>class, template<typename...>class>
+struct template_conditional;
+
+template<template<typename...>class Then, template<typename...>class Else>
+struct template_conditional<true, Then, Else>{
+	template<typename... Ts>
+	using type = Then<Ts...>;
+};
+
+template<template<typename...>class Then, template<typename...>class Else>
+struct template_conditional<false, Then, Else>{
+	template<typename... Ts>
+	using type = Else<Ts...>;
+};
+
+template<bool Cond, template<typename...>class Then, template<typename...>class Else, typename... Ts>
+using template_conditional_t = typename template_conditional<Cond, Then, Else>::template type<Ts...>;
+
 }
+
+template<typename T>
+using numeric_limits = typename detail::template_conditional_t<std::is_integral<T>::value, detail::numeric_limits_integral, detail::numeric_limits_impl, T>;
 
 template<typename T, unsigned int Bits, typename RNG, std::enable_if_t<std::disjunction<std::is_same<T, float>, std::is_same<T, double>, std::is_same<T, long double>>::value, std::nullptr_t> = nullptr>
 inline T generate_canonical(RNG& rng)restrict(cpu, amp){
-	const int minbits = min(static_cast<int>(Bits), detail::numeric_limits<T>::digits());
+	const int minbits = min(static_cast<int>(Bits), numeric_limits<T>::digits());
 
 	const T rngmin = static_cast<T>(rng.min());
 	const T rngmax = static_cast<T>(rng.max());
@@ -645,7 +684,7 @@ struct uniform_real_distribution{
 		using distribution_type = uniform_real_distribution<T>;
 
 		explicit param_type(T min = T(0), T max = T(1))restrict(cpu, amp) : min(min), max(max){
-			if(!(min <= max && (0 <= min || max <= min + detail::numeric_limits<T>::max())))
+			if(!(min <= max && (0 <= min || max <= min + numeric_limits<T>::max())))
 				min = 0.f, max = 1.f;
 		}
 

@@ -40,12 +40,12 @@ struct d3d{
 		};
 		template<typename I>
 		struct child : detail::resource<I>{
-			using resource::resource;
+			using detail::resource<I>::resource;
 			device get_device()const noexcept{ID3D11Device* ptr;(*this)->GetDevice(&ptr);auto ret =* query_interface<ID3D11Device1>(ptr);ptr->Release();return device{std::move(ret)};}
 		};
 		template<typename I>
 		struct resource : child<I>{
-			using child::child;
+			using child<I>::child;
 			::D3D11_RESOURCE_DIMENSION get_type()const{::D3D11_RESOURCE_DIMENSION t;(*this)->GetType(&t);return t;}
 			::UINT get_eviction_priority()const{return (*this)->GetEvictionPriority();}
 			void set_eviction_priority(::UINT ep){return (*this)->SetEvictionPriority(ep);}
@@ -53,7 +53,7 @@ struct d3d{
 		};
 		template<typename I>
 		struct view : child<I> {
-			using child::child;
+			using child<I>::child;
 			resource<ID3D11Resource> get_resource()const{ID3D11Resource* ptr;(*this)->GetResource(&ptr);return resource<ID3D11Resource>{std::move(ptr)};}
 			template<typename D3D11ResourceWrapper>
 			expected<D3D11ResourceWrapper, hresult_error> get_resource()const{
@@ -85,7 +85,7 @@ struct d3d{
 			::D3D11_RENDER_TARGET_VIEW_DESC get_desc()const{::D3D11_RENDER_TARGET_VIEW_DESC d;(*this)->GetDesc(&d);return d;}
 		};
 		struct buffer : resource<::ID3D11Buffer>{
-			using resource::resource;
+			using resource<::ID3D11Buffer>::resource;
 			struct description : detail::property<::D3D11_BUFFER_DESC>{
 		#define PROPERTYDECL(name, type, membername) description& name(type t){prop.membername = t;return *this;}
 				PROPERTYDECL(byte_width, UINT, ByteWidth)
@@ -102,7 +102,7 @@ struct d3d{
 			::D3D11_BUFFER_DESC get_desc()const{::D3D11_BUFFER_DESC d;(*this)->GetDesc(&d);return d;}
 		};
 		struct depth_stencil_view : view<::ID3D11DepthStencilView>{
-			using view::view;
+			using view<ID3D11DepthStencilView>::view;
 			struct description : detail::property<::D3D11_DEPTH_STENCIL_VIEW_DESC>{
 				description():property(){}
 		#define PROPERTYDECL(name, type, membername) description& name(type t){prop.membername = t;return *this;}
@@ -236,7 +236,6 @@ struct d3d{
 			::UINT get_context_flags()const{return (*this)->GetContextFlags();}
 		};
 		class context : public child<ID3D11DeviceContext1>{
-			using child::child;
 			expected<subresource, hresult_error> create_subresource(ID3D11Resource* resource, UINT subresource_id, D3D11_MAP map_type, UINT map_flags = 0)const{
 				D3D11_MAPPED_SUBRESOURCE m;
 				auto hr = (*this)->Map(resource, subresource_id, map_type, map_flags, &m);
@@ -248,6 +247,7 @@ struct d3d{
 				(*this)->Unmap(resource, subresource_id);
 			}
 		public:
+			using child::child;
 			class scoped_subresource : public D3D11_MAPPED_SUBRESOURCE{
 				const context& c;
 				ID3D11Resource* resource;
@@ -455,6 +455,9 @@ struct d3d{
 		}
 		template<typename Resource, std::enable_if_t<!std::is_base_of<ID3D11Resource, std::remove_pointer_t<std::decay_t<Resource>>>::value, std::nullptr_t> = nullptr>
 		expected<depth_stencil_view, hresult_error> create_depth_stencil_view(Resource&& r, const ::D3D11_DEPTH_STENCIL_VIEW_DESC& desc)const noexcept{return create_depth_stencil_view(std::forward<Resource>(r).get(), desc);}
+		expected<buffer, hresult_error> create_buffer(const D3D11_BUFFER_DESC& buffer_desc)const noexcept{
+			return detail::convert_to_rich_interface<buffer>(com_create_resource<ID3D11Buffer>([&](ID3D11Buffer** ptr){return (*this)->CreateBuffer(&buffer_desc, nullptr, ptr);}), _T(__FUNCTION__));
+		}
 		expected<buffer, hresult_error> create_buffer(const D3D11_BUFFER_DESC& buffer_desc, const D3D11_SUBRESOURCE_DATA& subresource_data)const noexcept{
 			return detail::convert_to_rich_interface<buffer>(com_create_resource<ID3D11Buffer>([&](ID3D11Buffer** ptr){return (*this)->CreateBuffer(&buffer_desc, &subresource_data, ptr);}), _T(__FUNCTION__));
 		}
@@ -472,33 +475,33 @@ struct d3d{
 		}
 #endif
 		template<std::size_t M, typename T, std::size_t N>
-		expected<input_layout, hresult_error> create_input_layout(const std::array<::D3D11_INPUT_ELEMENT_DESC, M>& element_descs, const T(&shader_bytecode_with_input_signature)[N])const noexcept{
-			return create_input_layout(element_descs.data(), static_cast<::UINT>(element_descs.size()), shader_bytecode_with_input_signature, N);
+		expected<input_layout, hresult_error> create_input_layout(const std::array<::D3D11_INPUT_ELEMENT_DESC, M>& element_descs, const std::array<T, N>& shader_bytecode_with_input_signature)const noexcept{
+			return create_input_layout(element_descs.data(), static_cast<::UINT>(element_descs.size()), shader_bytecode_with_input_signature.data(), shader_bytecode_with_input_signature.size()*sizeof(T));
 		}
 		template<typename T, std::size_t N>
-		expected<input_layout, hresult_error> create_input_layout(const std::vector<::D3D11_INPUT_ELEMENT_DESC>& element_descs, const T(&shader_bytecode_with_input_signature)[N])const noexcept{
-			return create_input_layout(element_descs.data(), static_cast<::UINT>(element_descs.size()), shader_bytecode_with_input_signature, N);
+		expected<input_layout, hresult_error> create_input_layout(const std::vector<::D3D11_INPUT_ELEMENT_DESC>& element_descs, const std::array<T, N>& shader_bytecode_with_input_signature)const noexcept{
+			return create_input_layout(element_descs.data(), static_cast<::UINT>(element_descs.size()), shader_bytecode_with_input_signature.data(), shader_bytecode_with_input_signature.size()*sizeof(T));
 		}
 		expected<vertex_shader, hresult_error> create_vertex_shader(const void* shader_bytecode, std::size_t bytecode_length)const noexcept{
 			return detail::convert_to_rich_interface<vertex_shader>(com_create_resource<ID3D11VertexShader>([&](ID3D11VertexShader** ptr){return (*this)->CreateVertexShader(shader_bytecode, bytecode_length, nullptr, ptr);}), _T(__FUNCTION__));
 		}
 		template<typename T, std::size_t N>
-		expected<vertex_shader, hresult_error> create_vertex_shader(const T(&shader_bytecode)[N])const noexcept{
-			return create_vertex_shader(shader_bytecode, N);
+		expected<vertex_shader, hresult_error> create_vertex_shader(const std::array<T, N>& shader_bytecode)const noexcept{
+			return create_vertex_shader(shader_bytecode.data(), shader_bytecode.size()*sizeof(T));
 		}
 		expected<pixel_shader, hresult_error> create_pixel_shader(const void* shader_bytecode, std::size_t bytecode_length)const noexcept{
 			return detail::convert_to_rich_interface<pixel_shader>(com_create_resource<ID3D11PixelShader>([&](ID3D11PixelShader** ptr){return (*this)->CreatePixelShader(shader_bytecode, bytecode_length, nullptr, ptr);}), _T(__FUNCTION__));
 		}
 		template<typename T, std::size_t N>
-		expected<pixel_shader, hresult_error> create_pixel_shader(const T(&shader_bytecode)[N])const noexcept{
-			return create_pixel_shader(shader_bytecode, N);
+		expected<pixel_shader, hresult_error> create_pixel_shader(const std::array<T, N>& shader_bytecode)const noexcept{
+			return create_pixel_shader(shader_bytecode.data(), shader_bytecode.size()*sizeof(T));
 		}
 		expected<compute_shader, hresult_error> create_compute_shader(const void* shader_bytecode, std::size_t bytecode_length)const noexcept{
 			return detail::convert_to_rich_interface<compute_shader>(com_create_resource<ID3D11ComputeShader>([&](ID3D11ComputeShader** ptr){return (*this)->CreateComputeShader(shader_bytecode, bytecode_length, nullptr, ptr);}), _T(__FUNCTION__));
 		}
 		template<typename T, std::size_t N>
-		expected<compute_shader, hresult_error> create_compute_shader(const T(&shader_bytecode)[N])const noexcept{
-			return create_compute_shader(shader_bytecode, N);
+		expected<compute_shader, hresult_error> create_compute_shader(const std::array<T, N>& shader_bytecode)const noexcept{
+			return create_compute_shader(shader_bytecode.data(), shader_bytecode.size()*sizeof(T));
 		}
 		expected<sampler_state, hresult_error> create_sampler_state(const ::D3D11_SAMPLER_DESC& desc = will::d3d::sampler_state::description{})const noexcept{
 			return detail::convert_to_rich_interface<sampler_state>(com_create_resource<ID3D11SamplerState>([&](ID3D11SamplerState** ptr){return (*this)->CreateSamplerState(&desc, ptr);}), _T(__FUNCTION__));

@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2019 I
+//Copyright (C) 2014-2020 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -9,6 +9,7 @@
 #include"d2d.hpp"
 #include"wic.hpp"
 #include"dwrite.hpp"
+#include"dcompo.hpp"
 #include"amp.hpp"
 #include"amp_graphics.hpp"
 #include<memory>
@@ -25,10 +26,20 @@ class pixel_format_converter{
 	will::d3d::pixel_shader ps;
 	will::d3d::sampler_state ss;
 	will::d3d::device::context dc;
+	struct vertex{
+		float pos[3];
+		float uv[2];
+	};
+	static constexpr std::array<vertex, 4> vertexes{{
+		{{-1.f, -1.f, .5f}, {0.f, 1.f}},
+		{{-1.f,  1.f, .5f}, {0.f, 0.f}},
+		{{ 1.f, -1.f, .5f}, {1.f, 1.f}},
+		{{ 1.f,  1.f, .5f}, {1.f, 0.f}}
+	}};
 	explicit pixel_format_converter(will::d3d::buffer&& vertex_buffer, will::d3d::input_layout&& input_layout, will::d3d::vertex_shader&& vertex_shader, will::d3d::pixel_shader&& pixel_shader, will::d3d::sampler_state&& sampler_state, will::d3d::device::context&& deffered_context) : vb{std::move(vertex_buffer)}, il{std::move(input_layout)}, vs{std::move(vertex_shader)}, ps{std::move(pixel_shader)}, ss{std::move(sampler_state)}, dc{std::move(deffered_context)}{}
 public:
 	static will::expected<pixel_format_converter, hresult_error> create(will::d3d::device& dev){
-		static constexpr BYTE vertex_shader[] = {
+		static constexpr std::array<BYTE, 616> vertex_shader = {{
 			 68,  88,  66,  67, 204, 140,  66, 148, 129,  67,  51, 171, 232, 192, 138, 125, 194, 219,  25,  26,   1,   0,   0,   0,
 			104,   2,   0,   0,   5,   0,   0,   0,  52,   0,   0,   0, 172,   0,   0,   0,   0,   1,   0,   0,  88,   1,   0,   0,
 			204,   1,   0,   0,  82,  68,  69,  70, 112,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -55,8 +66,8 @@ public:
 			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
-		};
-		static constexpr BYTE pixel_shader[] = {
+		}};
+		static constexpr std::array<BYTE, 660> pixel_shader = {{
 			 68,  88,  66,  67,   3,  10,  79, 110,  55, 128, 140,  49,  84, 243,  55, 101, 125,  13,   8, 175,   1,   0,   0,   0,
 			148,   2,   0,   0,   5,   0,   0,   0,  52,   0,   0,   0, 244,   0,   0,   0,  76,   1,   0,   0, 128,   1,   0,   0,
 			248,   1,   0,   0,  82,  68,  69,  70, 184,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   2,   0,   0,   0,
@@ -85,16 +96,6 @@ public:
 			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
-			};
-			struct vertex{
-				float pos[3];
-				float uv[2];
-			};
-			static constexpr std::array<vertex, 4> vertexes{{
-				{{-1.f, -1.f, .5f}, {0.f, 1.f}},
-				{{-1.f,  1.f, .5f}, {0.f, 0.f}},
-				{{ 1.f, -1.f, .5f}, {1.f, 1.f}},
-				{{ 1.f,  1.f, .5f}, {1.f, 0.f}}
 			}};
 			static constexpr std::array<D3D11_INPUT_ELEMENT_DESC, 2> input_layout{{
 				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -102,17 +103,11 @@ public:
 			}};
 		return
 			dev.create_buffer(will::d3d::buffer::description{}.byte_width(static_cast<::UINT>(sizeof(vertexes))).bind_flags(D3D11_BIND_VERTEX_BUFFER), will::d3d::subresource::data{}.memory(vertexes.data())).bind([&](will::d3d::buffer&& vb){return
-			dev.create_input_layout(input_layout, vertex_shader).bind([&](will::d3d::input_layout&& il){return
-			dev.create_vertex_shader(vertex_shader).bind([&](will::d3d::vertex_shader&& vs){return
-			dev.create_pixel_shader(pixel_shader).bind([&](will::d3d::pixel_shader&& ps){return
+			dev.create_input_layout<sizeof(input_layout)/sizeof(D3D11_INPUT_ELEMENT_DESC), std::remove_const_t<std::remove_reference_t<decltype(vertex_shader[0])>>, sizeof(vertex_shader)>(input_layout, vertex_shader).bind([&](will::d3d::input_layout&& il){return
+			dev.create_vertex_shader<std::remove_const_t<std::remove_reference_t<decltype(vertex_shader[0])>>, sizeof(vertex_shader)>(vertex_shader).bind([&](will::d3d::vertex_shader&& vs){return
+			dev.create_pixel_shader<std::remove_const_t<std::remove_reference_t<decltype(pixel_shader[0])>>, sizeof(pixel_shader)>(pixel_shader).bind([&](will::d3d::pixel_shader&& ps){return
 			dev.create_sampler_state().bind([&](will::d3d::sampler_state&& ss){return
 			dev.create_deferred_context().map([&](will::d3d::device::context&& dc){
-			dc.ia_set_input_layout(il);
-			dc.ia_set_vertex_buffer(0, vb, sizeof(vertexes[0]), 0);
-			dc.ia_set_primitive_topology(::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-			dc.vs_set_shader(vs);
-			dc.ps_set_sampler(0, ss);
-			dc.ps_set_shader(ps);
 			return pixel_format_converter(std::move(vb), std::move(il), std::move(vs), std::move(ps), std::move(ss), std::move(dc));
 			});});});});});});
 	}
@@ -130,9 +125,15 @@ public:
 		if((d.BindFlags & ::D3D11_BIND_SHADER_RESOURCE) != 0){
 			desc.get().BindFlags |= ::D3D11_BIND_RENDER_TARGET;
 			auto dst = dev.create_texture2d(desc);
-			return dst.bind([&](will::d3d::texture2d& dst){return
+			return dst.bind([&](will::d3d::texture2d&& dst){return
 			dev.create_render_target_view(dst).bind([&](will::d3d::render_target_view&& rtv){return
 			dev.create_shader_resource_view(tex, will::d3d::shader_resource_view::description{}.format(will::dxgi::format::is_typeless(tex.get_desc().Format) ? will::dxgi::format::to_unorm(tex.get_desc().Format) : tex.get_desc().Format).texture2d({0, tex.get_desc().MipLevels})).bind([&](will::d3d::shader_resource_view&& srv){return dc.finish_command_list([&](will::d3d::device::context& dc){
+			dc.ia_set_input_layout(il);
+			dc.ia_set_vertex_buffer(0, vb, sizeof(vertexes[0]), 0);
+			dc.ia_set_primitive_topology(::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			dc.vs_set_shader(vs);
+			dc.ps_set_sampler(0, ss);
+			dc.ps_set_shader(ps);
 			dc.rs_set_viewport(std::array<::D3D11_VIEWPORT, 1>{{{0, 0, static_cast<float>(d.Width), static_cast<float>(d.Height), 0.f, 1.f}}});
 			dc.ps_set_shader_resource(0, srv);
 			dc.om_set_render_targets(rtv, nullptr);
@@ -466,7 +467,7 @@ struct pixel_format_conversion_impl<concurrency::graphics::texture<ValueType, Ra
 	static will::expected<will::amp::graphics::texture<ValueType, Rank>, hresult_error> conv(const will::d2d::bitmap& bmp, pixel_format_converter& pfc, RenderTarget&& rt){return conv(bmp, rt.get_d3d_device(), rt, pfc, rt.get_accelerator_view());}
 	static will::expected<will::amp::graphics::texture<ValueType, Rank>, hresult_error> conv(const will::d2d::bitmap& bmp, will::d3d::device& dev, const will::d2d::device::context& devcont, const will::amp::accelerator_view& accv){
 		constexpr auto fn = _T(__FUNCTION__);
-		return reinterpret_conversion_impl<will::d3d::texture2d, will::d2d::bitmap>::conv(bmp, will::d3d::texture2d::description{}.format(DXGI_FORMAT_R8G8B8A8_UNORM).bind_flags(D3D11_BIND_UNORDERED_ACCESS|D3D11_BIND_SHADER_RESOURCE), dev, devcont).bind([&](will::d3d::texture2d&& tex){
+		return pixel_format_conversion_impl<will::d3d::texture2d, will::d2d::bitmap>::conv(bmp, will::d3d::texture2d::description{}.format(DXGI_FORMAT_R8G8B8A8_UNORM).bind_flags(D3D11_BIND_UNORDERED_ACCESS|D3D11_BIND_SHADER_RESOURCE), dev, devcont).bind([&](will::d3d::texture2d&& tex){
 			return will::amp::graphics::direct3d::make_texture<will::amp::graphics::unorm_4, 2>(accv, tex)
 			.emap([&](std::exception_ptr&& ptr){try{std::rethrow_exception(ptr);}catch(concurrency::runtime_exception& e){return make_unexpected<hresult_error>(fn, e.get_error_code());}});});
 	}
@@ -478,13 +479,20 @@ struct pixel_format_conversion_impl<concurrency::graphics::texture<ValueType, Ra
 
 }
 
-class hwnd_render_target:protected d3d::device, protected dxgi::swap_chain, public d2d::device::context, public dwrite{
-	static expected<dxgi::swap_chain, hresult_error> create_swap_chain(HWND hwnd, d3d::device& dev, const DXGI_SWAP_CHAIN_DESC1& desc = will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM)){
-		return dxgi::device::create(dev).bind([&](dxgi::device&& dev2){
-			return dev2.get_factory().bind([&](dxgi&& dxgi_fac){
-				return dxgi_fac.create_swap_chain(dev, hwnd, desc).bind([&](dxgi::swap_chain&& sc){
-					return dev2.set_maximum_frame_latency(1).map([&]()->dxgi::swap_chain{
-						return std::move(sc);
+class hwnd_render_target:protected d3d::device, protected dxgi::swap_chain, public d2d::device::context, public dwrite, public dcomposition::desktop_device{
+	static expected<dxgi::swap_chain, hresult_error> create_swap_chain(HWND hwnd, d3d::device& dev, DXGI_SWAP_CHAIN_DESC1 desc = will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM).scaling(DXGI_SCALING_STRETCH).swap_effect(DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL).alpha_mode(DXGI_ALPHA_MODE_PREMULTIPLIED)){
+		return [](HWND hwnd)->expected<RECT, hresult_error>{RECT r;if(::GetClientRect(hwnd, &r) != 0)return r;return make_unexpected<hresult_error>(_T(__FUNCTION__), ::GetLastError());}(hwnd).map([&](RECT&& r){
+			if(desc.Width == 0u)
+				desc.Width = r.right;
+			if(desc.Height == 0u)
+				desc.Height = r.bottom;
+		}).bind([&]{
+			return dxgi::device::create(dev).bind([&](dxgi::device&& dev2){
+				return dev2.get_factory().bind([&](dxgi&& dxgi_fac){
+					return dxgi_fac.create_swap_chain(dev, desc).bind([&](dxgi::swap_chain&& sc){
+						return dev2.set_maximum_frame_latency(1).map([&]()->dxgi::swap_chain{
+							return std::move(sc);
+						});
 					});
 				});
 			});
@@ -493,16 +501,30 @@ class hwnd_render_target:protected d3d::device, protected dxgi::swap_chain, publ
 	HWND hwnd;
 	HRESULT status;
 	amp::accelerator_view av;
-	hwnd_render_target(d3d::device&& dev, dxgi::swap_chain&& sc, d2d::device::context&& devcon, dwrite&& dw, HWND hw, amp::accelerator_view&& accv) : device{std::move(dev)}, swap_chain{std::move(sc)}, d2d::device::context{std::move(devcon)}, dwrite{std::move(dw)}, hwnd(std::move(hw)), status(0ul), av{std::move(accv)}{}
+	dcomposition::visual v;
+	dcomposition::target t;
+	hwnd_render_target(d3d::device&& dev, dxgi::swap_chain&& sc, d2d::device::context&& devcon, dwrite&& dw, dcomposition::desktop_device&& dcompo, HWND hw, amp::accelerator_view&& accv, dcomposition::visual&& v, dcomposition::target&& t) : device{std::move(dev)}, swap_chain{std::move(sc)}, d2d::device::context{std::move(devcon)}, dwrite{std::move(dw)}, dcomposition::desktop_device{std::move(dcompo)}, hwnd(std::move(hw)), status(0ul), av{std::move(accv)}, v{std::move(v)}, t{std::move(t)}{}
 	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const DXGI_SWAP_CHAIN_DESC1& desc, const D2D1_CREATION_PROPERTIES* prop, DWRITE_FACTORY_TYPE type, will::amp::queuing_mode qm){
 		return d3d::device::create(flag).bind([&](d3d::device&& d3d_dev){
 			return create_swap_chain(hwnd, d3d_dev, desc).bind([&](dxgi::swap_chain&& sc){
 				return sc.get_buffer().bind([&](dxgi::surface&& surf){
 					return d2d::device::context::create(surf, prop).bind([&](d2d::device::context&& devcon){
 						return dwrite::create_factory(type).bind([&](dwrite&& dw){
-							return amp::direct3d::create_accelerator_view(d3d_dev, qm)
-								.emap([](std::exception_ptr&& ptr){try{std::rethrow_exception(ptr);}catch(concurrency::runtime_exception& e){return make_unexpected<hresult_error>(_T("will::hwnd_render_target::create"), e.get_error_code());}}).map([&](amp::accelerator_view&& av){
-								return hwnd_render_target{std::move(d3d_dev), std::move(sc), std::move(devcon), std::move(dw), hwnd, std::move(av)};
+							return dcomposition::desktop_device::create(d3d_dev).bind([&](dcomposition::desktop_device&& dcompo){
+								return dcompo.create_visual().bind([&](dcomposition::visual&& visual){
+									return std::move(visual).set_content(sc).bind([&](dcomposition::visual&& visual){
+										return dcompo.create_target(hwnd, true).bind([&](dcomposition::target&& target){
+											return std::move(target).set_root(visual).bind([&](dcomposition::target&& target){
+												return dcompo.commit().bind([&]{
+													return amp::direct3d::create_accelerator_view(d3d_dev, qm)
+														.emap([](std::exception_ptr&& ptr){try{std::rethrow_exception(ptr);}catch(concurrency::runtime_exception& e){return make_unexpected<hresult_error>(_T("will::hwnd_render_target::create"), e.get_error_code());}}).map([&](amp::accelerator_view&& av){
+														return hwnd_render_target{std::move(d3d_dev), std::move(sc), std::move(devcon), std::move(dw), std::move(dcompo), hwnd, std::move(av), std::move(visual), std::move(target)};
+													});
+												});
+											});
+										});
+									});
+								});
 							});
 						});
 					});
@@ -518,7 +540,7 @@ public:
 #else
 		std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag = D3D11_CREATE_DEVICE_BGRA_SUPPORT, const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_NONE, D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS}
 #endif
-	){return create(hwnd, flag, will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM), &prop, DWRITE_FACTORY_TYPE_SHARED, will::amp::queuing_mode_automatic);}
+	){return create(hwnd, flag, will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM).scaling(DXGI_SCALING_STRETCH).swap_effect(DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL).alpha_mode(DXGI_ALPHA_MODE_PREMULTIPLIED), &prop, DWRITE_FACTORY_TYPE_SHARED, will::amp::queuing_mode_automatic);}
 	static expected<hwnd_render_target, hresult_error> create(HWND hwnd, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const DXGI_SWAP_CHAIN_DESC1& desc,
 #ifdef _DEBUG
 		const D2D1_CREATION_PROPERTIES& prop = {D2D1_THREADING_MODE_MULTI_THREADED, D2D1_DEBUG_LEVEL_WARNING, D2D1_DEVICE_CONTEXT_OPTIONS_NONE}
@@ -588,14 +610,17 @@ public:
 	expected<To, hresult_error> reinterpret_convert(From&& from, Args&&... args)const{return interop::reinterpret_convert<To>(std::forward<From>(from), std::forward<Args>(args)..., *this);}
 	template<typename To, typename From, typename... Args>
 	expected<To, hresult_error> pixel_format_convert(From&& from, Args&&... args){return interop::detail::pixel_format_conversion_impl<To, std::decay_t<From>>::conv(std::forward<From>(from), std::forward<Args>(args)..., *this);}
-	auto wm_size_resize_backbuffer(const ::DXGI_SWAP_CHAIN_DESC1& desc = will::dxgi::swap_chain::description{}.format(DXGI_FORMAT_B8G8R8A8_UNORM)){
-		return [&, this, buffer_count = desc.BufferCount, format = desc.Format, flags = desc.Flags](auto&&, WPARAM wparam, LPARAM){
+	auto wm_size_resize_backbuffer(const ::DXGI_SWAP_CHAIN_DESC1& desc = will::dxgi::swap_chain::description{}.format(::DXGI_FORMAT_B8G8R8A8_UNORM).alpha_mode(::DXGI_ALPHA_MODE_PREMULTIPLIED)){
+		return [&, this, buffer_count = desc.BufferCount, format = desc.Format, alpha = static_cast<::D2D1_ALPHA_MODE>(desc.AlphaMode), flags = desc.Flags](auto&&, WPARAM wparam, LPARAM){
 			if(wparam == SIZE_MINIMIZED || wparam == SIZE_MAXSHOW || wparam == SIZE_MAXHIDE)
 				return 0;
 			(*this).unset_target();
-			(*this).resize_buffers(buffer_count, 0, 0, format, flags).bind([&](){return
+			RECT r;
+			if(::GetClientRect(hwnd, &r) == 0)
+				throw winapi_last_error_exception(_T(__FUNCTION__));
+			(*this).resize_buffers(buffer_count, r.right, r.bottom, format, flags).bind([&](){return
 			(*this).get_buffer().bind([&](will::dxgi::surface&& surf){return
-			(*this).create_bitmap(surf, will::d2d::bitmap::property{}.format(format).alpha_mode(::D2D1_ALPHA_MODE_IGNORE).option(::D2D1_BITMAP_OPTIONS_TARGET | ::D2D1_BITMAP_OPTIONS_CANNOT_DRAW)).map([&](will::d2d::bitmap&& bmp){
+			(*this).create_bitmap(surf, will::d2d::bitmap::property{}.format(format).alpha_mode(alpha).option(::D2D1_BITMAP_OPTIONS_TARGET | ::D2D1_BITMAP_OPTIONS_CANNOT_DRAW)).map([&](will::d2d::bitmap&& bmp){
 			(*this).set_target(bmp);});});})
 			.value();
 			return 0;
@@ -603,13 +628,13 @@ public:
 	}
 };
 class gdi_compatible_render_target:protected d3d::device, public dxgi::surface, public d2d::device::context, public dwrite{
-	static expected<dxgi::surface, hresult_error> create_surface(unsigned int w, unsigned int h, d3d::device&& dev){
+	static expected<dxgi::surface, hresult_error> create_surface(unsigned int w, unsigned int h, d3d::device& dev){
 		return dev.create_texture2d(will::d3d::texture2d::description{}.width(w).height(h).mip_levels(1).array_size(1).format(DXGI_FORMAT_B8G8R8A8_UNORM).sample_count(1).sample_quality(0).bind_flags(D3D11_BIND_RENDER_TARGET).misc_flags(D3D11_RESOURCE_MISC_GDI_COMPATIBLE)).bind([](d3d::texture2d&& tex){return dxgi::surface::create(std::move(tex));});
 	}
 	gdi_compatible_render_target(d3d::device&& dev, dxgi::surface&& surf, d2d::device::context&& devcont, dwrite&& dw, amp::accelerator_view&& accv):device{std::move(dev)}, surface{std::move(surf)}, d2d::device::context{std::move(devcont)}, dwrite{std::move(dw)}, av{std::move(accv)}{}
 	static expected<gdi_compatible_render_target, hresult_error> create(const will::two_dim::wh<unsigned int>& wh, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const D2D1_CREATION_PROPERTIES* prop, DWRITE_FACTORY_TYPE type, amp::queuing_mode qm){
 		return d3d::device::create(flag).bind([&](d3d::device&& d3d_dev){
-			return create_surface(wh.w, wh.h, std::move(d3d_dev)).bind([&](dxgi::surface&& surf){
+			return create_surface(wh.w, wh.h, d3d_dev).bind([&](dxgi::surface&& surf){
 				return d2d::device::context::create(surf, prop).bind([&](d2d::device::context&& devcon){
 					return dwrite::create_factory(type).bind([&](dwrite&& dw){
 						return amp::direct3d::create_accelerator_view(d3d_dev, qm)
@@ -634,7 +659,7 @@ public:
 	static expected<gdi_compatible_render_target, hresult_error> create(const will::two_dim::wh<unsigned int>& wh, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type){return create(wh, flag, &prop, type, amp::queuing_mode_automatic);}
 	static expected<gdi_compatible_render_target, hresult_error> create(const will::two_dim::wh<unsigned int>& wh, std::underlying_type_t<D3D11_CREATE_DEVICE_FLAG> flag, const D2D1_CREATION_PROPERTIES& prop, DWRITE_FACTORY_TYPE type, amp::queuing_mode qm){return create(wh, flag, &prop, type, qm);}
 	template<typename T, typename... Args, std::enable_if_t<!std::is_same<T, unsigned int>::value, std::nullptr_t> = nullptr>
-	static expected<gdi_compatible_render_target, hresult_error> create(const will::two_dim::wh<T>& wh, Args&&... args){return create(wh.cast<unsigned int>(), std::forward<Args>(args)...);}
+	static expected<gdi_compatible_render_target, hresult_error> create(const will::two_dim::wh<T>& wh, Args&&... args){return create(will::two_dim::attribute(wh).convert<will::two_dim::wh<unsigned int>>(), std::forward<Args>(args)...);}
 	gdi_compatible_render_target(const will::two_dim::wh<unsigned int>& wh, const D2D1_CREATION_PROPERTIES& prop) : gdi_compatible_render_target{+create(wh, D3D11_CREATE_DEVICE_BGRA_SUPPORT, prop)}{}
 	explicit gdi_compatible_render_target(const will::two_dim::wh<unsigned int>& wh,
 #ifdef _DEBUG

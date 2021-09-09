@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2019 I
+//Copyright (C) 2014-2020 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -20,7 +20,7 @@ class d2d : public detail::resource<ID2D1Factory1>{
 	using resource::resource;
 	template<typename I>
 	struct d2d_resource : detail::resource<I>{
-		using resource::resource;
+		using detail::resource<I>::resource;
 		d2d get_factory()const{ID2D1Factory1* ptr;(*this)->GetFactory(reinterpret_cast<ID2D1Factory**>(&ptr));return d2d{std::move(ptr)};}
 	};
 public:
@@ -249,7 +249,7 @@ public:
 	class device : public d2d_resource<ID2D1Device>{
 		template<typename I>
 		struct brush : d2d_resource<I>{
-			using d2d_resource::d2d_resource;
+			using d2d_resource<I>::d2d_resource;
 			FLOAT get_opacity()const{return (*this)->GetOpacity();}
 			void set_opcaity(FLOAT opac){(*this)->SetOpacity(opac);}
 			__declspec(property(get=get_opacity, put=set_opcaity)) FLOAT opacity;
@@ -1198,7 +1198,7 @@ public:
 	private:
 		template<typename I>
 		struct render_target : d2d_resource<I>{
-			using d2d_resource::d2d_resource;
+			using d2d_resource<I>::d2d_resource;
 			using property = render_target_property;
 			struct region{
 				ID2D1RenderTarget* rt;
@@ -1278,7 +1278,7 @@ public:
 				renderer& bitmap(Bitmap&& bm, const D2D1_RECT_F& dest_rect, FLOAT opacity = 1.F, D2D1_INTERPOLATION_MODE interop = D2D1_INTERPOLATION_MODE_LINEAR){return bitmap(std::forward<Bitmap>(bm).get(), dest_rect, opacity, interop);}
 				renderer& bitmap(ID2D1Bitmap1* bm, FLOAT opacity, D2D1_INTERPOLATION_MODE interop, const D2D1_RECT_F& src_rect){(*this)->DrawBitmap(bm, nullptr, opacity, interop, &src_rect, nullptr);return *this;}
 				template<typename Bitmap, std::enable_if_t<!std::is_same<std::decay_t<Bitmap>, ID2D1Bitmap1*>::value && !std::is_same<std::decay_t<Bitmap>, bitmap::lazy_manipulator>::value>* = nullptr>
-				renderer& bitmap(Bitmap&& bm, FLOAT opacity, D2D1_INTERPOLATION_MODE interop, const D2D1_RECT_F& src_rect){return bitmap(std::fowrard<Bitmap>(bm), opacity, interop, src_rect);}
+				renderer& bitmap(Bitmap&& bm, FLOAT opacity, D2D1_INTERPOLATION_MODE interop, const D2D1_RECT_F& src_rect){return bitmap(std::forward<Bitmap>(bm), opacity, interop, src_rect);}
 				renderer& bitmap(ID2D1Bitmap1* bm, FLOAT opacity, D2D1_INTERPOLATION_MODE interop, const D2D1_MATRIX_4X4_F& perspective_transform){(*this)->DrawBitmap(bm, nullptr, opacity, interop, nullptr, &perspective_transform);return *this;}
 				template<typename Bitmap, std::enable_if_t<!std::is_same<std::decay_t<Bitmap>, ID2D1Bitmap1*>::value && !std::is_same<std::decay_t<Bitmap>, bitmap::lazy_manipulator>::value>* = nullptr>
 				renderer& bitmap(Bitmap&& bm, FLOAT opacity, D2D1_INTERPOLATION_MODE interop, const D2D1_MATRIX_4X4_F& perspective_transform){return bitmap(std::forward<Bitmap>(bm).get(), opacity, interop, perspective_transform);}
@@ -1344,7 +1344,7 @@ public:
 		};
 	public:
 		struct bitmap_render_target : render_target<ID2D1BitmapRenderTarget>{
-			using render_target::render_target;
+			using render_target<ID2D1BitmapRenderTarget>::render_target;
 			expected<bitmap, hresult_error> get_bitmap()const{return detail::convert_to_rich_interface<bitmap>(com_create_resource<ID2D1Bitmap1>([&](ID2D1Bitmap1** ptr){return (*this)->GetBitmap(reinterpret_cast<ID2D1Bitmap**>(ptr));}), _T(__FUNCTION__));}
 			template<typename F>
 			expected<void, hresult_error> draw(F&& f){
@@ -1375,9 +1375,9 @@ public:
 		explicit device(Device&& dev, const D2D1_CREATION_PROPERTIES& prop):device{std::forward<Device>(dev).get(), prop}{}
 		static expected<device, hresult_error> create(IDXGIDevice* dev){return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return ::D2D1CreateDevice(dev, nullptr, ptr);}), _T(__FUNCTION__));}
 		static expected<device, hresult_error> create(IDXGIDevice* dev, const D2D1_CREATION_PROPERTIES& prop){return detail::convert_to_rich_interface<device>(com_create_resource<ID2D1Device>([&](ID2D1Device** ptr){return ::D2D1CreateDevice(dev, &prop, ptr);}), _T(__FUNCTION__));}
-		template<typename Device>
+		template<typename Device, std::enable_if_t<!std::is_base_of<IDXGIDevice, std::remove_pointer_t<std::decay_t<Device>>>::value, std::nullptr_t> = nullptr>
 		static expected<device, hresult_error> create(Device&& dev){return create(std::forward<Device>(dev).get());}
-		template<typename Device>
+		template<typename Device, std::enable_if_t<!std::is_base_of<IDXGIDevice, std::remove_pointer_t<std::decay_t<Device>>>::value, std::nullptr_t> = nullptr>
 		static expected<device, hresult_error> create(Device&& dev, const D2D1_CREATION_PROPERTIES& prop){return create(std::forward<Device>(dev).get(), prop);}
 		UINT64 get_max_texture_memory()const{return (*this)->GetMaximumTextureMemory();}
 		void set_max_texture_memory(UINT64 bytes){(*this)->SetMaximumTextureMemory(bytes);}
@@ -1646,7 +1646,12 @@ public:
 	using bitmap_render_target =  device::bitmap_render_target;
 	expected<d2d&, hresult_error> reload_system_metrics()& {const auto hr = (*this)->ReloadSystemMetrics();if(SUCCEEDED(hr))return           *this ;return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
 	expected<d2d , hresult_error> reload_system_metrics()&&{const auto hr = (*this)->ReloadSystemMetrics();if(SUCCEEDED(hr))return std::move(*this);return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);}
+#if _WIN32_WINNT < _WIN32_WINNT_WIN10 || (defined(WDK_NTDDI_VERSION) && WDK_NTDDI_VERSION < NTDDI_WIN10_RS1)
+#pragma warning(push)
+#pragma warning(disable:4996)
 	expected<two_dim::xy<float>, hresult_error> get_desktop_dpi(){return reload_system_metrics().map([](auto&& t){two_dim::xy<float> ddpi;t->GetDesktopDpi(&ddpi.x, &ddpi.y);return ddpi;});}
+#pragma warning(pop)
+#endif
 	template<typename RandomAccessableContainer>
 	expected<stroke_style, hresult_error> create_stroke_style(const D2D1_STROKE_STYLE_PROPERTIES1& prop, RandomAccessableContainer&& dashes)const{
 		return detail::convert_to_rich_interface<stroke_style>(com_create_resource<ID2D1StrokeStyle1>([&](ID2D1StrokeStyle1** ptr){return (*this)->CreateStrokeStyle(prop, dashes.data(), static_cast<UINT32>(dashes.size()), ptr);}), _T(__FUNCTION__));

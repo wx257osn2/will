@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2019 I
+//Copyright (C) 2014-2020 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -43,11 +43,11 @@ namespace will{
 #ifdef UNICODE
 using SYMBOL_INFOT = ::SYMBOL_INFOW;
 using IMAGEHLP_MODULET64 = ::IMAGEHLP_MODULEW64;
-using IMAGEHLP_LINET64 = struct : ::IMAGEHLP_LINEW64{DWORD Displacement;};
+struct IMAGEHLP_LINET64 : ::IMAGEHLP_LINEW64{DWORD Displacement;};
 #else
 using SYMBOL_INFOT = ::SYMBOL_INFO;
 using IMAGEHLP_MODULET64 = ::IMAGEHLP_MODULE64;
-using IMAGEHLP_LINET64 = struct : ::IMAGEHLP_LINE64{DWORD Displacement;};
+struct IMAGEHLP_LINET64 : ::IMAGEHLP_LINE64{DWORD Displacement;};
 #endif
 
 class symbol_information{

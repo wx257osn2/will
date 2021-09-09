@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2018 I
+//Copyright (C) 2014-2020 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -15,6 +15,29 @@
 namespace will{
 
 namespace amp{
+
+namespace math{
+
+namespace detail{
+
+template<>
+struct numeric_limits_impl<concurrency::graphics::norm>{
+	static concurrency::graphics::norm max()restrict(cpu, amp){return concurrency::graphics::norm{1};}
+	static concurrency::graphics::norm min()restrict(cpu, amp){return concurrency::graphics::norm{FLT_MIN};}
+	static concurrency::graphics::norm lowest()restrict(cpu, amp){return concurrency::graphics::norm{-1};}
+	static concurrency::graphics::norm epsilon()restrict(cpu, amp){return concurrency::graphics::norm{FLT_EPSILON};}
+};
+template<>
+struct numeric_limits_impl<concurrency::graphics::unorm>{
+	static concurrency::graphics::unorm max()restrict(cpu, amp){return concurrency::graphics::unorm{1};}
+	static concurrency::graphics::unorm min()restrict(cpu, amp){return concurrency::graphics::unorm{FLT_MIN};}
+	static concurrency::graphics::unorm lowest()restrict(cpu, amp){return concurrency::graphics::unorm{0};}
+	static concurrency::graphics::unorm epsilon()restrict(cpu, amp){return concurrency::graphics::unorm{FLT_EPSILON};}
+};
+
+}
+
+}
 
 namespace graphics{
 
@@ -132,6 +155,11 @@ inline expected<accelerator_view> create_accelerator_view(accelerator& acc, bool
 }catch(concurrency::runtime_exception&){
 	return make_unexpected_from_current_exception();
 }
+template<typename D3DDevice, std::enable_if_t<std::is_base_of<D3DDevice, IUnknown>::value, std::nullptr_t> = nullptr>
+inline expected<com_ptr<D3DDevice>, hresult_error> get_device(const accelerator_view& av){
+	return will::query_interface<D3DDevice>(concurrency::direct3d::get_device(av)).map([](D3DDevice* ptr){return com_ptr<D3DDevice>{std::move(ptr)};}).emap([](HRESULT e){return make_unexpected<hresult_error>(_T("will::amp::direct3d::get_device"), e);});
+}
+
 
 }
 
@@ -228,22 +256,25 @@ public:
 	vec(U _1)restrict(cpu, amp):vec(static_cast<T>(_1)){}
 	template<typename U, typename... Args>
 	vec(U&& u, Args&&... args)restrict(cpu, amp):base_type{detail::vec_mat_construct<base_type, base_type::size>::create(forward<U>(u), forward<Args>(args)...)}{}
+#pragma warning(push)
+#pragma warning(disable: 4715)
 	T& operator[](unsigned int n)restrict(cpu, amp){
 		switch(n%2){
 		case 0:
-			return ref_x();
+			return this->ref_x();
 		case 1:
-			return ref_y();
+			return this->ref_y();
 		}
 	}
 	T operator[](unsigned int n)const restrict(cpu, amp){
 		switch(n%2){
 		case 0:
-			return get_x();
+			return this->get_x();
 		case 1:
-			return get_y();
+			return this->get_y();
 		}
 	}
+#pragma warning(pop)
 	WILL_AMP_DECL_VEC2(x, x)
 	WILL_AMP_DECL_VEC2(y, y)
 	WILL_AMP_DECL_VEC3(x, x, x)
@@ -311,26 +342,29 @@ public:
 	vec(U _1)restrict(cpu, amp):vec{static_cast<T>(_1)}{}
 	template<typename U, typename... Args>
 	vec(U&& u, Args&&... args)restrict(cpu, amp):base_type{detail::vec_mat_construct<base_type, base_type::size>::create(forward<U>(u), forward<Args>(args)...)}{}
+#pragma warning(push)
+#pragma warning(disable: 4715)
 	T& operator[](unsigned int n)restrict(cpu, amp){
 		switch(n%3){
 		case 0:
-			return ref_x();
+			return this->ref_x();
 		case 1:
-			return ref_y();
+			return this->ref_y();
 		case 2:
-			return ref_z();
+			return this->ref_z();
 		}
 	}
 	T operator[](unsigned int n)const restrict(cpu, amp){
 		switch(n%3){
 		case 0:
-			return get_x();
+			return this->get_x();
 		case 1:
-			return get_y();
+			return this->get_y();
 		case 2:
-			return get_z();
+			return this->get_z();
 		}
 	}
+#pragma warning(pop)
 	WILL_AMP_DECL_VEC2(x, x)
 	WILL_AMP_DECL_VEC2(y, y)
 	WILL_AMP_DECL_VEC2(z, z)
@@ -556,30 +590,33 @@ public:
 	vec(U _1)restrict(cpu, amp):vec{static_cast<T>(_1)}{}
 	template<typename U, typename... Args>
 	vec(U&& u, Args&&... args)restrict(cpu, amp):base_type{detail::vec_mat_construct<base_type, base_type::size>::create(forward<U>(u), forward<Args>(args)...)}{}
+#pragma warning(push)
+#pragma warning(disable: 4715)
 	T& operator[](unsigned int n)restrict(cpu, amp){
 		switch(n%4){
-		case 0:
-			return ref_x();
-		case 1:
-			return ref_y();
-		case 2:
-			return ref_z();
-		case 3:
-			return ref_w();
+		case 0u:
+			return this->ref_x();
+		case 1u:
+			return this->ref_y();
+		case 2u:
+			return this->ref_z();
+		case 3u:
+			return this->ref_w();
 		}
 	}
 	T operator[](unsigned int n)const restrict(cpu, amp){
 		switch(n%4){
-		case 0:
-			return get_x();
-		case 1:
-			return get_y();
-		case 2:
-			return get_z();
-		case 3:
-			return get_w();
+		case 0u:
+			return this->get_x();
+		case 1u:
+			return this->get_y();
+		case 2u:
+			return this->get_z();
+		case 3u:
+			return this->get_w();
 		}
 	}
+#pragma warning(pop)
 	WILL_AMP_DECL_VEC2(x, x)
 	WILL_AMP_DECL_VEC2(y, y)
 	WILL_AMP_DECL_VEC2(z, z)
@@ -1205,6 +1242,68 @@ struct texture_view<const amp::shader::vec<T, Dim>, Rank>{using type = concurren
 
 }
 
+template<typename M, typename T, int Rank>
+struct mapped_texture_view : texture_view<T, Rank>{
+private:
+	using parent_type = texture_view<T, Rank>;
+public:
+	alignas(4) M m;
+	using value_type = will::amp::invoke_result_t<M, T>;
+	mapped_texture_view(parent_type p):parent_type{p}{}
+	mapped_texture_view(parent_type p, const M& m):parent_type{p}, m{m}{}
+	const value_type operator[](const will::amp::index<Rank>& ind)const restrict(amp){
+		return m(parent_type::operator[](ind));
+	}
+	const value_type operator[](int i)const restrict(amp){
+		return m(parent_type::operator[](i));
+	}
+	const value_type operator()(const will::amp::index<Rank>& ind)const restrict(amp){
+		return m(parent_type::operator()(ind));
+	}
+	const value_type operator()(int i)const restrict(amp){
+		return m(parent_type::operator()(i));
+	}
+	const value_type operator()(int i0, int i1)const restrict(amp){
+		return m(parent_type::operator()(i0, i1));
+	}
+	const value_type operator()(int i0, int i1, int i2)const restrict(amp){
+		return m(parent_type::operator()(i0, i1, i2));
+	}
+	const value_type get(const will::amp::index<Rank>& ind)const restrict(amp){
+		return m(parent_type::get(ind));
+	}
+};
+
+template<typename M, typename T, int Rank>
+static inline mapped_texture_view<M, T, Rank> map(const concurrency::graphics::texture_view<T, Rank>& t){
+	return {t};
+}
+template<typename M, typename T, int Rank>
+static inline mapped_texture_view<M, T, Rank> map(const concurrency::graphics::texture_view<T, Rank>& t, const M& m){
+	return {t, m};
+}
+template<typename M, typename T, int Rank>
+static inline mapped_texture_view<M, const T, Rank> map(const concurrency::graphics::texture<T, Rank>& t){
+	texture_view<const T, Rank> texv{t};
+	return map<M>(texv);
+}
+template<typename M, typename T, int Rank>
+static inline mapped_texture_view<M, T, Rank> map(const concurrency::graphics::texture<T, Rank>& t, const M& m){
+	texture_view<const T, Rank> texv{t};
+	return map(texv, m);
+}
+
+namespace detail{
+
+template<typename>
+struct is_texture_view{using type = std::false_type;};
+template<typename T, int Rank>
+struct is_texture_view<concurrency::graphics::texture_view<T, Rank>>{using type = std::true_type;};
+template<typename M, typename T, int Rank>
+struct is_texture_view<mapped_texture_view<M, T, Rank>>{using type = std::true_type;};
+
+}
+
 }
 
 namespace shader{
@@ -1218,13 +1317,13 @@ auto map(F&& f, T&& t, Args&&... args)restrict(cpu, amp){return T{f(t.x, args.x.
 template<typename F, typename T, typename... Args, std::enable_if_t<detail::is_same_size_short_vectors<4, T, Args...>::value>* = nullptr>
 auto map(F&& f, T&& t, Args&&... args)restrict(cpu, amp){return T{f(t.x, args.x...), f(t.y, args.y...), f(t.z, args.z...), f(t.w, args.w...)};}
 template<typename F, typename T, std::enable_if_t<short_vector_traits<std::decay_t<T>>::size == 1>* = nullptr>
-auto reduce(F&&, T t)restrict(cpu, amp)->decltype(t){return t;}
+auto reduce(F&& f, T init, T t)restrict(cpu, amp)->decltype(t){return f(init, t);}
 template<typename F, typename T, std::enable_if_t<short_vector_traits<std::decay_t<T>>::size == 2>* = nullptr>
-auto reduce(F&& f, T&& t)restrict(cpu, amp)->decltype(f(t.x, t.y)){return f(t.x, t.y);}
+auto reduce(F&& f, typename short_vector_traits<T>::value_type init, T t)restrict(cpu, amp)->decltype(f(t.x, t.y)){return f(f(init, t.x), t.y);}
 template<typename F, typename T, std::enable_if_t<short_vector_traits<std::decay_t<T>>::size == 3>* = nullptr>
-auto reduce(F&& f, T&& t)restrict(cpu, amp)->decltype(f(f(t.x, t.y), t.z)){return f(f(t.x, t.y), t.z);}
+auto reduce(F&& f, typename short_vector_traits<T>::value_type init, T t)restrict(cpu, amp)->decltype(f(f(t.x, t.y), t.z)){return f(f(f(init, t.x), t.y), t.z);}
 template<typename F, typename T, std::enable_if_t<short_vector_traits<std::decay_t<T>>::size == 4>* = nullptr>
-auto reduce(F&& f, T&& t)restrict(cpu, amp)->decltype(f(f(f(t.x, t.y), t.z), t.w)){return f(f(f(t.x, t.y), t.z), t.w);}
+auto reduce(F&& f, typename short_vector_traits<T>::value_type init, T t)restrict(cpu, amp)->decltype(f(f(f(t.x, t.y), t.z), t.w)){return f(f(f(f(init, t.x), t.y), t.z), t.w);}
 
 using vec2 = vec<float, 2>;
 using vec3 = vec<float, 3>;
@@ -1247,9 +1346,9 @@ inline U operator/(T t, const U& u)restrict(cpu, amp){return map([t](typename sh
 
 inline float length(float x)restrict(cpu, amp){return math::abs(x);}
 template<typename T, std::enable_if_t<(short_vector_traits<T>::size >= 2)>* = nullptr>
-inline auto length(const T& vec)restrict(cpu, amp){
+inline auto length(T vec)restrict(cpu, amp){
 	using vt = typename short_vector_traits<T>::value_type;
-	return reduce([](vt a, vt b)restrict(cpu, amp){return hypot(a, b);}, vec);
+	return math::sqrt(reduce([](vt a, vt b)restrict(cpu, amp){return a + b*b;}, vt{}, vec));
 }
 
 template<typename T, typename U, std::enable_if_t<short_vector_traits<T>::size == short_vector_traits<U>::size>* = nullptr>
@@ -1262,8 +1361,8 @@ inline float normalize(float)restrict(cpu, amp){
 }
 template<typename T, std::enable_if_t<(short_vector_traits<T>::size >= 2)>* = nullptr>
 inline T normalize(const T& vec)restrict(cpu, amp){
-	if(length(vec) < math::detail::numeric_limits<typename short_vector_traits<T>::value_type>::epsilon())
-		return vec / math::detail::numeric_limits<typename short_vector_traits<T>::value_type>::epsilon();
+	if(length(vec) < math::numeric_limits<typename short_vector_traits<T>::value_type>::epsilon())
+		return vec / math::numeric_limits<typename short_vector_traits<T>::value_type>::epsilon();
 	else
 		return vec / length(vec);
 }
@@ -1271,7 +1370,7 @@ inline T normalize(const T& vec)restrict(cpu, amp){
 template<typename T, typename U, std::enable_if_t<short_vector_traits<T>::size == short_vector_traits<U>::size>* = nullptr>
 inline auto dot(const T& lhs, const U& rhs)restrict(cpu, amp){
 	using vt = typename short_vector_traits<T>::value_type;
-	return reduce([](vt a, vt b)restrict(cpu, amp){return a + b;}, map([](vt lhs, vt rhs)restrict(cpu, amp){return lhs * rhs;}, lhs, rhs));
+	return reduce([](vt a, vt b)restrict(cpu, amp){return a + b;}, vt{}, map([](vt lhs, vt rhs)restrict(cpu, amp){return lhs * rhs;}, lhs, rhs));
 }
 
 template<typename T, typename U, std::enable_if_t<short_vector_traits<T>::size == 3 && short_vector_traits<U>::size == 3>* = nullptr>

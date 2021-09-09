@@ -1,4 +1,4 @@
-﻿//Copyright (C) 2014-2017 I
+﻿//Copyright (C) 2014-2017, 2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -60,7 +60,7 @@ public:
 	static bool enum_display(bool（const_will_monitor＆，HDC，const_RECT＆）&& f, HDC hdc){
 		using F = bool（const_will_monitor＆，HDC，const_RECT＆）;
 		if(::EnumDisplayMonitors(hdc, nullptr, [](HMONITOR hm, HDC hdc, LPRECT lpr, LPARAM f)->BOOL{
-			return (*reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr) : TRUE : FALSE;
+			return (*reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr) ? TRUE : FALSE;
 		}, reinterpret_cast<LPARAM>(&f)) != 0)return {};
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	}
@@ -68,7 +68,7 @@ public:
 	static bool enum_display(bool（const_will_monitor＆，const_RECT＆）&& f, const RECT& r){
 		using F = bool（const_will_monitor＆，const_RECT＆）;
 		if(::EnumDisplayMonitors(nullptr, &r, [](HMONITOR hm, HDC, LPRECT lpr, LPARAM f)->BOOL{
-			return (*reinterpret_cast<F*>(f))(monitor{hm}, *lpr) : TRUE : FALSE;
+			return (*reinterpret_cast<F*>(f))(monitor{hm}, *lpr) ? TRUE : FALSE;
 		}, reinterpret_cast<LPARAM>(&f)) != 0)return {};
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	}
@@ -76,7 +76,7 @@ public:
 	static bool enum_display(bool（const_will_monitor＆，HDC，const_RECT＆）&& f, HDC hdc, const RECT& r){
 		using F = bool（const_will_monitor＆，HDC，const_RECT＆）;
 		if(::EnumDisplayMonitors(hdc, &r, [](HMONITOR hm, HDC hdc, LPRECT lpr, LPARAM f)->BOOL{
-			return (*reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr) : TRUE : FALSE;
+			return (*reinterpret_cast<F*>(f))(monitor{hm}, hdc, *lpr) ? TRUE : FALSE;
 		}, reinterpret_cast<LPARAM>(&f)) != 0)return {};
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	}

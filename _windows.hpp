@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017, 2019 I
+//Copyright (C) 2014-2017, 2019, 2021 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -9,6 +9,7 @@
 #include<thread>
 #include<string>
 #include<string_view>
+#include<filesystem>
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -47,6 +48,13 @@ inline namespace tchar{
 			to_string
 #endif
 			(std::forward<T>(t));
+	}
+	tstring to_tstring(const std::filesystem::path& p){
+#ifdef UNICODE
+		return p.wstring();
+#else
+		return p.string();
+#endif
 	}
 }
 
@@ -259,11 +267,41 @@ inline expected<module_handle, winapi_last_error> load_library(LPCTSTR file_name
 		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
 	return module_handle{std::move(mod)};
 }
-inline expected<module_handle, winapi_last_error> load_library(const tchar::tstring& file_name, DWORD flags){return load_library(file_name.c_str(), flags);}
+inline expected<module_handle, winapi_last_error> load_library(const tchar::tstring& file_name, DWORD flags = 0){return load_library(file_name.c_str(), flags);}
 
 template<typename T, typename... Args>
 inline expected<decltype(std::declval<T>()(std::declval<Args>()...)), winapi_last_error> call_dll_function(::LPCTSTR dll_name, ::LPCSTR function_name, Args&&... args){
 	return load_library(dll_name).bind([&](module_handle&& mh){return mh.get_proc_address<T>(function_name);}).map([&](typename detail::get_proc_addr_impl<T>::result_type&& proc_addr){return proc_addr(std::forward<Args>(args)...);});
+}
+
+inline expected<will::tstring, winapi_last_error> get_system_directory(){
+	will::tstring buf(1, _T('\0'));
+	{
+		const auto size = static_cast<std::size_t>(::GetSystemDirectory(buf.data(), static_cast<UINT>(buf.size())));
+		if(size == 0)
+			return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+		buf.resize(size);
+	}
+	const auto size = static_cast<std::size_t>(::GetSystemDirectory(buf.data(), static_cast<UINT>(buf.size())));
+	if(size == 0)
+		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+	buf.resize(size);
+	return buf;
+}
+
+inline expected<will::tstring, winapi_last_error> get_module_file_name(HINSTANCE mod){
+	will::tstring buf(MAX_PATH, _T('\0'));
+	std::size_t ret = static_cast<std::size_t>(::GetModuleFileName(mod, buf.data(), static_cast<DWORD>(buf.size())));
+	if(ret == 0)
+		return will::make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+	while(ret >= buf.size()){
+		buf.resize(buf.size()*2);
+		ret = static_cast<std::size_t>(::GetModuleFileName(mod, buf.data(), static_cast<DWORD>(buf.size())));
+		if(ret == 0)
+			return will::make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+	}
+	buf.resize(ret);
+	return buf;
 }
 
 }

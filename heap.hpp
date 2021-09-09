@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2017 I
+//Copyright (C) 2014-2017, 2019 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -27,7 +27,7 @@ public:
 		HANDLE h;
 	public:
 		explicit deleter(const heap& handle):h(handle.h){}
-		void operator()(T* ptr){ptr->~T();free(heap{h}, 0, ptr);}
+		void operator()(T* ptr){ptr->~T();heap heap{h};free(heap, 0, ptr);}
 		friend class memory;
 	};
 	enum class allocate_option:DWORD{
@@ -122,8 +122,10 @@ public:
 			return {};
 		}
 		expected<void, winapi_last_error> unlock(){
-			if(locked)
-				return heap::unlock(heap{h}).map([&]{locked = false;});
+			if(locked){
+				heap heap{h};
+				return heap::unlock(heap).map([&]{locked = false;});
+			}
 			return {};
 		}
 		~unlocker(){unlock();}
@@ -143,9 +145,9 @@ public:
 		heap get_heap()const{return heap{get_deleter().h};}
 	public:
 		using unique_ptr::unique_ptr;
-		void* reallocate(std::size_t new_size, reallocate_option op = reallocate_option{}){return heap::reallocate(get_heap(), get(), new_size, op);}
-		bool expand_size(std::size_t new_size)noexcept{return heap::expand_size(get_heap(), get(), new_size);}
-		bool expand_plus(std::size_t add_size)noexcept{return heap::expand_plus(get_heap(), get(), add_size);}
+		void* reallocate(std::size_t new_size, reallocate_option op = reallocate_option{}){heap heap = get_heap();return heap::reallocate(heap, get(), new_size, op);}
+		bool expand_size(std::size_t new_size)noexcept{heap heap = get_heap();return heap::expand_size(heap, get(), new_size);}
+		bool expand_plus(std::size_t add_size)noexcept{heap heap = get_heap();return heap::expand_plus(heap, get(), add_size);}
 		std::size_t size()const{return heap::get_size(get_heap(), get());}
 		friend heap;
 	};
@@ -205,5 +207,69 @@ public:
 	}
 	~private_heap(){destroy();}
 };
+
+template<typename Deleter>
+class moveable_memory{
+	static expected<void*, winapi_last_error> lock(HGLOBAL h){
+		void* t = ::GlobalLock(h);
+		if(t == nullptr)
+			return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+		return t;
+	}
+	static expected<unsigned int, winapi_last_error> unlock(HGLOBAL h){
+		::BOOL t = ::GlobalUnlock(h);
+		if(t == 0){
+			::DWORD le = ::GetLastError();
+			if(le != NO_ERROR)
+				return make_unexpected<winapi_last_error>(_T(__FUNCTION__), le);
+		}
+		return static_cast<unsigned int>(t);
+	}
+	Deleter d;
+protected:
+	HGLOBAL h;
+public:
+	explicit moveable_memory(HGLOBAL h):h(h){}
+	moveable_memory(const moveable_memory&) = default;
+	moveable_memory(moveable_memory&&) = default;
+	moveable_memory& operator=(const moveable_memory&) = default;
+	moveable_memory& operator=(moveable_memory&&) = default;
+	~moveable_memory(){if(h != nullptr)d(h);}
+	explicit operator bool()const{return h != nullptr;}
+	explicit operator HGLOBAL()const{return h;}
+	HGLOBAL get()const{return h;}
+	HGLOBAL release()&&{HGLOBAL ret = h; h = nullptr; return ret;}
+	class scoped_lock_t{
+		HGLOBAL h;
+		void* ptr;
+	public:
+		scoped_lock_t(HGLOBAL h, void* ptr):h{h}, ptr{ptr}{}
+		void* get()const{return ptr;}
+		~scoped_lock_t(){unlock(h);}
+	};
+	will::expected<scoped_lock_t, winapi_last_error> scoped_lock(){
+		return lock(h).map([this](void* ptr){return scoped_lock_t{this->h, ptr};});
+	}
+};
+
+namespace detail{
+
+struct global_free_deleter{
+	will::expected<void, winapi_last_error> operator()(HGLOBAL h)const{
+		if(::GlobalFree(h))
+			return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+		return {};
+	}
+};
+
+}
+
+static inline expected<moveable_memory<detail::global_free_deleter>, winapi_last_error> global_alloc_moveable(std::size_t size){
+	HGLOBAL t = ::GlobalAlloc(GMEM_MOVEABLE, size);
+	if(t == nullptr)
+		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+	else
+		return moveable_memory<detail::global_free_deleter>{std::move(t)};
+}
 
 }

@@ -1,4 +1,4 @@
-//Copyright (C) 2014-2019 I
+//Copyright (C) 2014-2020 I
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -13,7 +13,7 @@ class dxgi : public detail::resource<IDXGIFactory2>{
 	using resource::resource;
 	template<typename I>
 	struct dxgi_object : detail::resource<I>{
-		using resource::resource;
+		using detail::resource<I>::resource;
 	protected:
 		template<typename T>
 		expected<T, hresult_error> get_parent(const TCHAR* func_name)const{return detail::convert_to_rich_interface<T>(com_create_resource<detail::get_interface<T>>([&](detail::get_interface<T>** ptr){return (*this)->GetParent(__uuidof(detail::get_interface<T>), reinterpret_cast<void**>(ptr));}), func_name);}
@@ -262,7 +262,7 @@ public:
 			using resource::resource;
 			template<typename I>
 			struct dxgi_device_sub_object : dxgi_object<I>{
-				using dxgi_object::dxgi_object;
+				using dxgi_object<I>::dxgi_object;
 			protected:
 				template<typename T = device>
 				expected<T, hresult_error> get_device_impl(const TCHAR* func_name)const{return detail::convert_to_rich_interface<T>(com_create_resource<detail::get_interface<T>>([&](detail::get_interface<T>** ptr){return (*this)->GetDevice(__uuidof(detail::get_interface<T>), reinterpret_cast<void**>(ptr));}), func_name);}
@@ -452,7 +452,7 @@ public:
 			::LARGE_INTEGER t;
 			const HRESULT hr = (*this)->CheckInterfaceSupport(__uuidof(T), &t);
 			if(FAILED(hr))
-				return make_unexpected<hresult_error>(_T(__FUNCION__), hr);
+				return make_unexpected<hresult_error>(_T(__FUNCTION__), hr);
 			return t;
 		}
 		expected<::DXGI_ADAPTER_DESC2, hresult_error> get_desc()const{
@@ -616,7 +616,7 @@ public:
 				if(!e1)
 					return make_unexpected(e1.error());
 				auto result = f(*e1);
-				if e2 = unmap_desktop_surface();
+				auto e2 = unmap_desktop_surface();
 				if(!e2)
 					return make_unexpected(e2.error());
 				return result;
@@ -757,17 +757,38 @@ public:
 	expected<swap_chain, hresult_error> create_swap_chain(ID3D11Device* device, HWND hwnd, const DXGI_SWAP_CHAIN_DESC1& description = swap_chain::description{}.get())const{
 		return detail::convert_to_rich_interface<swap_chain>(com_create_resource<IDXGISwapChain1>([&](IDXGISwapChain1** ptr){return (*this)->CreateSwapChainForHwnd(device, hwnd, &description, nullptr, nullptr, ptr);}), _T(__FUNCTION__));
 	}
-	template<typename Device, std::enable_if_t<!std::is_base_of<ID3D11Device, std::remove_pointer_t<std::decay_t<Device>>>::value>* = nullptr>
+	expected<swap_chain, hresult_error> create_swap_chain(IDXGIDevice2* device, HWND hwnd, const DXGI_SWAP_CHAIN_DESC1& description = swap_chain::description{}.get())const{
+		return detail::convert_to_rich_interface<swap_chain>(com_create_resource<IDXGISwapChain1>([&](IDXGISwapChain1** ptr){return (*this)->CreateSwapChainForHwnd(device, hwnd, &description, nullptr, nullptr, ptr);}), _T(__FUNCTION__));
+	}
+	template<typename Device, std::enable_if_t<!std::is_base_of<ID3D11Device, std::remove_pointer_t<std::decay_t<Device>>>::value && !std::is_base_of<IDXGIDevice2, std::remove_pointer_t<std::decay_t<Device>>>::value>* = nullptr>
 	expected<swap_chain, hresult_error> create_swap_chain(Device&& device, HWND hwnd, const DXGI_SWAP_CHAIN_DESC1& description = swap_chain::description{})const{
 		return create_swap_chain(std::forward<Device>(device).get(), hwnd, description);
 	}
-	template<typename HWnd, std::enable_if_t<!std::is_same<std::decay_t<HWnd>, HWND>::value>* = nullptr>
+	template<typename HWnd, std::enable_if_t<!std::is_same<std::decay_t<HWnd>, HWND>::value && !std::is_convertible<std::decay_t<HWnd>, ::DXGI_SWAP_CHAIN_DESC1>::value>* = nullptr>
 	expected<swap_chain, hresult_error> create_swap_chain(ID3D11Device* device, HWnd&& hwnd, const DXGI_SWAP_CHAIN_DESC1& description = swap_chain::description{})const{
-		return create_swap_chain(device, std::forward<Device>(hwnd).get(), description);
+		return create_swap_chain(device, std::forward<HWnd>(hwnd).get(), description);
 	}
-	template<typename Device, typename HWnd, std::enable_if_t<!std::is_base_of<ID3D11Device, std::remove_pointer_t<std::decay_t<Device>>>::value && !std::is_same<std::decay_t<HWnd>, HWND>::value>* = nullptr>
+	template<typename HWnd, std::enable_if_t<!std::is_same<std::decay_t<HWnd>, HWND>::value && !std::is_convertible<std::decay_t<HWnd>, ::DXGI_SWAP_CHAIN_DESC1>::value>* = nullptr>
+	expected<swap_chain, hresult_error> create_swap_chain(IDXGIDevice2* device, HWnd&& hwnd, const DXGI_SWAP_CHAIN_DESC1& description = swap_chain::description{})const{
+		return create_swap_chain(device, std::forward<HWnd>(hwnd).get(), description);
+	}
+	template<typename Device, typename HWnd, std::enable_if_t<!std::is_base_of<ID3D11Device, std::remove_pointer_t<std::decay_t<Device>>>::value && !std::is_base_of<IDXGIDevice2, std::remove_pointer_t<std::decay_t<Device>>>::value && !std::is_same<std::decay_t<HWnd>, HWND>::value && !std::is_convertible<std::decay_t<HWnd>, ::DXGI_SWAP_CHAIN_DESC1>::value>* = nullptr>
 	expected<swap_chain, hresult_error> create_swap_chain(Device&& device, HWnd&& hwnd, const DXGI_SWAP_CHAIN_DESC1& description = swap_chain::description{})const{
 		return create_swap_chain(std::forward<Device>(device).get(), std::forward<Device>(hwnd).get(), description);
+	}
+	expected<swap_chain, hresult_error> create_swap_chain(::ID3D11Device* device, const ::DXGI_SWAP_CHAIN_DESC1& desc = swap_chain::description{}.get(), ::IDXGIOutput1* restrict_to_output = nullptr){
+		return detail::convert_to_rich_interface<dxgi::swap_chain>(com_create_resource<IDXGISwapChain1>([&](IDXGISwapChain1** ptr){return (*this)->CreateSwapChainForComposition(device, &desc, restrict_to_output, ptr);}), _T(__FUNCTION__));
+	}
+	expected<swap_chain, hresult_error> create_swap_chain(::IDXGIDevice2* device, const ::DXGI_SWAP_CHAIN_DESC1& desc = swap_chain::description{}.get(), ::IDXGIOutput1* restrict_to_output = nullptr){
+		return detail::convert_to_rich_interface<dxgi::swap_chain>(com_create_resource<IDXGISwapChain1>([&](IDXGISwapChain1** ptr){return (*this)->CreateSwapChainForComposition(device, &desc, restrict_to_output, ptr);}), _T(__FUNCTION__));
+	}
+	template<typename Device, std::enable_if_t<!std::is_base_of<ID3D11Device, std::remove_pointer_t<std::decay_t<Device>>>::value && !std::is_base_of<IDXGIDevice2, std::remove_pointer_t<std::decay_t<Device>>>::value, std::nullptr_t> = nullptr>
+	expected<swap_chain, hresult_error> create_swap_chain(Device&& device, const ::DXGI_SWAP_CHAIN_DESC1& desc = swap_chain::description{}.get(), ::IDXGIOutput1* restrict_to_output = nullptr){
+		return create_swap_chain(std::forward<Device>(device).get(), desc, restrict_to_output);
+	}
+	template<typename Device, typename Output, std::enable_if_t<!std::is_same<IDXGIOutput1, std::remove_pointer_t<std::decay_t<Output>>>::value, std::nullptr_t> = nullptr>
+	expected<swap_chain, hresult_error> create_swap_chain(Device&& device, const ::DXGI_SWAP_CHAIN_DESC1& desc, Output&& restrict_to_output){
+		return create_swap_chain(std::forward<Device>(device), desc, std::forward<Output>(restrict_to_output).get());
 	}
 	class enum_adapters_range{
 		dxgi& f;
