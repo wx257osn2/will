@@ -225,8 +225,8 @@ class module_handle{
 	::HMODULE hmodule;
 public:
 	explicit module_handle(::HMODULE&& hmod):hmodule{hmod}{}
-	module_handle(module_handle&& other)noexcept:hmodule{std::move(other.hmodule)}{other.hmodule = nullptr;}
-	module_handle& operator=(module_handle&& rhs)noexcept{hmodule = std::move(rhs.hmodule);rhs.hmodule = nullptr;return *this;}
+	module_handle(module_handle&& other)noexcept:hmodule{std::move(other.release())}{}
+	module_handle& operator=(module_handle&& rhs)noexcept{this->reset(std::move(rhs.release()));return *this;}
 	expected<void, winapi_last_error> free(){
 		if(hmodule){
 			if(::FreeLibrary(hmodule) == FALSE)
@@ -273,6 +273,37 @@ template<typename T, typename... Args>
 inline expected<decltype(std::declval<T>()(std::declval<Args>()...)), winapi_last_error> call_dll_function(::LPCTSTR dll_name, ::LPCSTR function_name, Args&&... args){
 	return load_library(dll_name).bind([&](module_handle&& mh){return mh.get_proc_address<T>(function_name);}).map([&](typename detail::get_proc_addr_impl<T>::result_type&& proc_addr){return proc_addr(std::forward<Args>(args)...);});
 }
+
+class weak_module_handle : module_handle{
+public:
+	using module_handle::module_handle;
+	weak_module_handle(weak_module_handle&& other)noexcept:module_handle{other.release()}{}
+	weak_module_handle& operator=(weak_module_handle&& rhs)noexcept{
+		this->reset(std::move(rhs.release()));
+		return *this;
+	}
+	void reset(::HMODULE&& other){
+		this->release();
+		static_cast<module_handle*>(this)->reset(std::move(other));
+	}
+	void swap(weak_module_handle& other)noexcept{
+		static_cast<module_handle&>(*this).swap(static_cast<module_handle&>(other));
+	}
+	using module_handle::release;
+	using module_handle::is_datafile;
+	using module_handle::is_image_mapping;
+	using module_handle::is_resource;
+	using module_handle::get_proc_address;
+	~weak_module_handle(){this->release();}
+};
+
+inline expected<weak_module_handle, winapi_last_error> get_module_handle(LPCTSTR file_name){
+	auto module_handle = ::GetModuleHandle(file_name);
+	if(module_handle == nullptr)
+		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
+	return weak_module_handle{std::move(module_handle)};
+}
+inline expected<weak_module_handle, winapi_last_error> get_module_handle(const tchar::tstring& file_name){return get_module_handle(file_name.c_str());}
 
 inline expected<will::tstring, winapi_last_error> get_system_directory(){
 	will::tstring buf(1, _T('\0'));
