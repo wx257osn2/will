@@ -47,13 +47,4 @@ inline expected<std::size_t, winapi_last_error> size_of(HMODULE mod, HRSRC res){
 
 }
 
-inline expected<HMODULE, winapi_last_error> get_current_module(){
-	HMODULE handle;
-	if(::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(&get_current_module), &handle) != 0)
-		return handle;
-	return make_unexpected(winapi_last_error{_T(__FUNCTION__)});
-}
-
-inline expected<HINSTANCE, winapi_last_error> get_current_instance(){return get_current_module();}
-
 }

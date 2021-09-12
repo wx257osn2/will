@@ -274,36 +274,30 @@ inline expected<decltype(std::declval<T>()(std::declval<Args>()...)), winapi_las
 	return load_library(dll_name).bind([&](module_handle&& mh){return mh.get_proc_address<T>(function_name);}).map([&](typename detail::get_proc_addr_impl<T>::result_type&& proc_addr){return proc_addr(std::forward<Args>(args)...);});
 }
 
-class weak_module_handle : module_handle{
-public:
-	using module_handle::module_handle;
-	weak_module_handle(weak_module_handle&& other)noexcept:module_handle{other.release()}{}
-	weak_module_handle& operator=(weak_module_handle&& rhs)noexcept{
-		this->reset(std::move(rhs.release()));
-		return *this;
-	}
-	void reset(::HMODULE&& other){
-		this->release();
-		static_cast<module_handle*>(this)->reset(std::move(other));
-	}
-	void swap(weak_module_handle& other)noexcept{
-		static_cast<module_handle&>(*this).swap(static_cast<module_handle&>(other));
-	}
-	using module_handle::release;
-	using module_handle::is_datafile;
-	using module_handle::is_image_mapping;
-	using module_handle::is_resource;
-	using module_handle::get_proc_address;
-	~weak_module_handle(){this->release();}
-};
+namespace detail{
 
-inline expected<weak_module_handle, winapi_last_error> get_module_handle(LPCTSTR file_name){
-	auto module_handle = ::GetModuleHandle(file_name);
-	if(module_handle == nullptr)
-		return make_unexpected<winapi_last_error>(_T(__FUNCTION__));
-	return weak_module_handle{std::move(module_handle)};
+inline will::expected<HMODULE, winapi_last_error> get_module_handle_ex(DWORD flags, LPCTSTR module_name){
+	HMODULE handle;
+	if(::GetModuleHandleEx(flags, module_name, &handle) != 0)
+		return handle;
+	return make_unexpected(winapi_last_error{_T(__FUNCTION__)});
 }
-inline expected<weak_module_handle, winapi_last_error> get_module_handle(const tchar::tstring& file_name){return get_module_handle(file_name.c_str());}
+
+template<typename T, typename... Args>
+inline will::expected<HMODULE, winapi_last_error> get_module_handle_ex(DWORD flags, T(*fp)(Args...)){
+	return get_module_handle_ex(flags | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCTSTR>(fp));
+}
+
+}
+
+inline expected<module_handle, winapi_last_error> get_current_module(){
+	return detail::get_module_handle_ex(0, &get_current_module).map([](HMODULE&& hmod){return module_handle{std::move(hmod)};});
+}
+
+inline expected<module_handle, winapi_last_error> get_module_handle(LPCTSTR file_name){
+	return detail::get_module_handle_ex(0, file_name).map([](HMODULE&& hmod){return module_handle{std::move(hmod)};});
+}
+inline expected<module_handle, winapi_last_error> get_module_handle(const tchar::tstring& file_name){return get_module_handle(file_name.c_str());}
 
 inline expected<will::tstring, winapi_last_error> get_system_directory(){
 	will::tstring buf(1, _T('\0'));
